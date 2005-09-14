@@ -21,6 +21,20 @@ class DBEntity:
     def buildStateDict(self):
         return dict([(attr, getattr(self, attr)) for attr in self.attribtutes])
     stateDict = property(buildStateDict, doc="current object's state")
+
+    def selectWhere(cls, cursor, **args):
+        if args:
+            wheres = ['%s=%%(%s)s' % (attr, attr) for attr in args]
+            where =  'WHERE ' + ' AND '.join(wheres)
+        else:
+            where = ''
+        query = 'SELECT %s FROM %s %s' % (', '.join(cls.attributes),
+                                                cls.tableName,
+                                                where)
+        cursor.execute(query, args)
+        results = cursor.fetchall()
+        return [cls(**dict(zip(cls.attributes, row))) for row in results]
+    selectWhere = classmethod(selectWhere)
     
     def commit(self, cursor, update=False):
         if update:
@@ -51,10 +65,7 @@ class DBEntity:
 
     def buildElementsFromTable(cls, cursor):
         """returns a list of <cls>'s instances based on database content"""
-        query = "SELECT %s FROM %s" % (', '.join(cls.attributes), cls.tableName)
-        cursor.execute(query)
-        results = cursor.fetchall()
-        return [cls(**dict(zip(cls.attributes, row))) for row in results]
+        return cls.selectWhere(cursor)
     buildElementsFromTable = classmethod(buildElementsFromTable)
     
     def __str__(self):
