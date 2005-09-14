@@ -8,6 +8,7 @@ TODO: analyse the God class into something understandable
 __revision__ = '$Id$'
 
 import os, stat
+import sha
 from xmlrpclib import ServerProxy
 
 from maay import converter
@@ -21,6 +22,11 @@ def getLastModificationTime(filename):
 
 def getFileSize(filename):
     return int(os.stat(filename)[stat.ST_SIZE])
+
+def makeDocumentId(filename):
+    content = file(filename, 'rb').read()
+    return sha.sha(content).hexdigest()
+    
 
 class Indexer:
     def __init__(self, indexerConfig):
@@ -42,32 +48,41 @@ class Indexer:
     def start(self):
         for filename in self.getFileIterator():
             lastModificationTime = getLastModificationTime(filename)
-            lastIndexationTime = self.getLastModificationTime(filename)
+            lastIndexationTime = self.getLastIndexationTime(filename)
             fileSize = getFileSize(filename)
             if lastIndexationTime == 0:
                 # means never been indexed
-                title, ttext = converter.extractWordsFromFile(filename)
-                self.insertFileInformations(filename, title, text, fileSize, lastModificationTime)
+                title, text, links, offset = converter.extractWordsFromFile(filename)
+                docId = makeDocumentId(filename)
+                self.insertFileInformations(docId, filename, title, text, links,
+                                            offset, fileSize, lastModificationTime)
             elif lastIndexationTime < lastModificationTime:
                 # file has changed since last modification
-                title, text = converter.extractWordsFromFile(filename)
-                self.updateFileInformations(filename, title, text, fileSize, lastModificationTime)
+                title, text, links, offset = converter.extractWordsFromFile(filename)
+                docId = makeDocumentId(filename)
+                self.updateFileInformations(docId, filename, title, text, links,
+                                            offset, fileSize, lastModificationTime)
             else:
                 print "%s didn't change since last indexation"
 
-    def fileWasModifiedSinceLastIndexation(self, filename):
+    def getLastIndexationTime(self, filename):
         lastIndexationTime = self.serverProxy.lastIndexationTime(self.cnxId, filename)
         if lastIndexationTime is None:
             raise AuthenticationError("Bad cnxId sent to the server")
         return lastIndexationTime
 
-    def updateFileInformations(self, filename, title, text):
+    def updateFileInformations(self, docId, filename, title, text, links,
+                               offset, fileSize, lastModTime):
+        self.serverProxy.insertDocument(self.cnxId, docId, filename, title, text,
+                                        links, offset, fileSize, lastModTime)
         print "I should now update DB with all these new words ! (%s)" % filename
         
-    def insertFileInformations(self, filename, title, text):
-        print "I should now insert in DB with all these new words ! (%s)" % filename
+    def insertFileInformations(self, docId, filename, title, text, links,
+                               offset, fileSize, lastModTime):
+        self.serverProxy.updatetDocument(self.cnxId, docId, filename, title, text,
+                                         links, offset, fileSize, lastModTime)
     
-        
+     
 class FileIterator:
     """provide a simple way to walk through indexed dirs"""
     def __init__(self, indexed, skipped=None):
