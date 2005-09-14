@@ -27,32 +27,32 @@ class MaayPage(rend.Page):
     child_images = static.File('/home/adim/maay/images/')
     
 
-class LogForm(MaayPage):
+class LoginForm(MaayPage):
     """a basic login form. This page is rendered until the user
     is logged.
     """
     addSlash = True
     docFactory = loaders.stan(
-    tags.html[
-        tags.head[tags.title["Maay Login Page"]],
-        tags.body[
-            tags.form(action=guard.LOGIN_AVATAR, method='post')[
-                tags.table[
-                    tags.tr[
-                        tags.td[ "Username:" ],
-                        tags.td[ tags.input(type='text', name='username') ],
+        tags.html[
+            tags.head[tags.title["Maay Login Page"]],
+            tags.body[
+                tags.form(action=guard.LOGIN_AVATAR, method='post')[
+                    tags.table[
+                        tags.tr[
+                            tags.td[ "Username:" ],
+                            tags.td[ tags.input(type='text', name='username') ],
+                            ],
+                        tags.tr[
+                            tags.td[ "Password:" ],
+                            tags.td[ tags.input(type='password', name='password') ],
+                            ]
                         ],
-                    tags.tr[
-                        tags.td[ "Password:" ],
-                        tags.td[ tags.input(type='password', name='password') ],
-                        ]
-                    ],
-                tags.input(type='submit'),
-                tags.p,
+                    tags.input(type='submit'),
+                    tags.p,
+                    ]
                 ]
             ]
-        ]
-    )
+        )
     
 
 class SearchForm(MaayPage):
@@ -72,7 +72,7 @@ class SearchForm(MaayPage):
 
     def child_search(self, context):
         words = context.arg('words')
-        if isinstance(words, str):
+        if isinstance(words, basestring):
             words = (words,)
         results = self.querier.findDocuments(words)
         return ResultsPage(results)
@@ -120,7 +120,7 @@ class MaayRealm:
         for iface in interfaces:
             if iface is inevow.IResource:
                 if avatarId is ANONYMOUS:
-                    resc = LogForm()
+                    resc = LoginForm()
                     return inevow.IResource, resc, lambda: None
                 else:
                     try:
@@ -128,7 +128,7 @@ class MaayRealm:
                         print "Hit cache !"
                     except KeyError:
                         print "ouch ! what am I supposed to ? !!"
-                        return inevow.IResource, LogForm(), lambda: None
+                        return inevow.IResource, LoginForm(), lambda: None
                     resc = SearchForm(avatarId, querier)
                     return inevow.IResource, resc, resc.logout
         raise NotImplementedError("can't provide avatar implementing %s"
