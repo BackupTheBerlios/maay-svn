@@ -45,16 +45,20 @@ class MaayRPCServer(XMLRPC):
         return None # XXX: need to differenciate bad cnxId and no last mod time
 
 
-    def xmlrpc_updateDocument(self, cnxId, docInfo):
+    def xmlrpc_updateDocument(self, cnxId, docId, filename, title, text,
+                              links, offset, fileSize, lastModTime):
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
-            querier.udpateDocument(filename, title, text, fileSize, lastModTime)
+            querier.udpateDocument(docId, filename, title, text, links,
+                                   offset, fileSize, lastModTime)
         return False
     
-    def xmlrpc_insertDocument(self, cnxId, filename, title, text, fileSize, lastModTime):
+    def xmlrpc_insertDocument(self, cnxId, docId, filename, title, text,
+                              links, offset, fileSize, lastModTime):
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
-            querier.insertDocument(filename, title, text, fileSize, lastModTime)
+            querier.insertDocument(docId, filename, title, text,
+                                   links, offset, fileSize, lastModTime)
         return None
     
     def cnxIsValid(self, cnxId):
