@@ -38,7 +38,8 @@ class IndexationFailure(Exception):
 
 class TextParser:
     def parseFile(self, filename):
-        """returns a couple (title, normalized_text)
+        """returns a 4-uple (title, normalized_text, links, offset)
+        
         Aglorithm taken from original texttotext implementation
         """
         content = file(filename).read()
@@ -50,12 +51,12 @@ class TextParser:
         # normalize white spaces
         result = ' '.join(translated.split())
         title = result[:60]
-        return title, result
+        return title, result, [], 0
         
 
 class HTMLParser:
     def parseFile(self, filename):
-        """returns a couple (title, normalized_text)
+        """returns a 4-uple (title, normalized_text, links, offset)
         TODO: port original code from htmltotext
         """
         # XXX: really dummy implementation !!
