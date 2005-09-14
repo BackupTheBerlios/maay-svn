@@ -103,11 +103,11 @@ class IndexerConfiguration(Configuration):
         ('host',
          {'type' : "string", 'metavar' : "<host>", 'short' : "H",
           'help' : "where Maay node can be found",
-          'default' : "sagittarius",
+          'default' : "localhost",
           }),
 
         ('port',
-         {'type' : "int", 'metavar' : "<int>", 'short' : "p",
+         {'type' : "int", 'metavar' : "<int>", 'short' : "P",
           'help' : "which port to use",
           'default' : 6789,
         }),
@@ -119,7 +119,7 @@ class IndexerConfiguration(Configuration):
 
         ('password',
          {'type': 'string',
-          'metavar': '<password>', 
+          'metavar': '<password>', 'short' : "p",
           'help': 'password to use to connect to the database'}),
 
         ('index-dir',

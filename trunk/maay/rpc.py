@@ -26,7 +26,7 @@ class MaayRPCServer(XMLRPC):
     def xmlrpc_authenticate(self, username, password):
         # XXX: use maayPortal to authenticate
         try:
-            querier = MaayQuerier(host=self.dbhost, databse=self.dbname,
+            querier = MaayQuerier(host=self.dbhost, database=self.dbname,
                               user=username, password=password)
         except self.dbapiMod.OperationalError:
             return ''
