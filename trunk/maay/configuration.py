@@ -3,13 +3,16 @@
 __revision__ = '$Id$'
 
 import os
+
 import sys
+
 from logilab.common.configuration import Configuration as BaseConfiguration
+
+import maay
 
 def __get_data_dir():
     """Return the name of the directory where data files are stored,
     depending on the platform and application setup"""
-    import maay
     __maay_dir = os.path.abspath(os.path.dirname(maay.__file__))
     if sys.platform == "win32":
         # Assume we are working on an installed version of Maay
