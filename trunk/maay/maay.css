@@ -1,0 +1,28 @@
+input.searchButton {
+  background: #FFF0FF;
+  border: 1px outset #ff2222;
+  margin: 5 10 5 0;
+}
+
+table.searchHome {
+  width: 100%;
+  text-align: center;
+}
+
+div.resultItem {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+pre.resultDesc {
+  font-size: 80%;
+}
+
+a.docTitle {
+  display: block;
+}
+
+span.resultUrl {
+  color: green;
+  text-decoration: none;
+}
