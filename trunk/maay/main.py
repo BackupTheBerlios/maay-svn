@@ -60,7 +60,7 @@ class LoginForm(MaayPage):
 
 class SearchForm(MaayPage):
     """default search form"""
-    docFactory = loaders.xmlfile('searchform.html')
+    docFactory = loaders.xmlfile(get_path_of('searchform.html'))
     addSlash = True
 
     def __init__(self, maayId, querier):
@@ -84,7 +84,7 @@ class SearchForm(MaayPage):
 
 class ResultsPage(MaayPage):
     """default results page"""
-    docFactory = loaders.xmlfile('resultpage.html')
+    docFactory = loaders.xmlfile(get_path_of('resultpage.html'))
     addSlash = False
     
     def __init__(self, results):
