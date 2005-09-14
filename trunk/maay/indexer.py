@@ -119,7 +119,7 @@ class IndexerConfiguration(Configuration):
 
         ('password',
          {'type': 'string',
-          'metavar': '<password>', 'short': 'p',
+          'metavar': '<password>', 
           'help': 'password to use to connect to the database'}),
 
         ('index-dir',
