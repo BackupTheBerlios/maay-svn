@@ -12,6 +12,7 @@ from twisted.cred.credentials import IAnonymous, IUsernamePassword
 from twisted.internet import reactor, defer
 from twisted.web import server
 from twisted.web import static
+
 from twisted.python import failure
 
 from nevow import inevow, rend, tags, guard, loaders, appserver
@@ -19,12 +20,14 @@ from nevow import inevow, rend, tags, guard, loaders, appserver
 from logilab.common.textutils import normalize_text
 
 from maay.querier import MaayQuerier
+
 from maay.rpc import MaayRPCServer
 
+from maay.configuration import get_path_of
 
 class MaayPage(rend.Page):
-    child_maaycss = static.File('/home/adim/maay/maay.css')
-    child_images = static.File('/home/adim/maay/images/')
+    child_maaycss = static.File(get_path_of('maay.css')
+    child_images = static.File(get_path_of('images/')
     
 
 class LoginForm(MaayPage):

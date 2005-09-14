@@ -3,8 +3,36 @@
 __revision__ = '$Id$'
 
 import os
-
+import sys
 from logilab.common.configuration import Configuration as BaseConfiguration
+
+def __get_data_dir():
+    """Return the name of the directory where data files are stored,
+    depending on the platform and application setup"""
+    import maay
+    __maay_dir = os.path.abspath(os.path.dirname(maay.__file__))
+    if sys.platform == "win32":
+        # Assume we are working on an installed version of Maay
+        # XXX FIXME this probably does not work with py2exe
+        return  os.path.join(__maay_dir, 'data') 
+    else:
+        if __maay_dir.startswith('/home'):
+            # we are in a development directory
+            return os.path.join(__maay_dir, 'data')
+        else:
+            # the application has been installed
+            base, last = os.path.split(__maay_dir)
+            while last and last != 'lib': 
+                base, last = os.path.split(base)
+            return os.path.join(base,'share', 'maay')
+    raise AssertionError("Unknown platform setup")
+        
+def get_path_of(datafile):
+    """return the path of a data file, depending on the platform
+    Handles development paths for testing as well as deployed paths"""
+    path = os.path.join(__get_data_dir(), datafile)
+    assert os.path.exists(path)
+    return path
 
 class Configuration(BaseConfiguration):
     options = []

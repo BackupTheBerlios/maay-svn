@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+  <head>
+    <title>Results</title>
+    <link rel="stylesheet" type="text/css" href="maaycss"/>
+  </head>
+ 
+  <body>
+    <div class="reSearch">
+      <img src="images/smallmaay.png" />
+      <form action="search">
+	<input type="text" name="words" value="" />
+	<input type="submit" class="searchButton" value="search" />
+      </form>      
+    </div>
+    <div class="message">results for XXX</div>
+    <table class="results" nevow:render="sequence" nevow:data="results">
+      <tr nevow:pattern="item" nevow:render="row">
+	<td>
+	  <div class="resultItem">
+	    <a class="docTitle"><nevow:attr name="href"><nevow:slot name="docurl" /></nevow:attr><nevow:slot name="doctitle">DOC TITLE</nevow:slot></a>
+	    <pre class="resultDesc">
+	      <nevow:slot name="abstract">doc abstract</nevow:slot>
+	    </pre>
+	    <span class="resultUrl"><nevow:attr name="href"><nevow:slot name="docurl" /></nevow:attr><nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /></span>
+	  </div>
+	</td>
+      </tr>
+    </table>
+  </body>  
+</html>
