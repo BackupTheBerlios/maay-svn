@@ -3,3 +3,4 @@ python-twisted-web
 python-nevow (SVN)
 python-zopeinterface (>= 3.0.1)
 logilab-common
+python-mysqldb
