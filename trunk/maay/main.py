@@ -26,8 +26,8 @@ from maay.rpc import MaayRPCServer
 from maay.configuration import get_path_of
 
 class MaayPage(rend.Page):
-    child_maaycss = static.File(get_path_of('maay.css')
-    child_images = static.File(get_path_of('images/')
+    child_maaycss = static.File(get_path_of('maay.css'))
+    child_images = static.File(get_path_of('images/'))
     
 
 class LoginForm(MaayPage):

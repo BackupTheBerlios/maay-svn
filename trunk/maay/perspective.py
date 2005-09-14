@@ -8,8 +8,8 @@ from maay.configuration import get_path_of
 
 class MaayPage(rend.Page):
     """base web perspective"""
-    child_maaycss = static.File(get_path_of('maay.css')
-    child_images = static.File(get_path_of('images/')
+    child_maaycss = static.File(get_path_of('maay.css'))
+    child_images = static.File(get_path_of('images/'))
 
 
 class IIndexerPerspective(Interface):
