@@ -6,7 +6,7 @@ from twisted.cred.credentials import UsernamePassword
 
 from logilab.common.db import get_dbapi_compliant_module
 
-from maay.querier import Querier
+from maay.querier import MaayQuerier
 
 def make_uid(username, password):
     """forge a unique identifier"""
@@ -26,7 +26,7 @@ class MaayRPCServer(XMLRPC):
     def xmlrpc_authenticate(self, username, password):
         # XXX: use maayPortal to authenticate
         try:
-            querier = Querier(host=self.dbhost, databse=self.dbname,
+            querier = MaayQuerier(host=self.dbhost, databse=self.dbname,
                               user=username, password=password)
         except self.dbapiMod.OperationalError:
             return ''
