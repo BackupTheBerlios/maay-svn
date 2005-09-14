@@ -31,7 +31,7 @@ def get_path_of(datafile):
     """return the path of a data file, depending on the platform
     Handles development paths for testing as well as deployed paths"""
     path = os.path.join(__get_data_dir(), datafile)
-    assert os.path.exists(path)
+    assert os.path.exists(path), "cannot find %s"%path
     return path
 
 class Configuration(BaseConfiguration):
