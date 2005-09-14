@@ -4,14 +4,38 @@ __revision__ = '$Id$'
 __metaclass__ = type
 
 from mimetypes import guess_type
+import re
+import time
 
-from logilab.common.db import get_connection
-from maay.document import Document, FileInfo
+import MySQLdb
+
+from maay.dbentity import *
+
+
+WORD_MIN_LEN = 2
+WORD_MAX_LEN = 50
+
+PUBLISHED_STATE = 1 << 0
+CACHED_STATE = 1 << 1
+KNOWN_STATE = 1 << 2
+PRIVATE_STATE = 1 << 3
+UNKNOWN_STATE = 1 << 9
+
+MAX_STORED_SIZE = 65535
+
+REMOVED_FILE_STATE = 0
+CREATED_FILE_STATE = 1
+MODIFIED_FILE_STATE = 2
+UNMODIFIED_FILE_STATE = 3
+NOT_INDEXED_FILE_STATE = 4
+
+WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN)) # XXX: need to handle diacritics signs
 
 class MaayQuerier:
-    def __init__(self, driver='mysql', host='', database='', user='', password=''):
-        self._cnx = get_connection(driver, host, database, user, password)
-
+    """High-Level interface to Maay SQL database"""
+    def __init__(self, host='', database='', user='', password=''):
+        self._cnx = MySQLdb.connect(host=host, db=database,
+                                    user=user, passwd=password)
 
     def _execute(self, query, args=None):
         cursor = self._cnx.cursor()
@@ -30,46 +54,95 @@ class MaayQuerier:
     def findDocuments(self, words):
         if not words:
             return []
+        columns = ['document_id', 'title', 'size', 'text', 'url', 'mime_type']
         args = {'words' : '(' + ','.join([repr(word) for word in words]) + ')',
                 'lenwords' : len(words)}
         # XXX: what is the HAVING clause supposed to do ?
-        query = """SELECT D.document_id, D.title, D.size, D.text, D.url, D.mime_type
+        query = """SELECT %s
                     FROM documents D, document_scores DS 
-                    WHERE DS.db_document_id=D.db_document_id AND DS.word IN %(words)s
+                    WHERE DS.db_document_id=D.db_document_id AND DS.word IN %%(words)s
                     GROUP BY DS.db_document_id
-                    HAVING count(DS.db_document_id) = %(lenwords)s"""
-        print "QUERY =", query % args
-        results = [Document(*row) for row in self._execute(query, args)]
+                    HAVING count(DS.db_document_id) = %%(lenwords)s""" % (
+            ['D.%s' % col for col in columns])
+        # for each row, build a dict from list of couples (attrname, value)
+        # and build a DBEntity from this dict
+        results = [Document(**dict(zip(columns, row))) for row in self._execute(query, args)]
         return results
 
 
-    def getFilesInformations(self, file_name=None, file_state=None, state=None,
-                             db_document_id=None, order_by_filename=0, file_name_sup=None, limit=None):
-        query = "SELECT file_name, file_time, db_document_id, state, file_state FROM files"
-        wheres = []
-        if file_name:
-            file_name = self.__escape_string(file_name)
-            wheres.append("file_name='%s'" % file_name)
-        if file_name_sup:
-            file_name_sup = self.__escape_string(file_name_sup)
-            wheres.append("file_name > '%s'" % file_name_sup)
-        if file_state:
-            wheres.append("file_state='%s'" % file_state)
-        if state:
-            wheres.append("state='%s'" % state)
-        if db_document_id:
-            wheres.append("db_document_id='%s'" % db_document_id)
-        if wheres:
-            query += ' WHERE %s' % (' AND '.join(wheres))
-        if order_by_filename == 1:
-            query += ' ORDER BY file_name'
-            query += " LIMIT %d,%d" % limit
-        return [FileInfo(*row) for row in self._execute(query)]
+    def getFilesInformations(self, **args):
+        cursor = self._cnx.cursor()
+        results = FileInfo.selectWhere(cursor, filename=file_name)
+        cursor.close()
+        return results
 
-
-    def insertDocument(self, filename, title, text, fileSize, lastModTime):
+    def insertDocument(self, docId, filename, title, text, links, offset, fileSize, lastModTime, nodeID):
         mimetype = guess_type(filename)[0]
-        doc = Document(title, fileSize, text, url=None, mimetype=mimetype)
-        query, args = doc.insertQuery()
-        self._execute(query, args)
-        
+        doc = self.insertDocumentInfo(docId, title, mimetype, text, fileSize,
+                                      lastModTime, filename)
+        scores = self.getScoresForDocument(doc, text, links, offset)
+        cursor = self._cnx.cursor()
+        dbDocumentScores = {}
+        for documentScore in DocumentScore.buildElementsFromTable(cursor):
+            dbDocumentScores[documentScore.word] = documentScore
+        for word, position in scores.iteritems():
+            try:
+                dbDocumentScore = dbDocumentScores[word]
+            except KeyError:
+                update = False
+                download_count = 0
+            else:
+                update = True
+                download_count += dbDocumentScore.download_count
+            documentScore = DocumentScore(doc.db_document_id, word, position,
+                                          download_count, 0, 0)
+            documentScore.commit(cursor, update)
+        fileInfo = FileInfo(filename, lastModTime, doc.db_document_id, PUBLISHED_STATE, CREATED_FILE_STATE)
+        fileInfo.commit(cursor, update=False)
+        provider = DocumentProvider(doc.db_document_id, nodeID, int(time.time()))
+        provider.commit(cursor, update=False)
+
+    def updateDocument(self, docId, filename, title, text, links, offset, fileSize, lastModTime, nodeID):
+        pass ## FIXME THIS is where adim and alf stopped porting the code
+    
+    def insertDocumentInfo(self, docId, title, mimetype, text, size, publicationTime, url):
+        downloadCount = 0 # XXX 
+        # check if it exists first :
+        title = MySQLdb.escape_string(title)
+        text = MySQLdb.escape_string(text[:MAX_STORED_SIZE])
+        url = MySQLdb.escape_string(url or "")
+        query = """INSERT INTO documents (document_id, mime_type, title, size, text, publication_time, state, download_count, url, indexed) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+                """ %  (docId, mimetype, title, size, text,
+                        publicationTime, UNKNOWN_STATE, downloadCount, url, 1)
+        self._execute(query)
+        return self.getDocumentWithId(docId)
+
+    def getScoresForDocument(self, document, text, links, offset):
+        """parse words from document's text and update DB infos"""
+        scores = {}
+        for match in WORDS_RGX.finditer(text):
+            word = match.group(0)
+            word = word.lower()
+            position = match.start() - offset
+            if position < 0:
+                position = -1
+            scores[word] = position
+        return scores
+                
+    def getDocumentWithId(self, docId):
+        """searchs the DB for a document with id <docId> and builds a Document
+        instance with the results
+
+        :return: `Document` or None if no document matches docId
+        """
+        columns = ['db_document_id', 'document_id', 'mime_type', 'title', 'size',
+                   'text', 'publication_time', 'state', 'download_count', 'url']
+        query = 'SELECT %s FROM documents WHERE document_id=%%(docId)s' % (
+            ', '.join(columns))
+        results = self._execute(query, {'docId' : docId})
+        if results:
+            # build a dict from list of couples (attrname, value) from the
+            # first row and build a DBEntity from this dict
+            return Document(**dict(zip(columns, results[0])))
+        else:
+            return None
