@@ -1,0 +1,26 @@
+#set global $title="A propos"
+#include "config/templates/includes/header.tmpl"
+
+#set global $selected_top_menu_id=$constants.SEARCH_MENU_ID
+#include "config/templates/includes/top_menus.tmpl"
+
+<h1>Cached version of <a href="/maay/url?url=$url&qid=$query_id">$url :</a></h1>
+<table>
+
+#set $documentInfos = $database.getDocumentInfos(url=$url, get_text=1)
+
+#for $documentInfo in $documentInfos
+#set $excerpt = $templatetools.get_excerpt($documentInfo.text, 0)
+<tr>
+<td valign=top><a href="/maay/document?did=$documentInfo.document_id&qid=$query_id >-->"><b>$templatetools.long_date_str($documentInfo.publication_time)</b></a></td><td><a href="/maay/document?did=$documentInfo.document_id&qid=$query_id">$documentInfo.title</a><br>$excerpt</a></td>
+</tr>
+#end for
+</table>
+<br>
+<form action="/maay/search">
+<input type=hidden name="url" value="$url">
+<input type=hidden name="maaysearch" value="">
+<input type=submit value="Find more">
+</form>
+
+#include "config/templates/includes/footer.tmpl"

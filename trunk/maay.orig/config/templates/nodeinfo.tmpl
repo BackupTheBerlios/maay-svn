@@ -1,0 +1,62 @@
+#set global $title="Information sur le noeud $nodeInfo.node_id"
+#include "config/templates/includes/header.tmpl"
+
+#set global $selected_top_menu_id=$constants.NODES_MENU_ID
+#include "config/templates/includes/top_menus.tmpl"
+
+<center><b>Information sur le noeud '$nodeInfo.node_id'</b></center>
+<br><br><br>
+<table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+  <tr bgcolor="#efefef">
+    <td colspan=2><b>Informations générales</b></td>
+  </tr>
+  <tr bgcolor=#ffffff>
+    <td><b>Identifiant du noeud</b></td><td>$nodeInfo.node_id</td>
+      </tr>
+  <tr bgcolor=#ffffff>
+    <td><b>Adresse IP</b></td><td>$nodeInfo.ip</td>
+  </tr>
+  <tr bgcolor=#ffffff>
+    <td><b>Port</b></td><td>$nodeInfo.port</td>
+  </tr>
+  <tr bgcolor=#ffffff>
+    <td><b>Date de dernièr contact</b></td><td>$nodeInfo.last_seen_time</td>
+  </tr>
+  <tr bgcolor=#ffffff>
+    <td><b>Bande passante</b></td><td>$nodeInfo.bandwidth</td>
+  </tr>
+  <tr bgcolor=#ffffff>
+    <td><b>Nombre de manifestations d'intérêts</b></td><td>$nodeInfo.claim_count</td>
+  </tr>
+  <tr bgcolor=#ffffff>
+    <td><b>Affinité</b></td><td>$nodeInfo.affinity</td>
+  </tr>
+
+</table>
+<br><br>
+
+## Node interests
+
+<table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+  <tr bgcolor="#efefef">
+        <td colspan=4><b>Intérêts du noeuds</b></td>
+  </tr>
+  <tr bgcolor="#ffffff">
+    <td><b>Mot</b></td>
+    <td><b>Nombre de manifestation pour le mot</b></td>
+    <td><b>Specialisation</b></td>
+    <td><b>Expertise</b></td>
+  </tr>
+
+
+#for $nodeInterest in $nodeInterests
+  <tr bgcolor="#ffffff">
+    <td><a href="/maay/wordinfo?w=$nodeInterest.word">$nodeInterest.word</a></td>
+        <td align=right>$nodeInterest.claim_count</td>
+        <td align=right>$nodeInterest.specialisation</td>
+        <td align=right>$nodeInterest.expertise</td>
+  </tr>
+#end for
+
+
+#include "config/templates/includes/footer.tmpl"

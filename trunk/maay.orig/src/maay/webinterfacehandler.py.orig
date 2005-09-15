@@ -1,0 +1,2259 @@
+"""
+  This module contains the functions used for the web user interface.
+  First attempt to replace the homemade template engine to Cheetah.
+"""
+
+import os
+import stat
+import sys
+import time
+
+import re
+import thread
+import urlparse
+import urllib
+import cgi
+import Cookie
+import gc
+import urllib
+import mimetypes
+
+import Cheetah
+import Cheetah.Template
+
+import tools
+import constants
+import resultspool
+import converter.texttohtml
+import converter.htmltomaayhtml
+import converter.htmltools
+import maay.datastructure.documentinfo
+
+import maay.config.language
+import globalvars
+
+current_result_spool_query_id = -1
+
+SEARCH_MENU = 1
+REPOSITORY_MENU = 2
+DOWNLOAD_MENU = 3
+NODES_MENU = 4
+WORDS_MENU = 5
+SYSTEM_MENU = 6
+PREFERENCES_MENU = 7
+ABOUT_MENU = 8
+HELP_MENU = 9
+LOGS_MENU = 10
+LOGOUT_MENU = 11
+
+MAAY_SCRIPT_PREFIX = "maay"
+SEARCH_SCRIPT = "search"
+RESULTS_SCRIPT = "resultspool"
+DOWNLOADS_SCRIPT = "download"
+PREFERENCES_SCRIPT = "preferences"
+ABOUT_SCRIPT = "about"
+HELP_SCRIPT = "help"
+LOGS_SCRIPT = "logs"
+SYSTEM_SCRIPT = "system"
+WORDS_SCRIPT = "words"
+NODES_SCRIPT = "nodes"
+LOGS_SCRIPT = "logs"
+
+# deprecated...
+def __to_url(u):
+	return u.replace('\\', '/')
+
+def __cut_str(u, s):
+	if len(u) < s:
+		return u
+	else:
+		return "%s..." % u[:s - 3]
+
+repository_tabs = {}
+
+# write the header of the page (menu)
+def __write_header(httpRequestHandler, title, selected_menu_id, headers = None):
+	httpRequestHandler.send_response(200)
+	httpRequestHandler.send_header("Content-Type", "text/html; charset=iso-8859-1")
+	if headers:
+		for var, value in headers:
+			httpRequestHandler.send_header(var, value)
+	httpRequestHandler.end_headers()
+
+# TODO: faire plus propre en utilisant les valeurs d'URL pour les actions en bas du prog
+	if globalvars.mode == constants.USER_MODE:
+		menus = [
+				(SEARCH_MENU, globalvars.language.getValue('MENU_SEARCH'), '/maay/resultspool'),
+				(REPOSITORY_MENU, globalvars.language.getValue('MENU_REPOSITORY'), '/maay/repository'), 
+				(DOWNLOAD_MENU, globalvars.language.getValue('MENU_DOWNLOAD'), '/maay/download'), 
+				(PREFERENCES_MENU, globalvars.language.getValue('MENU_PREFERENCES'), '/maay/preferences'),
+				(ABOUT_MENU, globalvars.language.getValue('MENU_ABOUT'), '/maay/about'),
+				(HELP_MENU, globalvars.language.getValue('MENU_HELP'), '/maay/help')]
+
+	else:
+		menus = [
+				(SEARCH_MENU, globalvars.language.getValue('MENU_SEARCH'), '/maay/resultspool'),
+				(REPOSITORY_MENU, globalvars.language.getValue('MENU_REPOSITORY'), '/maay/repository'), 
+				(DOWNLOAD_MENU, globalvars.language.getValue('MENU_DOWNLOAD'), '/maay/download'), 
+				(NODES_MENU, globalvars.language.getValue('MENU_NODES'), '/maay/nodes'), 
+				(WORDS_MENU, globalvars.language.getValue('MENU_WORDS'), '/maay/words'), 
+				(SYSTEM_MENU, globalvars.language.getValue('MENU_SYSTEM'), '/maay/system'),
+				(PREFERENCES_MENU, globalvars.language.getValue('MENU_PREFERENCES'), '/maay/preferences'),
+				(LOGS_MENU, globalvars.language.getValue('MENU_LOGS'), '/maay/logs'),
+				(ABOUT_MENU, globalvars.language.getValue('MENU_ABOUT'), '/maay/about'),
+				(HELP_MENU, globalvars.language.getValue('MENU_HELP'), '/maay/help')]
+	
+	client_ip, client_port = httpRequestHandler.client_address
+
+	if globalvars.localAuthentification == 1 or client_ip != '127.0.0.1':
+		menus.append((LOGOUT_MENU, globalvars.language.getValue('MENU_LOGOUT'), '/maay/logout'))
+
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("header", {'title' : title}))
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("menu_header"))
+
+	for id, label, path in menus:
+		if selected_menu_id == id:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("menu_selected", {'label' : label, 'path' : path}))
+		else:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("menu_unselected", {'label' : label, 'path' : path}))
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("menu_footer"))
+
+def __write_footer(httpRequestHandler):
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("footer"))
+
+def __get_documents_cheetah(httpRequestHandler, selected_document_state):
+	documentInfos = globalvars.database.getDocumentInfos(search_range = selected_document_state)
+	dict = {
+		 'selected_document_state': selected_document_state,
+		 'documentInfos': documentInfos}
+	obj = globalvars
+	template_file = open("config/templates/documents.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+def __get_document_info_cheetah(httpRequestHandler, document_id):
+	documentInfo = globalvars.database.getDocumentInfo(document_id)
+	fileInfos = globalvars.database.getFileInfos(db_document_id=documentInfo.db_document_id)
+	documentProviders = globalvars.database.getDocumentProviders(documentInfo.db_document_id)
+
+	documentScores = globalvars.database.getDocumentScores(db_document_id=documentInfo.db_document_id, order="download_count")
+
+	dict = {
+		 'documentInfo': documentInfo,
+		 'fileInfos': fileInfos,
+		 'documentProviders': documentProviders,
+		 'documentScores': documentScores
+		}
+	obj = globalvars
+	template_file = open("config/templates/documentinfo.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+def __get_word_info_cheetah(httpRequestHandler, word):
+	wordInfo = globalvars.database.getWordInfo(word)
+	nodeInterests = globalvars.database.getNodeInterests(words=[word])
+	dict = {
+		'wordInfo': wordInfo,
+		'nodeInterests': nodeInterests
+		}
+	obj = globalvars
+	template_file = open("config/templates/wordinfo.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+def __get_node_info_cheetah(httpRequestHandler, node_id):
+	nodeInfo = globalvars.database.getNodeInfo(node_id)
+	nodeInterests = globalvars.database.getNodeInterests(node_id=node_id)
+	dict = {
+		'nodeInfo': nodeInfo,
+		'nodeInterests': nodeInterests
+		}
+	obj = globalvars
+	template_file = open("config/templates/nodeinfo.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+def __get_nodes_cheetah(httpRequestHandler):
+	nodeInfos = globalvars.database.getNodeInfos()
+	dict = {
+		'nodeInfos': nodeInfos
+		}
+	obj = globalvars
+	template_file = open("config/templates/nodes.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+def __get_words_cheetah(httpRequestHandler):
+	wordInfos = globalvars.database.getWordInfos()
+	dict = {
+		'wordInfos': wordInfos
+		}
+	obj = globalvars
+	template_file = open("config/templates/nodes.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+
+
+def __get_preference_security_cheetah(httpRequestHandler, args):
+	comment = ""
+	if args.get('changesetting'):
+		remoteaccess = args.get('remoteaccess') and args.get('remoteaccess')[0]
+		if remoteaccess:
+			globalvars.remoteAccess = 1
+		else:
+			globalvars.remoteAccess = 0
+			
+		globalvars.config.setValue("RemoteAccess", globalvars.remoteAccess)
+
+		localauth = args.get('localauth') and args.get('localauth')[0]
+		if localauth:
+			globalvars.sessionID = tools.generate_id()
+			headers = [("Set-Cookie", "sessionID=%s" % globalvars.sessionID)]
+			globalvars.localAuthentification = 1
+		else:
+			globalvars.localAuthentification = 0
+		globalvars.config.setValue("LocalAuthentification", globalvars.localAuthentification)
+
+		comment = "Settings changed !"
+
+	elif args.get('changeauth'):
+		password = args.get('password')[0]
+		newlogin = args.get('newlogin') and args.get('newlogin')[0]
+		newpassword1 = args.get('newpassword1') and args.get('newpassword1')[0]
+		newpassword2 = args.get('newpassword2') and args.get('newpassword2')[0]
+		globalvars.logger
+		
+		if password == globalvars.password:
+			if newpassword1 == newpassword2:
+				comment = "Password changed !"
+				globalvars.login = newlogin
+				globalvars.password = newpassword1
+				globalvars.config.setValue('Login', newlogin)
+				globalvars.config.setValue('Password', newpassword1)
+				globalvars.config.save()
+			else:
+				comment = "New passwords do not match !"
+
+		else:
+			comment = "Bad password !"
+			
+	dict = {
+		'comment': comment,
+		}
+	obj = globalvars
+	template_file = open("config/templates/prefsecurity.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+def __get_preference_indexation_cheetah(httpRequestHandler, args):
+	comment = ""
+	if args.get('save'):
+		indexedDirectoriesStr = args.get('indexedDirectories') and args.get('indexedDirectories')[0]
+		notIndexedDirectoriesStr = args.get('notIndexedDirectories') and args.get('notIndexedDirectories')[0]
+
+		if indexedDirectoriesStr:
+			indexedDirectories = indexedDirectoriesStr.split("\r\n")
+			tools.remove_void_entries(indexedDirectories)
+			indexedDirectories.sort()
+		else:
+			indexedDirectories = []
+			
+		if notIndexedDirectoriesStr:
+			notIndexedDirectories = notIndexedDirectoriesStr.split("\r\n")
+			tools.remove_void_entries(notIndexedDirectories)
+			notIndexedDirectories.sort()
+		else:
+			notIndexedDirectories = []
+		
+		globalvars.indexer.setIndexedDirectories(indexedDirectories)
+		globalvars.indexer.setNotIndexedDirectories(notIndexedDirectories)
+		globalvars.indexer.forcePrivateReindexationWhenFinished()
+		
+		
+		print "index = %s" % str(indexedDirectories)
+		print "not index = %s" % str(notIndexedDirectories)
+
+		publishedDirectoriesStr = args.get('publishedDirectories') and args.get('publishedDirectories')[0]
+		notPublishedDirectoriesStr = args.get('notPublishedDirectories') and args.get('notPublishedDirectories')[0]
+
+		if publishedDirectoriesStr:
+			publishedDirectories = publishedDirectoriesStr.split("\r\n")
+			tools.remove_void_entries(publishedDirectories)
+			publishedDirectories.sort()
+		else:
+			publishedDirectories = []
+			
+		if notPublishedDirectoriesStr:
+			notPublishedDirectories = notPublishedDirectoriesStr.split("\r\n")
+			tools.remove_void_entries(notPublishedDirectories)
+			notPublishedDirectories.sort()
+		else:
+			notPublishedDirectories = []
+		
+		globalvars.indexer.setPublishedDirectories(publishedDirectories)
+		globalvars.indexer.setNotPublishedDirectories(notPublishedDirectories)
+		globalvars.indexer.forcePublishedReindexationWhenFinished()
+
+		comment = "Indexation rules saved !"
+		
+                maay.globalvars.config.setValue('LastIndexedPrivateFilename', maay.globalvars.indexer.getLastIndexedPrivateFilename())
+                maay.globalvars.config.setValue('IndexedDirectory', maay.globalvars.indexer.getIndexedDirectories())
+                maay.globalvars.config.setValue('NotIndexedDirectory', maay.globalvars.indexer.getNotIndexedDirectories())
+                maay.globalvars.config.setValue('PublishedDirectory', maay.globalvars.indexer.getPublishedDirectories())
+                maay.globalvars.config.setValue('NotPublishedDirectory', maay.globalvars.indexer.getNotPublishedDirectories())
+
+		globalvars.config.save()
+
+
+	dict = {
+		'comment': comment,
+		'publishedDirectories': tools.seq2lines(globalvars.indexer.getPublishedDirectories()),
+		'notPublishedDirectories': tools.seq2lines(globalvars.indexer.getNotPublishedDirectories()),
+		'indexedDirectories': tools.seq2lines(globalvars.indexer.getIndexedDirectories()),
+		'notIndexedDirectories': tools.seq2lines(globalvars.indexer.getNotIndexedDirectories()),
+		}
+	obj = globalvars
+	template_file = open("config/templates/prefindexation.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+def __get_preference_ui_cheetah(httpRequestHandler, args):
+	comment = ""
+	if args.get('rs'):
+		rs = int(args.get('rs')[0])
+		if rs in (10, 20, 50, 100):
+			globalvars.result_count_per_page = rs
+			globalvars.config.setValue("ResultPerPage", globalvars.result_count_per_page)
+			comment = "Result count per page set to %s" % rs
+	elif args.get('lang'):
+		lang = args.get('lang')[0]
+		globalvars.language.setLanguage(lang)
+		comment = "Language set to %s" % lang
+
+
+	dict = {'comment': comment}
+	obj = globalvars
+	template_file = open("config/templates/prefui.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+def __get_preference_debug_cheetah(httpRequestHandler, args):
+	comment = ""
+
+	if args.get('repository'):
+		globalvars.taskScheduler.force_task("indexer")
+		comment = "Full indexing started"
+	elif args.get('template'):
+		globalvars.templateFile.read(globalvars.config.getValue('Template'))
+		comment = "Template file reloaded"
+	elif args.get('affinity'):
+		globalvars.taskScheduler.force_task("affinity")
+		comment = "Affinity computation started"
+	elif args.get('matching'):
+		globalvars.taskScheduler.force_task("matching")
+		comment = "Matching computation started"
+	elif args.get('idxpr'):
+		idxpr = int(args.get('idxpr')[0])
+		if idxpr == constants.LOW_PRIORITY:
+			comment = "Indexation priority set to low"
+			globalvars.indexer.setPriority(constants.LOW_PRIORITY)
+		elif idxpr == constants.MEDIUM_PRIORITY:
+			comment = "Indexation priority set to medium"
+			globalvars.indexer.setPriority(constants.MEDIUM_PRIORITY)
+		elif idxpr == constants.HIGH_PRIORITY:
+			comment = "Indexation priority set to high"
+			globalvars.indexer.setPriority(constants.HIGH_PRIORITY)
+	elif args.get('mode'):
+		mode = args.get('mode')[0]
+		if mode == 'user':
+			globalvars.mode = constants.USER_MODE
+			comment = "Mode set to user mode"
+		else:
+			globalvars.mode = constants.DEVELOPPER_MODE
+			comment = "Mode set to developper mode"
+		globalvars.config.setValue("Mode", globalvars.mode)
+	elif args.get('pubrepository'):
+		globalvars.indexer.forcePublishedIndexation()
+		comment = "Published repository reindexation started"
+	elif args.get('prirepository'):
+		globalvars.indexer.forcePrivateIndexation()
+		comment = "Published repository reindexation started"
+
+
+	dict = {
+		"comment": comment,
+		"priority": globalvars.indexer.getPriority(),
+		'publishedIndexationState': ((not globalvars.indexer.isPublishedIndexationFinished()) and "indexing...") or "finished",
+		'privateIndexationState': ((not globalvars.indexer.isPrivateIndexationFinished()) and "indexing...") or "finished",
+		}
+	obj = globalvars
+	template_file = open("config/templates/prefdebug.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+def __get_results_cheetah(httpRequestHandler, query_id, page = 1, sort_policy = resultspool.SCORE_SORTED, search_range = constants.ALL_SEARCH_RANGE):
+	global current_result_spool_query_id
+
+	# find the query ID of the current search tab
+	if query_id == -1:
+		if current_result_spool_query_id == -1:
+			resultSpools = globalvars.maay_core.getResultSpoolManager().getResultSpools()
+			if len(resultSpools) > 0:
+				current_result_spool_query_id = resultSpools[0].getQueryID()
+		query_id = current_result_spool_query_id
+	else:
+		current_result_spool_query_id = query_id
+
+	if not query_id:
+		queryStr = ""
+	else:
+		resultSpool = globalvars.maay_core.getResultSpoolManager().getResultSpool(query_id)
+		if resultSpool:
+			queryStr = resultSpool.getLabel()
+		else:
+			queryStr = ""
+
+	wordsQuery = ""
+	documentIDQuery = ""
+	urlQuery = ""
+	
+	if resultSpool:
+		for w in resultSpool.getQuery():
+			if w[0] == '#':
+				documentIDQuery = w[1:]
+			elif w.find('url:') == 0:
+				urlQuery = w[len('url:'):]
+			else:
+				wordsQuery += " " + w
+		wordsQuery = wordsQuery[1:]
+
+	resultSpools = globalvars.maay_core.getResultSpoolManager().getResultSpoolsByNodeID(globalvars.maay_core.getNodeID())
+
+	dict = {
+		'query': queryStr,
+		'query_id': query_id,
+		'wordsQuery': wordsQuery,
+		'documentIDQuery': documentIDQuery,
+		'urlQuery': urlQuery,
+		'resultSpools': resultSpools
+		}
+	obj = globalvars
+	template_file = open("config/templates/resultspool.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+
+
+
+
+def __get_about(httpRequestHandler):
+	dict = {}
+	obj = globalvars
+	template_file = open("config/templates/about.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+
+
+
+def __get_nodes(httpRequestHandler):
+	__write_header(httpRequestHandler, "Neighbors List", NODES_MENU)
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("nodelist_header"))
+
+	nodeInfos = globalvars.database.getNodeInfos()
+	for n in nodeInfos:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("nodelist_row",
+			{'nodeID': n.node_id,
+				'nodeIP': n.ip,
+				'nodePort': n.port,
+				'lastSeenTime':time.asctime(time.localtime(n.last_seen_time)),
+				'claimCount':n.claim_count,
+				'affinity':n.affinity,
+				'bandwidth':n.bandwidth,
+				}))
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("nodelist_footer"))
+	__write_footer(httpRequestHandler)
+
+def __get_system(httpRequestHandler, action = None):
+	__write_header(httpRequestHandler, "System", SYSTEM_MENU)
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("system",
+		{
+			'id':globalvars.maay_core.getNodeID(),
+			'ip':globalvars.ip,
+			'port':globalvars.config.getValue('Port'),
+			'processorLoad': "%02d%%" % globalvars.systemMonitor.getProcessorLoad(),
+			'availableMemory': tools.size_str(globalvars.systemMonitor.getAvailableMemory()),
+			'privateDocumentCount': globalvars.database.getDocumentCount(maay.datastructure.documentinfo.PRIVATE_STATE),
+			'privateDocumentSize': tools.size_str(globalvars.database.getDocumentSizeSum(maay.datastructure.documentinfo.PRIVATE_STATE)),
+			'publishedDocumentCount': globalvars.database.getDocumentCount(maay.datastructure.documentinfo.PUBLISHED_STATE),
+			'publishedDocumentSize': tools.size_str(globalvars.database.getDocumentSizeSum(maay.datastructure.documentinfo.PUBLISHED_STATE)),
+			'cachedDocumentCount': globalvars.database.getDocumentCount(maay.datastructure.documentinfo.CACHED_STATE),
+			'cachedDocumentSize': tools.size_str(globalvars.database.getDocumentSizeSum(maay.datastructure.documentinfo.CACHED_STATE)),
+			'knownDocumentCount': globalvars.database.getDocumentCount(maay.datastructure.documentinfo.KNOWN_STATE),
+			'neighborCount': globalvars.database.getNodeInfoCount()
+		}))
+
+	__write_footer(httpRequestHandler)
+
+def __get_preference_security(httpRequestHandler, args):
+
+	comment = ""
+	headers = None
+	if args.get('changesetting'):
+		remoteaccess = args.get('remoteaccess') and args.get('remoteaccess')[0]
+		if remoteaccess:
+			globalvars.remoteAccess = 1
+		else:
+			globalvars.remoteAccess = 0
+			
+		globalvars.config.setValue("RemoteAccess", globalvars.remoteAccess)
+
+		localauth = args.get('localauth') and args.get('localauth')[0]
+		if localauth:
+			globalvars.sessionID = tools.generate_id()
+			headers = [("Set-Cookie", "sessionID=%s" % globalvars.sessionID)]
+			globalvars.localAuthentification = 1
+		else:
+			globalvars.localAuthentification = 0
+		globalvars.config.setValue("LocalAuthentification", globalvars.localAuthentification)
+
+		comment = "Settings changed !"
+
+	elif args.get('changeauth'):
+		password = args.get('password')[0]
+		newlogin = args.get('newlogin') and args.get('newlogin')[0]
+		newpassword1 = args.get('newpassword1') and args.get('newpassword1')[0]
+		newpassword2 = args.get('newpassword2') and args.get('newpassword2')[0]
+		globalvars.logger
+		
+		if password == globalvars.password:
+			if newpassword1 == newpassword2:
+				comment = "Password changed !"
+				globalvars.login = newlogin
+				globalvars.password = newpassword1
+				globalvars.config.setValue('Login', newlogin)
+				globalvars.config.setValue('Password', newpassword1)
+				globalvars.config.save()
+			else:
+				comment = "New passwords do not match !"
+
+		else:
+			comment = "Bad password !"
+			
+	__write_header(httpRequestHandler, "Preferences", PREFERENCES_MENU, headers=headers)
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_header",
+		{
+			'comment': comment
+		}))
+
+	
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_security",
+		{
+			'remoteAccessChecked': globalvars.remoteAccess and "checked",
+			'localAuthentificationChecked': globalvars.localAuthentification and "checked",
+			'login': globalvars.login,
+		}))
+			
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_footer"))
+	__write_footer(httpRequestHandler)
+
+
+def __get_preference_indexation(httpRequestHandler, args):
+	comment = ""
+	if args.get('save'):
+		indexedDirectoriesStr = args.get('indexedDirectories') and args.get('indexedDirectories')[0]
+		notIndexedDirectoriesStr = args.get('notIndexedDirectories') and args.get('notIndexedDirectories')[0]
+
+		if indexedDirectoriesStr:
+			indexedDirectories = indexedDirectoriesStr.split("\r\n")
+			tools.remove_void_entries(indexedDirectories)
+			indexedDirectories.sort()
+		else:
+			indexedDirectories = []
+			
+		if notIndexedDirectoriesStr:
+			notIndexedDirectories = notIndexedDirectoriesStr.split("\r\n")
+			tools.remove_void_entries(notIndexedDirectories)
+			notIndexedDirectories.sort()
+		else:
+			notIndexedDirectories = []
+		
+		globalvars.indexer.setIndexedDirectories(indexedDirectories)
+		globalvars.indexer.setNotIndexedDirectories(notIndexedDirectories)
+		globalvars.indexer.forcePrivateReindexationWhenFinished()
+		
+		
+		print "index = %s" % str(indexedDirectories)
+		print "not index = %s" % str(notIndexedDirectories)
+
+		publishedDirectoriesStr = args.get('publishedDirectories') and args.get('publishedDirectories')[0]
+		notPublishedDirectoriesStr = args.get('notPublishedDirectories') and args.get('notPublishedDirectories')[0]
+
+		if publishedDirectoriesStr:
+			publishedDirectories = publishedDirectoriesStr.split("\r\n")
+			tools.remove_void_entries(publishedDirectories)
+			publishedDirectories.sort()
+		else:
+			publishedDirectories = []
+			
+		if notPublishedDirectoriesStr:
+			notPublishedDirectories = notPublishedDirectoriesStr.split("\r\n")
+			tools.remove_void_entries(notPublishedDirectories)
+			notPublishedDirectories.sort()
+		else:
+			notPublishedDirectories = []
+		
+		globalvars.indexer.setPublishedDirectories(publishedDirectories)
+		globalvars.indexer.setNotPublishedDirectories(notPublishedDirectories)
+		globalvars.indexer.forcePublishedReindexationWhenFinished()
+
+		comment = "Indexation rules saved !"
+		
+                maay.globalvars.config.setValue('LastIndexedPrivateFilename', maay.globalvars.indexer.getLastIndexedPrivateFilename())
+                maay.globalvars.config.setValue('IndexedDirectory', maay.globalvars.indexer.getIndexedDirectories())
+                maay.globalvars.config.setValue('NotIndexedDirectory', maay.globalvars.indexer.getNotIndexedDirectories())
+                maay.globalvars.config.setValue('PublishedDirectory', maay.globalvars.indexer.getPublishedDirectories())
+                maay.globalvars.config.setValue('NotPublishedDirectory', maay.globalvars.indexer.getNotPublishedDirectories())
+
+		globalvars.config.save()
+
+	__write_header(httpRequestHandler, "Preferences", PREFERENCES_MENU)
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_header",
+		{
+			'comment': comment
+		}))
+		
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_indexation",
+		{
+			'publishedDirectories': tools.seq2lines(globalvars.indexer.getPublishedDirectories()),
+			'notPublishedDirectories': tools.seq2lines(globalvars.indexer.getNotPublishedDirectories()),
+			'indexedDirectories': tools.seq2lines(globalvars.indexer.getIndexedDirectories()),
+			'notIndexedDirectories': tools.seq2lines(globalvars.indexer.getNotIndexedDirectories()),
+
+		}))
+		
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_footer"))
+	__write_footer(httpRequestHandler)
+
+def __get_preference_ui(httpRequestHandler, args):
+	comment = ""
+	if args.get('rs'):
+		rs = int(args.get('rs')[0])
+		if rs in (10, 20, 50, 100):
+			globalvars.result_count_per_page = rs
+			globalvars.config.setValue("ResultPerPage", globalvars.result_count_per_page)
+			comment = "Result count per page set to %s" % rs
+	elif args.get('lang'):
+		lang = args.get('lang')[0]
+		globalvars.language.setLanguage(lang)
+		comment = "Language set to %s" % lang
+
+	__write_header(httpRequestHandler, "Preferences", PREFERENCES_MENU)
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_header",
+		{
+			'comment': comment
+		}))
+
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_results",
+		{
+			'10selected': (globalvars.result_count_per_page == 10 and 'selected') or "",
+			'20selected': (globalvars.result_count_per_page == 20 and 'selected') or "",
+			'50selected': (globalvars.result_count_per_page == 50 and 'selected') or "",
+			'100selected': (globalvars.result_count_per_page == 100 and 'selected') or ""
+		}))
+
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_language_header"))
+	for l in globalvars.language.getLanguages():
+		selected = ''
+		if l == globalvars.language.getLanguage():
+			selected = 'selected'
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_language_option",
+			{
+				'language': l,
+				'selected': selected
+			}))
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_language_footer"))
+	
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_footer"))
+	__write_footer(httpRequestHandler)
+
+def __get_preference_debug(httpRequestHandler, args):
+	comment = ""
+
+	if args.get('repository'):
+		globalvars.taskScheduler.force_task("indexer")
+		comment = "Full indexing started"
+	elif args.get('template'):
+		globalvars.templateFile.read(globalvars.config.getValue('Template'))
+		comment = "Template file reloaded"
+	elif args.get('affinity'):
+		globalvars.taskScheduler.force_task("affinity")
+		comment = "Affinity computation started"
+	elif args.get('matching'):
+		globalvars.taskScheduler.force_task("matching")
+		comment = "Matching computation started"
+	elif args.get('idxpr'):
+		idxpr = int(args.get('idxpr')[0])
+		if idxpr == constants.LOW_PRIORITY:
+			comment = "Indexation priority set to low"
+			globalvars.indexer.setPriority(constants.LOW_PRIORITY)
+		elif idxpr == constants.MEDIUM_PRIORITY:
+			comment = "Indexation priority set to medium"
+			globalvars.indexer.setPriority(constants.MEDIUM_PRIORITY)
+		elif idxpr == constants.HIGH_PRIORITY:
+			comment = "Indexation priority set to high"
+			globalvars.indexer.setPriority(constants.HIGH_PRIORITY)
+	elif args.get('mode'):
+		mode = args.get('mode')[0]
+		if mode == 'user':
+			globalvars.mode = constants.USER_MODE
+			comment = "Mode set to user mode"
+		else:
+			globalvars.mode = constants.DEVELOPPER_MODE
+			comment = "Mode set to developper mode"
+		globalvars.config.setValue("Mode", globalvars.mode)
+	elif args.get('pubrepository'):
+		globalvars.indexer.forcePublishedIndexation()
+		comment = "Published repository reindexation started"
+	elif args.get('prirepository'):
+		globalvars.indexer.forcePrivateIndexation()
+		comment = "Published repository reindexation started"
+
+	__write_header(httpRequestHandler, "Preferences", PREFERENCES_MENU)
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_header",
+		{'comment': comment}))
+
+	
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_mode",
+		{
+			'userModeSelected': (globalvars.mode == constants.USER_MODE and 'selected') or '',
+			'developperModeSelected': (globalvars.mode == constants.DEVELOPPER_MODE and 'selected') or ''
+		}))
+
+	if globalvars.mode == constants.DEVELOPPER_MODE:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_debug",
+			{
+				'lowPrioritySelected': (globalvars.indexer.getPriority() == constants.LOW_PRIORITY) and 'selected',
+				'mediumPrioritySelected': (globalvars.indexer.getPriority() == constants.MEDIUM_PRIORITY) and 'selected',
+				'highPrioritySelected': (globalvars.indexer.getPriority() == constants.HIGH_PRIORITY) and 'selected',
+				'publishedIndexationState': ((not globalvars.indexer.isPublishedIndexationFinished()) and "indexing...") or "finished",
+				'privateIndexationState': ((not globalvars.indexer.isPrivateIndexationFinished()) and "indexing...") or "finished",
+				'maxSimultaneousDownload': globalvars.max_simultaneous_download
+			}))
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("preference_footer"))
+
+	__write_footer(httpRequestHandler)
+
+def __get_nodeinfo(httpRequestHandler, nodeID):
+	__write_header(httpRequestHandler, "Interests", NODES_MENU)
+
+	n = globalvars.database.getNodeInfo(nodeID)
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("nodeinfo",
+		{'nodeID': n.node_id,
+			'nodeIP': n.ip,
+			'nodePort': n.port,
+			'lastSeenTime':time.asctime(time.localtime(n.last_seen_time)),
+			'bandwidth':n.bandwidth,
+			'claimCount':n.claim_count,
+			'affinity':n.affinity,
+			}))
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("interestlist_header"))
+
+	nodeInterests = globalvars.database.getNodeInterests(node_id=nodeID)
+	for ni in nodeInterests:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("interestlist_row", {'word': ni.word, 'escaped_word':urllib.quote(ni.word), 'claimCount': ni.claim_count, 'relevance': ni.relevance, 'popularity': ni.popularity}))
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("interestlist_footer"))
+
+	__write_footer(httpRequestHandler)
+	
+def __get_document_info(httpRequestHandler, document_id):
+	documentInfo = globalvars.database.getDocumentInfo(document_id)
+	__write_header(httpRequestHandler, "Document Info", REPOSITORY_MENU)
+
+	local_url = "http://%s:%s/maay/document?did=%s" % (globalvars.hostname, globalvars.port, document_id)
+
+	# display general information
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_general",
+		{'documentID' : documentInfo.document_id,
+		'title' : documentInfo.title,
+		'size': documentInfo.size,
+		'mimeType': documentInfo.mime_type,
+		'publicationTime': time.ctime(documentInfo.publication_time),
+		'state': maay.datastructure.documentinfo.state_str(documentInfo.state),
+		'downloadCount': documentInfo.download_count,
+		'url': documentInfo.url or "None",
+		'local_url': local_url,
+		'matching': documentInfo.matching
+		}))
+
+	# display links information
+#	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_links_header"))
+#	linkInfos = globalvars.database.getLinkInfos(src_document_id=document_id)
+#	for linkInfo in linkInfos:
+#		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_links_row", {'path':linkInfo.path, 'documentID':linkInfo.dst_document_id, 'linkTime': time.ctime(linkInfo.link_time)}))
+#	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_links_footer"))
+#
+#
+	# display files
+	fileInfos = globalvars.database.getFileInfos(db_document_id=documentInfo.db_document_id)
+	if len(fileInfos) > 0:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_fileinfo_header"))
+		for fileInfo in fileInfos:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_fileinfo_row",
+				{
+					'filename' : fileInfo.file_name,
+					'filetime' : tools.long_date_str(fileInfo.file_time),
+					'state' : maay.datastructure.documentinfo.state_str(fileInfo.state)				
+				}))
+
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_fileinfo_footer"))
+	
+	if globalvars.mode == constants.DEVELOPPER_MODE:
+		# display providers
+		documentProviders = globalvars.database.getDocumentProviders(documentInfo.db_document_id)
+		if len(documentProviders) > 0:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_providers_header"))
+			for provider in documentProviders:
+				httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_providers_row",
+					{'nodeID' : provider.node_id,
+					'lastProvidingTime': time.ctime(provider.last_providing_time)}))
+	
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_providers_footer"))
+	
+	
+		# display words
+		documentScores = globalvars.database.getDocumentScores(db_document_id=documentInfo.db_document_id, order="download_count")
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_keywords_header"))
+		for ds in documentScores:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_keywords_row",
+			{'word' : ds.word,
+			'quotedword' : urllib.quote(ds.word),
+			'downloadCount': ds.download_count,
+			'relevance': ds.relevance,
+			'popularity': ds.popularity,
+			'position': ds.position,
+			}))
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentinfo_keywords_footer", {'documentID': document_id}))
+
+	__write_footer(httpRequestHandler)
+
+def __get_words(httpRequestHandler):
+	__write_header(httpRequestHandler, 'Word List', WORDS_MENU)
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("wordlist_header"))
+
+	wordInfos = globalvars.database.getWordInfos()
+	for w in wordInfos:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("wordlist_row",
+			{'escaped_word': urllib.quote(w.word), 
+			'word': w.word,
+			'claimCount': w.claim_count,
+			'downloadCount': w.download_count,
+			}))
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("wordlist_footer"))
+	__write_footer(httpRequestHandler)
+
+
+def __get_wordinfo(httpRequestHandler, word):
+	__write_header(httpRequestHandler, 'Word Info', WORDS_MENU)
+
+	wordInfo = globalvars.database.getWordInfo(word)
+	if not wordInfo:
+		claim_count = 0
+		download_count = 0
+	else:
+		claim_count = wordInfo.claim_count
+		download_count = wordInfo.download_count
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("wordinfo",
+	{
+		'word': word,
+		'claimCount': claim_count,
+		'downloadCount': download_count,
+	}))
+#
+#	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("relatedwordlist_header"))
+#	wordRelationships = globalvars.database.getWordRelationships(word)
+#	for w in wordRelationships:
+#		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("relatedwordlist_row",
+#			{'word': w.word2, 
+#			'claimCount': w.claim_count,
+#			'downloadCount': w.download_count
+#			}
+#			))
+#
+#	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("relatedwordlist_footer"))
+#
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("interestednodelist_header"))
+
+	nodeInterests = globalvars.database.getNodeInterests(words=[word])
+	for n in nodeInterests:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("interestednodelist_row",
+			{'nodeID': n.node_id,
+				'claimCount': n.claim_count,
+				'relevance':n.relevance,
+				'popularity': n.popularity
+				}))
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("interestednodelist_footer"))
+
+	documentScores = globalvars.database.getDocumentScores(words = (word,))
+	if len(documentScores) > 0:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("interesteddocumentlist_header"))
+
+		for ds in documentScores:
+			di = globalvars.database.getDocumentInfo(db_document_id=ds.db_document_id)
+			excerpt = __putInBold("<b>...</b> %s <b>...</b>" % converter.htmltools.asciiToHtml(__get_excerpt(di.text, ds.position)), (word,))
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("interesteddocumentlist_row",
+				{'title': converter.htmltools.asciiToHtml(di.title),
+					'excerpt': excerpt,
+					'relevance':ds.relevance,
+					'popularity': ds.popularity,
+					'documentID': di.document_id
+					}))
+
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("interesteddocumentlist_footer"))
+
+	__write_footer(httpRequestHandler)
+
+
+
+def __get_repository(httpRequestHandler, view):
+	__write_header(httpRequestHandler, 'Repository', REPOSITORY_MENU)
+
+	# display repository bar
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("repositorybar_header"))
+	repositoryMenus = (
+		(maay.datastructure.documentinfo.PRIVATE_STATE, globalvars.language.getValue("REPOSITORY_PRIVATE_DOCUMENTS")),
+		(maay.datastructure.documentinfo.PUBLISHED_STATE, globalvars.language.getValue("REPOSITORY_PUBLISHED_DOCUMENTS")),
+		(maay.datastructure.documentinfo.CACHED_STATE, globalvars.language.getValue("REPOSITORY_CACHED_DOCUMENTS")),
+		(maay.datastructure.documentinfo.KNOWN_STATE, globalvars.language.getValue("REPOSITORY_KNOWN_DOCUMENTS")),
+		(maay.datastructure.documentinfo.UNKNOWN_STATE, globalvars.language.getValue("REPOSITORY_UNKNOWN_DOCUMENTS")))
+
+	for v, d in repositoryMenus:
+		if globalvars.mode == constants.USER_MODE and v in (maay.datastructure.documentinfo.KNOWN_STATE, maay.datastructure.documentinfo.UNKNOWN_STATE):
+			continue
+		if v == view:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("repositorytab_selected", {'view': v, 'description': d}))
+		else:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("repositorytab_unselected", {'view': v, 'description': d}))
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("repositorybar_footer", {'colspan': (len(repositoryMenus) * 2 + 1)}))
+
+	if view == maay.datastructure.documentinfo.PRIVATE_STATE:
+		title = 'List of private documents'
+	elif view == maay.datastructure.documentinfo.PUBLISHED_STATE:
+		title = 'List of published documents'
+	elif view == maay.datastructure.documentinfo.CACHED_STATE:
+		title = 'List of cached documents'
+	elif view == maay.datastructure.documentinfo.KNOWN_STATE:
+		title = 'List of known documents'
+
+	documentInfos = globalvars.database.getDocumentInfos(search_range = view)
+	if not documentInfos:
+		httpRequestHandler.wfile.write('<br><br>%s' % globalvars.language.getValue("REPOSITORY_NO_DOCUMENTS"))
+		__write_footer(httpRequestHandler)
+		del documentInfos
+		return
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentlist_header"))
+
+	for d in documentInfos:
+		title = d.title[:60]
+		if len(d.title) > 60:
+			title += "..."
+		elif len(title) == 0:
+			title = "No title"
+
+		if len(d.url) > 40:
+			short_url = d.url[0:40] + "..."
+		else:
+			short_url = d.url
+
+		time_str = time.strftime("%x", time.gmtime(d.publication_time))
+
+		httpRequestHandler.wfile.write(
+			globalvars.templateFile.getTemplateValue(
+				"documentlist_row",
+				{
+					'documentID': d.document_id,
+					'documentTitleExcerpt': converter.htmltools.asciiToHtml(title),
+					'mimeType': d.mime_type,
+					'documentSize': d.size,
+					'publicationTime': time_str,
+					'downloadCount': d.download_count,
+					'url': d.url,
+					'shortUrl': short_url,
+					'matching': d.matching
+				}))
+		del d
+	del documentInfos
+
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("documentlist_footer"))
+
+	__write_footer(httpRequestHandler)
+
+def __get_document_text(httpRequestHandler, document_id):
+	httpRequestHandler.send_response(200)
+	httpRequestHandler.end_headers()
+	documentInfo = globalvars.database.getDocumentInfo(document_id)
+#	if not documentInfo or documentInfo.state == documentinfo.KNOWN_STATE:
+#		httpRequestHandler.wfile.write('Document not indexed for it is not in cache, so no text version (to do)')
+#	else:
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("document_text", {'title':documentInfo.title, 'text':documentInfo.text}))
+	
+def __get_document_by_id(httpRequestHandler, document_id, query_id=-1, remote=False):
+	if query_id == -1:
+		search_query = []
+	else:
+		resultSpool = globalvars.maay_core.getResultSpoolManager().getResultSpool(query_id)
+		if resultSpool:
+			search_query = resultSpool.getQuery()
+		else:
+			search_query = []
+	documentInfo = globalvars.database.getDocumentInfo(document_id)
+
+	if not documentInfo:
+		print "document not known, send search request on the document id"
+		if not documentInfo:
+			documentInfo = maay.datastructure.documentinfo.DocumentInfo(None, document_id, "", "", 0, "", 0, maay.datastructure.documentinfo.UNKNOWN_STATE, 0, "", 0)
+			globalvars.database.insertDocumentInfo(documentInfo)
+
+		print "send download"
+		globalvars.maay_core.send_download_request(document_id, search_query)
+		__display_downloading_page(httpRequestHandler, documentInfo, query_id, remote)
+	else:
+		fileInfos = globalvars.database.getFileInfos(db_document_id = documentInfo.db_document_id)
+		fileInfo = None
+		for f in fileInfos:
+			try:
+				print "file : %s" % f.file_name
+				os.stat(f.file_name)
+				fileInfo = f
+				break
+			except Exception, e:
+				print "file deleted : %s" % f.file_name
+				print "exception : %s" % e
+				globalvars.database.deleteFileInfo(f.file_name)
+				
+		globalvars.indexer.checkDocumentState(documentInfo.db_document_id)
+
+		if fileInfo:
+			__get_document_by_filename(httpRequestHandler, fileInfo.file_name, document_id=document_id, query_id=query_id)
+			globalvars.maay_core.hasDownloaded(globalvars.maay_core.getNodeID(), document_id, search_query, weight=constants.DOWNLOAD_SCORE_WEIGHT)
+			if documentInfo.state in (maay.datastructure.documentinfo.KNOWN_STATE, maay.datastructure.documentinfo.UNKNOWN_STATE):
+				globalvars.indexer.addNewDocumentToIndex(fileInfo.file_name)
+
+
+			return
+			
+		documentInfo.state = maay.datastructure.documentinfo.KNOWN_STATE
+		globalvars.database.updateDocumentInfo(documentInfo)
+
+		globalvars.maay_core.send_download_request(document_id, search_query)
+		__display_downloading_page(httpRequestHandler, documentInfo, query_id, remote)
+
+def __display_error_page(httpRequestHandler, code, title, errorTitle, description):
+	httpRequestHandler.send_response(code)
+	httpRequestHandler.end_headers()
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("error_page", 
+		{'title':title, 'errorTitle':errorTitle, 'description':description}))
+
+
+def __display_downloading_page(httpRequestHandler, documentInfo, queryID, remote=False):
+	
+	if remote:
+		prefix = "remote_"
+	else:
+		prefix = ""
+
+	if not remote:		
+		__write_header(httpRequestHandler, "Downloading...", DOWNLOAD_MENU)
+		
+	download = globalvars.downloadManager.getDownload(documentInfo.document_id)
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("%sdownload_header" % prefix,
+		{
+			'documentID': documentInfo.document_id,
+			'transferred': tools.size_str(download.getTransferred()),
+			'size': tools.size_str(documentInfo.size),
+			'state': download.getStateStr(),
+			'title': documentInfo.title}))
+	
+	providers = download.getProviders()
+
+	if providers:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("%sdownloadproviderlist_header" % prefix))
+	
+		for p in providers:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("%sdownloadproviderlist_row" % prefix, 
+				{
+					'nodeID': p.node_id,
+					'ip': p.ip,
+					'port': p.port,
+					'state': p.getStateStr()}))
+
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("%sdownloadproviderlist_footer" % prefix))
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("%sdownload_footer" % prefix,
+			{
+				'documentID': documentInfo.document_id,
+				'queryID': queryID
+			}))
+
+
+	if not remote:		
+		__write_footer(httpRequestHandler)
+
+
+def __get_document_by_filename(httpRequestHandler, filename, document_id = None, query_id = None):
+	try:
+		filename = urllib.unquote(filename)
+		mode = os.stat(filename)[stat.ST_MODE]
+		if stat.S_ISDIR(mode):
+			filename = os.path.normpath(filename + "/index.html")
+
+		mime_type = mimetypes.guess_type(filename)
+
+		# check if we can access the file and it exists
+
+		documentInfo = None
+		if document_id:
+			documentInfo = globalvars.database.getDocumentInfo(document_id=document_id)
+		
+		if documentInfo and documentInfo.mime_type == 'text/html' and documentInfo.url and documentInfo.state in (maay.datastructure.documentinfo.CACHED_STATE, maay.datastructure.documentinfo.KNOWN_STATE):
+			httpRequestHandler.send_response(200)
+			httpRequestHandler.send_header('Content-Type', documentInfo.mime_type)
+			httpRequestHandler.send_header('Connection', 'close')
+			httpRequestHandler.send_header('Accept-Ranges', 'bytes')
+			httpRequestHandler.end_headers()
+
+			httpRequestHandler.wfile.write(maay.globalvars.templateFile.getTemplateValue("cached_header", 
+			{'documentID' : document_id,
+			'queryID' : query_id,
+			'url' : documentInfo.url,
+			'quotedUrl' : urllib.quote(documentInfo.url),
+			'date' : tools.long_date_str(documentInfo.publication_time)
+			}))
+	
+
+			fd = open(filename, 'rb')
+			converter.htmltomaayhtml.htmlToMaayHtml(document_id, fd, httpRequestHandler.wfile, documentInfo.url)
+			fd.close()
+			return	
+
+		httpRequestHandler.send_response(200)
+		httpRequestHandler.send_header('Content-Type', mime_type)
+		httpRequestHandler.send_header('Connection', 'close')
+		file_length = os.stat(filename)[stat.ST_SIZE]
+		httpRequestHandler.send_header('Content-Length', file_length)
+		httpRequestHandler.send_header('Accept-Ranges', 'bytes')
+
+		httpRequestHandler.end_headers()
+
+		fd = open(filename, 'rb')
+		while 1:
+			buf = fd.read(1024)
+			if not buf:
+				break
+			httpRequestHandler.wfile.write(buf)
+		fd.close()
+
+	except:
+		globalvars.logger.exception("")
+		__display_error_page(httpRequestHandler, 404, "Error 404: Page not found", "Not found", "The requested URL %s was not found on this server" % httpRequestHandler.path)
+
+#def __get_document_by_id(httpRequestHandler, document_id, query_id = -1, remote=False):
+#	print "get document by id"
+#	documentInfo = globalvars.database.getDocumentInfo(document_id)
+#	fileInfos = globalvars.database.getFileInfos(db_document_id = documentInfo.db_document_id)
+#
+#	fd = None
+#	for fileInfo in fileInfos:
+#		try:
+#			fd = open(fileInfo.file_name)
+#		except Exception, e:
+#			print "file %s not found, remove it" % fileInfo.file_name
+#			globalvars.indexer.removeFileInfo(fileInfo)
+#
+#	globalvars.indexer.checkDocumentState(documentInfo.db_document_id)
+#
+#	if not fd:
+#		httpRequestHandler.send_response(302)
+#		httpRequestHandler.send_header('Location', '/maay/document?did=%s&qid=%s' % (document_id, query_id))
+#		httpRequestHandler.end_headers()
+#		return
+#		
+#	if documentInfo.state in (documentInfo.KNOWN_STATE, documentInfo.UNKNOWN_STATE):
+#		globalvars.indexer.addNewDocumentToIndex(file_name)
+#	
+#	httpRequestHandler.send_response(200)
+#
+#	httpRequestHandler.send_header('Content-Type', documentInfo.mime_type)
+#	httpRequestHandler.send_header('Connection', 'close')
+#	httpRequestHandler.end_headers()
+#	if documentInfo.mime_type == 'text/html':
+#		httpRequestHandler.wfile.write(fd.read())
+#	else:
+#		httpRequestHandler.wfile.write(fd.read())
+#	fd.close()
+
+def __get_excerpt(text, pos, excerpt_half_size=constants.EXCERPT_HALF_SIZE, dot=False):
+	if pos >= constants.MAX_TEXT_CONTENT_STORED_SIZE:
+		pos = 0
+	start = max(0, pos - excerpt_half_size)
+	if start > 0:
+#		print "text = %s" % text
+#		print "start = %s %s %s" % (start, end, pos)
+		while start < pos and text[start] != ' ':
+			start += 1
+		start += 1
+
+	end = min(len(text), start + excerpt_half_size * 2)
+
+	if end < len(text):
+		while end > pos and text[end] != ' ':
+			end -= 1
+	
+	r = text[start:end + 1]
+	if dot:
+		if start > 0:
+			r = "...%s" % r
+		if end < len(text):
+			r = "%s..." % r
+	return r
+
+
+def __display_maay_result(httpRequestHandler, document_id, query_id, query, mini=0):
+	documentInfos = globalvars.database.getDocumentInfos(document_id = document_id, get_text = 1)
+	if not documentInfos:
+		return
+	documentInfo = documentInfos[0]
+	documentScores = globalvars.database.getDocumentScores(db_document_id = documentInfo.db_document_id, words = query, order = 'popularity', document_score_count = 3)
+	#print "documentID = %s %s" % (documentID, rank)
+	title = __putInBold(converter.texttohtml.textToHTML(documentInfo.title), query)
+
+	if mini == 0:
+		excerpt_half_size = 40
+	else:
+		excerpt_half_size = 20
+	
+	excerpt = __mergeExcerpts(documentInfo, documentScores, query, excerpt_half_size=excerpt_half_size)
+	
+	if not excerpt:
+		if len(documentInfo.text) <= excerpt_half_size * 2:
+			end = len(documentInfo.text)
+		else:
+			end = excerpt_half_size * 2
+			while end > 0 and documentInfo.text[end] != ' ':
+				end -= 1
+		excerpt = converter.texttohtml.textToHTML(documentInfo.text[:end+1]) + " <b>...</b> "
+	excerpt = __putInBold(excerpt, query)
+
+	scores = ""
+	if globalvars.mode == constants.DEVELOPPER_MODE:
+		for ds in documentScores:
+			scores += "%s(<b>%s</b>, <b>%s</b>) " % (ds.word, ds.relevance, ds.popularity)
+
+		searchresultscores = globalvars.templateFile.getTemplateValue("searchresultscores", {'scores': scores})
+		searchresultinfo = globalvars.templateFile.getTemplateValue("searchresultinfo", {'documentID': documentInfo.document_id})
+		searchresultmatching = globalvars.templateFile.getTemplateValue("searchresultmatching", {'matching': documentInfo.matching})
+
+	else:
+		searchresultscores = ""
+		searchresultinfo = ""
+		searchresultmatching = ""
+
+	documentScores = globalvars.database.getBestRelevantDocumentScores(documentInfo.db_document_id, 5)
+	if len(documentScores) > 0:
+		descriptions = ""
+		for ds in documentScores:
+			if globalvars.debug:
+				descriptions += "%s(<b>%s</b>, <b>%s</b>) " % (ds.word, ds.relevance, ds.popularity)
+			else:
+				descriptions += "%s " % ds.word
+
+		searchresultdescriptions = globalvars.templateFile.getTemplateValue("searchresultdescriptions", {'descriptions': descriptions})
+	else:
+		searchresultdescriptions = ""
+
+	size = tools.size_str(documentInfo.size)
+	
+	color = constants.getDocumentStateColor(documentInfo.state)
+
+	date = tools.date_str(documentInfo.publication_time)
+
+	searchResultFiles = ""
+	urlStr = ""
+	fileInfos = globalvars.database.getFileInfos(db_document_id = documentInfo.db_document_id)
+	
+#	documentInfos = globalvars.database.getDocumentInfos(url=documentInfo.url)
+	documentInfos = []
+
+# TODO: proposer un lien quand c'est public
+	for fileInfo in fileInfos:
+#		pos = fileInfo.file_name.find(globalvars.config.getValue("PublishedDocumentRoot"))
+#		if pos != -1:
+#			url = 'http://%s:%s/pub/%s' % (globalvars.ip, globalvars.port, fileInfo.file_name[pos + len(globalvars.config.getValue("PublishedDocumentRoot")) + 1:])
+#			url = url.replace("\\", "/")
+#			urlStr += globalvars.templateFile.getTemplateValue("searchresulturl",
+#				{
+#					'url': url,
+#					'quotedUrl': urllib.quote(url),
+#					'urltext': __putInBold(url, query),
+#					'queryID': query_id,
+#					'cachedVersionCount': len(documentInfos)})
+#		else:
+			url = fileInfo.file_name
+			searchResultFiles += globalvars.templateFile.getTemplateValue("searchresultfile", {'quotedUrl': urllib.quote(url), 'urlText': __putInBold(url, query)})
+#			url = fileInfo.file_name
+#			searchResultFiles += globalvars.templateFile.getTemplateValue("searchresultfile", {'quotedUrl': urllib.quote(url), 'urlText': __putInBold(url, query)})
+
+	if documentInfo.url:
+		urlStr += globalvars.templateFile.getTemplateValue("searchresulturl",
+			{'url': documentInfo.url, 
+			'quotedUrl': urllib.quote(documentInfo.url),
+			'urltext': __putInBold(documentInfo.url, query),
+			'queryID': query_id,			
+			'cachedVersionCount': len(documentInfos)})
+	
+	if mini == 0:
+		if documentInfo.mime_type == "text/html":
+			searchresulticon = globalvars.templateFile.getTemplateValue("searchresulticon", {'iconname': 'html.png'})
+		elif documentInfo.mime_type == "application/pdf":
+			searchresulticon = globalvars.templateFile.getTemplateValue("searchresulticon", {'iconname': 'pdf.png'})
+		elif documentInfo.mime_type == "application/msword":
+			searchresulticon = globalvars.templateFile.getTemplateValue("searchresulticon", {'iconname': 'doc.png'})
+		elif documentInfo.mime_type == "text/plain":
+			searchresulticon = globalvars.templateFile.getTemplateValue("searchresulticon", {'iconname': 'txt.png'})
+		else:
+			searchresulticon = ""
+	
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchresult", 
+			{
+			'searchresulticon': searchresulticon,			
+			'title': title,
+			'plainTitle': documentInfo.title,
+			'documentID': documentInfo.document_id,
+			'queryID': query_id,
+			'searchresultfiles': searchResultFiles,
+			'searchresultdescriptions': searchresultdescriptions,
+			'searchresultmatching': searchresultmatching,
+			'excerpt': excerpt,
+			'searchresultscores': searchresultscores,
+			'size': size,
+			'searchresulturl': urlStr,
+			'searchresultinfo': searchresultinfo,
+			'searchresultmatching': searchresultmatching,
+			'date': date,
+			'mimeType': documentInfo.mime_type,
+			'color': color}))
+	else:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("minisearchresult", 
+			{'title': "%s" % title,
+			'documentID': documentInfo.document_id,
+			'queryID': query_id,
+			'searchresultfiles': searchResultFiles,
+			'searchresultdescriptions': searchresultdescriptions,
+			'excerpt': excerpt,
+			'searchresultscores': searchresultscores,
+			'size': size,
+			'searchresulturl': urlStr,
+			'searchresultinfo': searchresultinfo,
+			'searchresultmatching': searchresultmatching,
+			'date': date,
+			'mimeType': documentInfo.mime_type,
+			'color': color}))
+
+
+def __get_results(httpRequestHandler, query_id, page = 1, sort_policy = resultspool.SCORE_SORTED, search_range = constants.ALL_SEARCH_RANGE):
+	global current_result_spool_query_id
+	__write_header(httpRequestHandler, "Search", SEARCH_MENU)
+
+	# find the query ID of the current search tab
+	if query_id == -1:
+		if current_result_spool_query_id == -1:
+			resultSpools = globalvars.maay_core.getResultSpoolManager().getResultSpools()
+			if len(resultSpools) > 0:
+				current_result_spool_query_id = resultSpools[0].getQueryID()
+		query_id = current_result_spool_query_id
+	else:
+		current_result_spool_query_id = query_id
+
+	if not query_id:
+		queryStr = ""
+	else:
+		resultSpool = globalvars.maay_core.getResultSpoolManager().getResultSpool(query_id)
+		if resultSpool:
+			queryStr = resultSpool.getLabel()
+		else:
+			queryStr = ""
+
+
+	# display the search form
+	if globalvars.search_mode == constants.NORMAL_SEARCH_MODE:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchform",
+			{'query': queryStr}))
+	else:
+		wordsQuery = ""
+		documentIDQuery = ""
+		urlQuery = ""
+		
+		if resultSpool:
+			for w in resultSpool.getQuery():
+				if w[0] == '#':
+					documentIDQuery = w[1:]
+				elif w.find('url:') == 0:
+					urlQuery = w[len('url:'):]
+				else:
+					wordsQuery += " " + w
+			wordsQuery = wordsQuery[1:]
+			
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchform_advanced",
+			{'wordsQuery': wordsQuery,
+			'documentIDQuery': documentIDQuery,
+			'urlQuery': urlQuery,
+			}))
+
+	resultSpools = globalvars.maay_core.getResultSpoolManager().getResultSpoolsByNodeID(globalvars.maay_core.getNodeID())
+	resultSpoolCount = len(resultSpools)
+	if resultSpoolCount == 0:
+		return
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchbar_header",
+		{
+			'ip': globalvars.ip,
+			'port': globalvars.port
+		}))
+
+	# display the search tabs
+	i = 0
+	for rs in resultSpools:
+		queryStr = rs.getLabel()
+		
+		color = constants.getSearchRangeColor(rs.getRange())
+		lightColor = constants.getSearchRangeLightColor(rs.getRange())
+
+		if rs.getQueryID() == query_id:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchtab_selected",
+			{'queryID' : rs.getQueryID(),
+				'color' : color,
+				'lightColor' : lightColor,
+				'queryStr' : __cut_str(queryStr, constants.SEARCH_TAB_SIZE),
+				'resultCount' : (rs.getResultCount())
+				}))
+		else:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchtab_unselected", 
+			{'queryID' : rs.getQueryID(),
+				'color' : color,
+				'lightColor' : lightColor,
+			'queryStr' : __cut_str(queryStr, constants.SEARCH_TAB_SIZE),
+			'resultCount' : (rs.getResultCount())}))
+
+		i += 1
+
+	# display the current search tab filters
+	resultSpool = globalvars.maay_core.getResultSpoolManager().getResultSpool(query_id)
+	
+	color = constants.getSearchRangeColor(resultSpool.getRange())
+	lightColor = constants.getSearchRangeLightColor(resultSpool.getRange())
+
+	if resultSpool.getRange() == constants.DESKTOP_SEARCH_RANGE:
+		search_range_name = globalvars.language.getValue("SEARCH_RESULTS_DESKTOP_SEARCH")
+	elif resultSpool.getRange() == constants.MAAY_SEARCH_RANGE:
+		search_range_name = globalvars.language.getValue("SEARCH_RESULTS_MAAY_SEARCH")
+	elif resultSpool.getRange() == constants.INTRANET_SEARCH_RANGE:
+		search_range_name = globalvars.language.getValue("SEARCH_RESULTS_INTRANET_SEARCH")
+	elif resultSpool.getRange() == constants.INTERNET_SEARCH_RANGE:
+		search_range_name = globalvars.language.getValue("SEARCH_RESULTS_INTERNET_SEARCH")
+
+	# TODO:rajouter bouton, avoir des documents plus pertinents
+	# rajouter possibilite de trier par relevance, popularite, date, score
+
+	filters_list = ((constants.ALL_SEARCH_RANGE, globalvars.language.getValue("SEARCH_RESULTS_ALL_DOCUMENT")),
+		(constants.PRIVATE_SEARCH_RANGE, globalvars.language.getValue("SEARCH_RESULTS_PRIVATE_DOCUMENT")),
+		(constants.PUBLISHED_SEARCH_RANGE, globalvars.language.getValue("SEARCH_RESULTS_PUBLISHED_DOCUMENT")),
+		(constants.CACHED_SEARCH_RANGE, globalvars.language.getValue("SEARCH_RESULTS_CACHED_DOCUMENT")),
+		(constants.KNOWN_SEARCH_RANGE, globalvars.language.getValue("SEARCH_RESULTS_KNOWN_DOCUMENT")))
+
+	if resultSpool.getRange() in (constants.INTERNET_SEARCH_RANGE, constants.INTRANET_SEARCH_RANGE):
+		filters = ""
+		result_count = resultSpool.getResultCount()
+	else:
+		results = resultSpool.getFilteredResults(search_range_filter=search_range)
+
+		filters = ""
+		for r, n in filters_list:
+			if r == constants.ALL_SEARCH_RANGE:
+				result_count = ""
+			else:
+				result_count = resultSpool.getFilteredResultCount(search_range_filter = r)
+
+			filterColor = constants.getDocumentStateColor(r)
+			if r == search_range:
+				filters += globalvars.templateFile.getTemplateValue("searchbar_filter_selected", {'searchRangeName': n, 'searchResultCount' : result_count, 'color': filterColor})
+			elif result_count > 0:
+				filters += globalvars.templateFile.getTemplateValue("searchbar_filter_unselected", {'queryID': query_id, 'searchRange': r,  'searchRangeName': n, 'searchResultCount' : result_count, 'color': filterColor})
+			else:
+				filters += globalvars.templateFile.getTemplateValue("searchbar_filter_disabled", {'queryID': query_id, 'searchRange': r,  'searchRangeName': n, 'searchResultCount' : result_count, 'color': filterColor})
+			if r != filters_list[len(filters_list) - 1][0]:
+				filters += "<td> - </td>"
+		result_count = resultSpool.getFilteredResultCount(search_range_filter=search_range)
+		
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchbar_footer",
+	{
+		'colspan': (resultSpoolCount * 3 + 2),
+		'color': color,
+		'lightColor': lightColor,
+		'filters': filters,
+		'startResult': min(result_count, (page - 1) * globalvars.result_count_per_page + 1),
+		'endResult': min(result_count, page * globalvars.result_count_per_page),
+		'resultCount': result_count,
+		'time': time.asctime(time.localtime(resultSpool.getQueryTime())),
+		'range': search_range_name,
+		'searchRange': search_range,
+		'query': resultSpool.getLabel(),
+		'queryID': query_id
+	}))
+	
+	if globalvars.mode == constants.DEVELOPPER_MODE:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchbar_filetypefilter"))
+	
+
+	httpRequestHandler.wfile.write("\n<br>\n")
+
+
+	if not query_id:
+		__write_footer(httpRequestHandler)
+		return
+		
+	current_result_spool_query_id = query_id
+
+	query = resultSpool.getQuery()
+
+	if resultSpool.getRange() in (constants.INTERNET_SEARCH_RANGE, constants.INTRANET_SEARCH_RANGE):
+		document_count_ptr = [0]
+		documentInfos = globalvars.database.getBestDocumentInfos(query, None, 0,constants.DESKTOP_SEARCH_RANGE)
+
+		desktop_result_count = len(documentInfos)
+		if desktop_result_count > 0:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchdesktopresult_header",
+				{'resultCount': desktop_result_count,
+				'query': urllib.quote(tools.query_str(query))
+				}))
+			for di in documentInfos[:2]:
+				__display_maay_result(httpRequestHandler, di.document_id, resultSpool.getQueryID(), query, mini=1)
+
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchdesktopresult_footer"))
+
+		results = resultSpool.getResults(sort_policy)[(page - 1) * globalvars.result_count_per_page:page * globalvars.result_count_per_page]
+		result_count = resultSpool.getResultCount()
+	else:
+		results = resultSpool.getFilteredResults(search_range_filter=search_range, sort_policy=sort_policy)[(page - 1) * globalvars.result_count_per_page:page * globalvars.result_count_per_page]
+		result_count = resultSpool.getFilteredResultCount(search_range_filter=search_range)
+
+			
+	if results == None or results == []:
+		httpRequestHandler.wfile.write(globalvars.language.getValue("SEARCH_RESULTS_NOT_FOUND"))
+		__write_footer(httpRequestHandler)
+		return
+
+	for r in results:
+		if resultSpool.getRange() in (constants.INTERNET_SEARCH_RANGE, constants.INTRANET_SEARCH_RANGE):
+			color = constants.getSearchRangeColor(resultSpool.getRange())
+			title = r.title
+			excerpt = r.excerpt
+			extra = ""
+			if r.size > 0:
+				extra = " - %s" % tools.size_str(r.size)
+				print "r.date = %s" % r.date
+				if r.date > 0:
+					extra += " - %s" % tools.date_str(r.date)
+
+			documentInfos = globalvars.database.getDocumentInfos(url=r.url)
+
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchresult_searchengine", 
+				{'title': __putInBold(converter.texttohtml.textToHTML(r.title), query),
+				'excerpt': __putInBold(converter.texttohtml.textToHTML(r.excerpt), query),
+				'queryID': resultSpool.getQueryID(),
+				'quotedUrl': urllib.quote(r.url),
+				'url': r.url,
+				'cachedVersionCount': len(documentInfos),
+				'extra': extra,
+				'color': color}))
+		else:
+			__display_maay_result(httpRequestHandler, r.document_id, resultSpool.getQueryID(), query)
+
+
+	# display page bar in case there are several pages
+	if result_count <= globalvars.result_count_per_page:
+		__write_footer(httpRequestHandler)
+		return
+
+	start_page = max(1, page - globalvars.result_count_per_page)
+	last_page = int(result_count / globalvars.result_count_per_page) + ((result_count % globalvars.result_count_per_page) != 0)
+	end_page = min(page + globalvars.result_count_per_page, last_page + 1)
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchresultpage_header"))
+
+	# display M___ with previous or not if we are on the first page or not
+	if page > 1:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchresultpage_left",
+		{
+			'queryID': query_id,
+			'page': page - 1,
+			'searchRange': search_range
+		}))
+	else:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchresultpage_left0"))
+
+	# display like in Google, Maaaaaaaay depending on the number of result pages
+	# with a in red for the current page, the other a in yellow for the others
+	for i in xrange(start_page, end_page):
+		if i == page:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchresultpage_bar0",
+			{
+				'queryID': query_id,
+				'page': i,
+				'searchRange': search_range
+			}))
+		else:
+			httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchresultpage_bar1",
+			{
+				'queryID': query_id,
+				'page': i,
+				'searchRange': search_range
+			}))
+
+
+#	print "page = %s, las_page = %s" % (page, last_page)
+	if page < last_page:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchresultpage_right",
+		{
+			'queryID': query_id,
+			'page': page + 1,
+			'searchRange': search_range
+		}))
+	else:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchresultpage_right0"))
+
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("searchresultpage_footer"))
+
+	__write_footer(httpRequestHandler)
+
+
+def __putInBold(str, words):
+	for word in words:
+#		pattern = "(^| |,|;|!|\?|<|>|\.)(" + word + ")($| |,|;|!|\?|<|>|\.)"
+#		pattern = "(^|\W+)(%s)($|\W+)" % globalvars.accent.extendsMatchingPattern(word)
+		pattern = "(%s)" % globalvars.accent.extendsMatchingPattern(word)
+
+		p = re.compile(pattern)
+		str = p.sub("<b>\g<1></b>", str)
+
+	return str
+
+def __mergeExcerpts(documentInfo, ds, words, excerpt_half_size = constants.EXCERPT_HALF_SIZE):
+	documentScores = []
+	for d in ds:
+		if d.word in words:
+			documentScores.append(d)
+
+	documentScores.sort(lambda x, y: int(x.position - y.position))
+
+	str = ""
+	lastEndPosition = 0
+
+	for documentScore in documentScores:
+		excerpt = __get_excerpt(documentInfo.text, documentScore.position, excerpt_half_size=excerpt_half_size)
+#		excerpt = documentScore.excerpt
+		if not excerpt or excerpt == "":
+			continue
+
+		# todo: check for accented text
+		m = re.search("(^|\W+)(%s)(\W+|$|:)" % documentScore.word, excerpt, re.IGNORECASE)
+
+		if not m or documentScore.position == -1:
+			str += excerpt
+			endPosition = len(excerpt)
+		else:
+			pos = m.start()
+
+			startPosition = documentScore.position - pos
+			endPosition = len(excerpt) - pos + documentScore.position 
+
+			if startPosition <= lastEndPosition:
+				str += converter.texttohtml.textToHTML(excerpt[pos - (documentScore.position - lastEndPosition):])
+			else:
+				if documentScore.position - excerpt_half_size > 0:
+					str += "<b>...</b>"
+				str += converter.texttohtml.textToHTML(excerpt)
+
+		lastEndPosition = endPosition
+
+	if not str:
+		return None
+		
+	str += " <b>...</b>"
+	return str
+
+
+def __close_result_spool(httpRequestHandler, query_id):
+	global current_result_spool_query_id
+	resultSpools = globalvars.maay_core.getResultSpoolManager().getResultSpoolsByNodeID(globalvars.maay_core.getNodeID())
+	removedResultSpool = globalvars.maay_core.getResultSpoolManager().getResultSpool(query_id)
+
+	try:
+		index = resultSpools.index(removedResultSpool)
+	except ValueError:
+		index = -1
+
+#	print "index = %s" % index
+
+	globalvars.maay_core.getResultSpoolManager().removeResultSpool(removedResultSpool)
+
+	if query_id == current_result_spool_query_id:
+		if index >= len(resultSpools) - 1:
+			index = len(resultSpools) - 1
+
+		if index == -1:
+			current_result_spool_query_id = None
+		else:
+			current_result_spool_query_id = resultSpools[index].getQueryID()
+
+
+
+def __send_search_query(httpRequestHandler, query, search_range, result_count, query_id = None):
+	if not query_id:
+		query_id = globalvars.maay_core.send_search_request(query, constants.INIT_TTL, search_range, constants.MIN_SCORE, constants.INIT_FNC, result_count)
+	return query_id
+
+
+def __get_download(httpRequestHandler):
+	__write_header(httpRequestHandler, 'download', DOWNLOAD_MENU)
+	if len(globalvars.downloadManager.getDownloads()) == 0:
+		httpRequestHandler.wfile.write("No pending download");
+		return
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("downloadlist_header"))
+	for download in globalvars.downloadManager.getDownloads():
+#		print "download = %s " % download
+		documentInfo = globalvars.database.getDocumentInfo(download.getDocumentID())
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("downloadlist_row", 
+			{'title': documentInfo.title or "No title", 
+			'transferred': download.getTransferred(), 
+			'size': documentInfo.size,
+			 'speed': '0 kB/s', 
+			'documentID': documentInfo.document_id, 
+			'state': download.getStateStr()}))
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("downloadlist_footer"))
+
+
+def __get_versions(httpRequestHandler, url, query_id):
+	__write_header(httpRequestHandler, 'Logs', SEARCH_MENU)
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("versionlist_header", 
+		{
+			'url': url,
+			'queryID': query_id
+		})) 
+	documentInfos = globalvars.database.getDocumentInfos(url = url, get_text=1)
+	
+	for documentInfo in documentInfos:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("versionlist_row",
+			{
+				'documentID': documentInfo.document_id,
+				'title': documentInfo.title,
+				'queryID': query_id,
+				'excerpt': "%s" % __get_excerpt(documentInfo.text, 0),
+				'date': tools.long_date_str(documentInfo.publication_time)
+
+			})) 
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("versionlist_footer", {'url': url})) 
+	__write_footer(httpRequestHandler)
+
+
+def __get_maayify_url(httpRequestHandler, url=None, title = None, keywords=None, submit=0):
+	if submit:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("maayify_close"))
+		globalvars.urlindexer.insertURL(url, keywords, weight=constants.ANNOTATION_SCORE_WEIGHT)
+	else:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("maayify_url", 
+			{
+				'title': title,
+				'url': url,
+			})) 
+
+
+def __get_maayify_document(httpRequestHandler, document_id=None, title = None, keywords=None, submit=0):
+	if submit:
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("maayify_close"))
+		print "maayify keywords = %s" % keywords
+		globalvars.maay_core.hasDownloaded(globalvars.maay_core.getNodeID(), document_id, keywords, weight=constants.ANNOTATION_SCORE_WEIGHT)
+	else:
+		documentInfo = globalvars.database.getDocumentInfo(document_id=document_id)
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("maayify_document", 
+			{
+				'title': documentInfo.title,
+				'documentID': document_id,
+			})) 
+
+def __get_logs(httpRequestHandler):
+	__write_header(httpRequestHandler, 'Logs', LOGS_MENU)
+	# TODO: faire un lien qui permet de choisir le niveau de log souhaité
+	httpRequestHandler.wfile.write("<pre>")
+	fd = file(os.path.join('logs', 'maay.log'))
+	level = "INFO"
+	while True:
+		line = fd.readline()
+		if not line:
+			break
+		words = line.split(' ', 3)
+		if len(words) == 4:
+			date, hour, level_tmp, text = words		
+			if level_tmp in ('INFO', 'DEBUG', 'EXCEPTION', 'ERROR'):
+				level = level_tmp
+			
+		if level == 'INFO':		
+			httpRequestHandler.wfile.write("<font class=info>%s</font>" % line)
+		elif level == 'DEBUG':
+			httpRequestHandler.wfile.write("<font class=debug>%s</font>" % line)
+		elif level in ('EXCEPTION', 'ERROR'):
+			httpRequestHandler.wfile.write("<font class=exception>%s</font>" % line)
+		else:
+			httpRequestHandler.wfile.write("<font class=debug>%s</font>" % line)
+
+	httpRequestHandler.wfile.write("</pre>")
+	__write_footer(httpRequestHandler)
+
+def __get_login_page(httpRequestHandler, url="", comment=""):
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("login_page", {'url': url, 'comment': comment}))
+
+
+def __get_remote_download(httpRequestHandler, document_id, download=None):
+	if not download:
+		documentInfos = globalvars.database.getDocumentInfos(document_id=document_id)
+		documentInfo = documentInfos and documentInfos[0]
+		node_id = None
+		ip = None
+		port = None
+		last_providing_time = None
+		last_seen_time = None
+		
+		if documentInfo and documentInfo.state in (maay.datastructure.documentinfo.PUBLISHED_STATE, maay.datastructure.documentinfo.CACHED_STATE):
+			node_id = globalvars.maay_core.getNodeID()
+			ip = globalvars.ip
+			port = globalvars.port
+			last_providing_time = int(time.time())
+			last_seen_time = int(time.time())
+		elif documentInfo:
+			documentProviders = globalvars.database.getDocumentProviders(documentInfo.db_document_id)
+			documentProvider = len(documentProviders) > 0 and documentProviders[0]
+			nodeInfo = globalvars.database.getNodeInfo(documentProvider.node_id)
+			
+			if documentProvider and nodeInfo:
+				node_id = documentProvider.node_id
+				ip = nodeInfo.ip
+				port = nodeInfo.port
+				last_providing_time = documentProvider.last_providing_time
+				last_seen_time = nodeInfo.last_seen_time
+				
+		httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("remote_download_page",
+			{
+				'documentID': document_id,
+				'nodeID': node_id,
+				'ip': ip,
+				'port': port,
+				'lastSeenTime': last_seen_time,
+				'lastProvidingTime': last_providing_time
+
+			}))
+	else:
+		__get_document_by_id(httpRequestHandler, document_id, remote=True)
+
+def __get_help(httpRequestHandler):
+	dict = {'title': "Aide",
+		'selected_top_menu_id': HELP_MENU}
+	obj = globalvars
+	template_file = open("config/templates/help.tmpl", "r")
+	t = Cheetah.Template.Template(file=template_file, searchList=[dict, obj])
+	httpRequestHandler.wfile.write(str(t))
+	template_file.close()
+
+
+
+def __get_maayl(httpRequestHandler):
+	httpRequestHandler.wfile.write(globalvars.templateFile.getTemplateValue("maayl_page"))
+
+def handle_get(httpRequestHandler):
+	u = urlparse.urlparse(httpRequestHandler.path)
+	client_ip, client_port = httpRequestHandler.client_address
+	
+	# let the / (url format)
+	words = u[2].split("/", 2)
+	first_directory = None
+	if len(words) > 1:
+		first_directory = words[1]
+
+	args = cgi.parse_qs(u[4])
+
+	if first_directory == 'maay':
+		if len(words) >= 3:
+			maay_action = words[2]
+		else:
+			maay_action = None
+
+		if maay_action != "remotedownload" and client_ip != '127.0.0.1' and globalvars.remoteAccess == 0:
+			__display_error_page(httpRequestHandler, 403, "Error 403: Forbidden", "Forbidden", "You do not have the right to access to the URL %s on this server" % httpRequestHandler.path)
+			return
+
+		# check that the user is logged, if it is not the case, display login page.
+		if maay_action != "remotedownload" and maay_action != 'login':
+			if client_ip != '127.0.0.1' or globalvars.localAuthentification == 1:
+				c = Cookie.SimpleCookie(httpRequestHandler.headers.get('Cookie'))
+				sessionID = None
+				if c.has_key("sessionID"):
+					sessionID = c["sessionID"].value
+				print "sessions %s / %s" % (sessionID, globalvars.sessionID)
+				if not globalvars.sessionID or sessionID != globalvars.sessionID:
+					__get_login_page(httpRequestHandler, httpRequestHandler.path)
+					return				
+		if  maay_action == 'login':
+			login = None
+			password = None
+			try:
+				login = args.get('login')[0]
+				password = args.get('password')[0]
+			except Exception, e:
+				pass
+
+			urls = args.get('url')
+			url = urls and urls[0]
+
+			if login == globalvars.login and password == globalvars.password:
+				if not url:
+					url = "/maay/resultspool"
+				
+				globalvars.sessionID = tools.generate_id()
+				httpRequestHandler.send_response(302)
+				httpRequestHandler.send_header("Set-Cookie", "sessionID=%s" % globalvars.sessionID)
+				httpRequestHandler.send_header('Location', '%s' % url)
+				httpRequestHandler.end_headers()
+			else:
+				httpRequestHandler.send_response(302)
+				__get_login_page(httpRequestHandler, url, "Too bad, try again !")
+	
+				httpRequestHandler.end_headers()
+		elif  maay_action == 'logs':
+			__get_logs(httpRequestHandler)
+		elif  maay_action == 'logout':
+			httpRequestHandler.send_response(302)
+			httpRequestHandler.send_header("Set-Cookie", "sessionID=; max-age=0")
+			__get_login_page(httpRequestHandler)
+		elif  maay_action == 'canceldownload':
+			dids = args.get('did')
+			document_id = dids[0]
+			download = globalvars.downloadManager.cancelDownload(document_id)
+			httpRequestHandler.send_response(302)
+			httpRequestHandler.send_header('Location', '/maay/download')
+
+		elif  maay_action == 'search':
+			qs = args.get('q')
+#			if qs:
+#				qs[0] = qs[0].strip()
+			if qs and qs[0]:
+				query = qs[0].split()
+			else:
+				query = []
+				
+			qids = args.get('qid')
+			if qids and qids[0]:
+				query_id = qids[0]
+				resultSpool = globalvars.maay_core.getResultSpoolManager().getResultSpool(query_id)
+				globalvars.maay_core.send_search_request(resultSpool.getQuery(), constants.INIT_TTL, resultSpool.getRange(), constants.MIN_SCORE, constants.INIT_FNC, resultSpool.getExpectedResultCount(), query_id = query_id)
+				httpRequestHandler.send_response(302)
+				httpRequestHandler.send_header('Location', "/maay/resultspool?qid=%s" % query_id)
+				httpRequestHandler.end_headers()
+				return
+
+			did = args.get('did')
+			if did:
+				query.append("#%s" % did[0])
+			else:
+				document_id = None
+
+			urls = args.get('url')
+			if urls:
+				query.append("url:%s" % urls[0])
+#				url = urls[0]
+			else:
+				url = None
+	
+
+			if not query and not document_id and not url:
+				httpRequestHandler.send_response(302)
+#				httpRequestHandler.send_header('Location', "http://%s:%s/maay/resultspool" % (host, globalvars.port))
+				httpRequestHandler.send_header('Location', "/maay/resultspool")
+				httpRequestHandler.end_headers()
+				return
+
+	#		print "query = %s" % query
+			# number of results expected
+			r = args.get('r')
+			if r:
+				result_count = int(r[0])
+			else:
+				result_count = globalvars.result_count_per_page
+
+			if args.get('desktopsearch'):
+				search_range = constants.DESKTOP_SEARCH_RANGE
+				result_count = -1
+			elif args.get('privatesearch'):
+				search_range = constants.PRIVATE_SEARCH_RANGE
+			elif args.get('publishsearch'):
+				search_range = constants.PUBLISHED_SEARCH_RANGE
+			elif args.get('intranetsearch'):
+				search_range = constants.INTRANET_SEARCH_RANGE
+			elif args.get('googlesearch'):
+				search_range = constants.INTERNET_SEARCH_RANGE
+			else:
+				search_range = constants.MAAY_SEARCH_RANGE
+
+					
+			query_id = __send_search_query(httpRequestHandler, query, search_range, result_count)
+			httpRequestHandler.send_response(302)
+#			httpRequestHandler.send_header('Location', "http://%s:%s/maay/resultspool?qid=%s" % (host, globalvars.port, query_id))
+			httpRequestHandler.send_header('Location', "/maay/resultspool?qid=%s" % query_id)
+			httpRequestHandler.end_headers()
+		elif maay_action == 'doctext':
+			document_id = args['did'][0]
+			__get_document_text(httpRequestHandler, document_id)
+		elif maay_action == 'document':
+			# todo: test if d is correct (40 char and only one word)
+			document_id = args['did'][0]
+			qid = args.get('qid')
+			if qid:
+				query_id = args['qid'][0]
+			else:
+				query_id = -1
+
+			nids = args.get('nid')
+			node_id = nids and nids[0]
+
+			ips = args.get('ip')
+			ip = ips and ips[0]
+
+			ports = args.get('port')
+			port = ports and ports[0]
+			
+			lsts = args.get('lst')
+			last_seen_time = lsts and lsts[0]
+
+			lpts = args.get('lpt')
+			last_providing_time = lpts and lpts[0]
+
+			if node_id and ip and port and last_seen_time and last_providing_time:
+				maay.globalvars.maay_core.updateNodeInfo(node_id, ip, port, 0, 0, last_seen_time)
+				documentInfos = globalvars.database.getDocumentInfos(document_id = document_id)
+				documentInfo = (len(documentInfos) > 0) and documentInfos[0]
+				globalvars.maay_core.updateDocumentProvider(documentInfo.db_document_id, node_id, last_providing_time)
+
+			__get_document_by_id(httpRequestHandler, document_id, query_id)
+		elif maay_action == 'documentinfo':
+			# TODO: test if d is correct (40 char and only one word)
+			document_id = args['did'][0]
+			query = []
+			__get_document_info_cheetah(httpRequestHandler, document_id)
+		elif maay_action == 'resultspool':
+			# TODO: test if d is correct (40 char and only one word)
+			sm = args.get('sm')
+			if sm:
+				if sm[0] == '0':
+					globalvars.search_mode = constants.NORMAL_SEARCH_MODE
+				elif sm[0] == '1':
+					globalvars.search_mode = constants.ADVANCED_SEARCH_MODE
+			qid = args.get('qid')
+			if qid:
+				query_id = qid[0]
+			else:
+				query_id = current_result_spool_query_id	
+			p = args.get('p')
+			if p:
+				page=int(p[0])
+			else:
+				page = 1
+
+			r = args.get('r')
+			if r:
+				search_range=int(r[0])
+			else:
+				search_range = constants.ALL_SEARCH_RANGE
+	
+	
+			s = args.get('s')
+			if s:
+				sort_policy = int(s[0])
+			else:
+				sort_policy = resultspool.SCORE_SORTED
+	
+			__get_results_cheetah(httpRequestHandler, query_id, page, sort_policy, search_range)
+		elif maay_action == 'closeresultspool':
+			# TODO: test if d is correct (40 char and only one word)
+			query_id = args['qid'][0]
+			__close_result_spool(httpRequestHandler, query_id)
+			httpRequestHandler.send_response(302)
+			httpRequestHandler.send_header('Location', '/maay/resultspool')
+
+		elif maay_action == 'nodes':
+			__get_nodes_cheetah(httpRequestHandler)
+		elif maay_action == 'nodeinfo':
+			nodeID = args['nid'][0]
+			__get_node_info_cheetah(httpRequestHandler, nodeID)
+		elif maay_action == 'words':
+			__get_words_cheetah(httpRequestHandler)
+		elif maay_action == 'wordinfo':
+			word = args['w'][0]
+			__get_word_info_cheetah(httpRequestHandler, word)
+		elif maay_action == 'system':
+			__get_system(httpRequestHandler)
+		elif maay_action in ('preferences', 'prefsecurity'):
+			__get_preference_security_cheetah(httpRequestHandler, args)
+		elif maay_action == 'prefindexation':
+			__get_preference_indexation_cheetah(httpRequestHandler, args)
+		elif maay_action == 'prefui':
+			__get_preference_ui_cheetah(httpRequestHandler, args)
+		elif maay_action == 'prefdebug':
+			__get_preference_debug_cheetah(httpRequestHandler, args)
+		elif maay_action == 'documents':
+			v = args.get('v')
+			if v:
+				view = int(v[0])
+			else:
+				view = maay.datastructure.documentinfo.PUBLISHED_STATE
+				
+#			__get_repository(httpRequestHandler, view)
+			__get_documents_cheetah(httpRequestHandler, view)
+		elif maay_action == 'versions':
+			urls = args.get('url')
+			if urls:
+				url = urls[0]
+			qids = args.get('qid')
+			if qids:
+				query_id = qids[0]
+			else:
+				query_id = None
+			__get_versions(httpRequestHandler, url, query_id)
+		elif maay_action == 'link':
+			did = args.get('did')
+			if did:
+				document_id = urllib.unquote(did[0])
+			else:
+				__display_error_page(httpRequestHandler, 200, "Bad arguments 1", "URL = %s" % httpRequestHandler.path)	
+				return
+			p = args.get('path')
+			if p:
+				path = p[0]
+			else:
+				__display_error_page(httpRequestHandler, 200, "Bad arguments 2", "URL = %s" % httpRequestHandler.path)	
+				return
+			u = args.get('url')
+			if u:
+				url = urllib.unquote(u[0])
+			else:
+				url = None
+	
+	#		print "document_id = %s" % document_id
+	#		print "path = %s" % path
+			__get_link(httpRequestHandler, document_id, path, url)
+	
+		elif maay_action == 'download':
+			__get_download(httpRequestHandler)
+
+		elif maay_action == 'help':
+			__get_help(httpRequestHandler)
+		elif maay_action == 'about':
+			__get_about(httpRequestHandler)
+
+		elif maay_action == 'url':
+#			__get_url(httpRequestHandler)
+			urls = args.get('url')
+			qids = args.get('qid')
+			url = urls[0]
+			query_id = qids[0]
+			httpRequestHandler.send_response(302)
+			httpRequestHandler.send_header('Location', url)
+			httpRequestHandler.end_headers()
+
+			resultSpool = globalvars.maay_core.getResultSpoolManager().getResultSpool(query_id)
+			globalvars.urlindexer.insertURL(url, resultSpool.getQuery(), weight=constants.DOWNLOAD_SCORE_WEIGHT)
+		elif maay_action == 'remotedownload':
+			dids = args.get('did')
+			document_id = dids[0]
+			downloads = args.get('download')
+			download = downloads and downloads[0]
+			__get_remote_download(httpRequestHandler, document_id, download)
+
+		elif maay_action == 'redir':
+			urls = args.get('url')
+			url = urls[0]
+			globalvars.command.start(url)
+		elif maay_action == 'maayify':
+			urls = args.get('url')
+			url = urls and urls[0]
+			titles = args.get('title')
+			print "title = %s" % str(titles)
+			title = (titles and titles[0]) or "No title"
+
+			dids = args.get('did')
+			document_id = dids and dids[0]
+			
+			submit = args.get('maayify')
+			keywords = None
+			if submit:
+				kwss = args.get('keywords')
+				kws = (kwss and kwss[0]) or ""
+				keywords = kws.split()
+
+			if document_id:
+				__get_maayify_document(httpRequestHandler, document_id=document_id, keywords=keywords, submit=submit)
+			else:
+				__get_maayify_url(httpRequestHandler, url=url, title=title, keywords=keywords, submit=submit)
+		elif maay_action == 'maayl':
+			__get_maayl(httpRequestHandler)
+		else:
+			# TODO: do an error page
+			file_path = os.path.normpath("%s%s%s" % (globalvars.config.getValue("MaayDocumentRoot"), os.path.sep, words[2]))
+			__get_document_by_filename(httpRequestHandler, file_path)
+	elif first_directory == 'pub':
+		print "url = %s" % u[2]
+		file_path = os.path.normpath("%s%s%s" % (globalvars.config.getValue("PublishedDocumentRoot"), os.path.sep, words[2]))
+		__get_document_by_filename(httpRequestHandler, file_path)
+	else:
+		file_path = os.path.normpath("%s%s%s" % (globalvars.config.getValue("WWWDocumentRoot"), os.path.sep, u[2]))
+		__get_document_by_filename(httpRequestHandler, file_path)
+
+
