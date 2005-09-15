@@ -68,6 +68,7 @@ CREATE TABLE `documents` (
   `size` int(11) default NULL,
   `text` text,
   `publication_time` int(14) default NULL,
+-- FIXME: this should be an unsigned tinyint
   `state` char(1) default NULL,
   `download_count` float NOT NULL default '0',
   `url` varchar(255) NOT NULL default '',
@@ -88,7 +89,9 @@ CREATE TABLE `files` (
   `file_name` varchar(255) NOT NULL default '',
   `file_time` int(11) NOT NULL default '0',
   `db_document_id` int(11) default NULL,
+-- FIXME : this matches documents.state, and should be unsigned tinyint too
   `state` tinyint(4) default NULL,
+-- FIXME: unsigned tinyint too
   `file_state` tinyint(4) default NULL,
   PRIMARY KEY  (`file_name`),
   KEY `db_document_id` (`db_document_id`)
@@ -119,6 +122,7 @@ CREATE TABLE `node_interests` (
 CREATE TABLE `nodes` (
   `node_id` char(40) NOT NULL default '',
   `ip` char(15) NOT NULL default '',
+-- FIXME: this should be unsigned smallint
   `port` smallint(11) NOT NULL default '0',
   `last_seen_time` int(11) default NULL,
   `counter` int(11) NOT NULL default '0',
