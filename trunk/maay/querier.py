@@ -15,19 +15,9 @@ from maay.dbentity import *
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
 
-PUBLISHED_STATE = 1 << 0
-CACHED_STATE = 1 << 1
-KNOWN_STATE = 1 << 2
-PRIVATE_STATE = 1 << 3
-UNKNOWN_STATE = 1 << 9
+
 
 MAX_STORED_SIZE = 65535
-
-REMOVED_FILE_STATE = 0
-CREATED_FILE_STATE = 1
-MODIFIED_FILE_STATE = 2
-UNMODIFIED_FILE_STATE = 3
-NOT_INDEXED_FILE_STATE = 4
 
 WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN)) # XXX: need to handle diacritics signs
 
@@ -97,7 +87,9 @@ class MaayQuerier:
             documentScore = DocumentScore(doc.db_document_id, word, position,
                                           download_count, 0, 0)
             documentScore.commit(cursor, update)
-        fileInfo = FileInfo(filename, lastModTime, doc.db_document_id, PUBLISHED_STATE, CREATED_FILE_STATE)
+        fileInfo = FileInfo(filename, lastModTime, doc.db_document_id,
+                            Document.PUBLISHED_STATE,
+                            FileInfo.CREATED_FILE_STATE)
         fileInfo.commit(cursor, update=False)
         provider = DocumentProvider(doc.db_document_id, nodeID, int(time.time()))
         provider.commit(cursor, update=False)
@@ -113,7 +105,7 @@ class MaayQuerier:
         url = MySQLdb.escape_string(url or "")
         query = """INSERT INTO documents (document_id, mime_type, title, size, text, publication_time, state, download_count, url, indexed) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
                 """ %  (docId, mimetype, title, size, text,
-                        publicationTime, UNKNOWN_STATE, downloadCount, url, 1)
+                        publicationTime, Document.UNKNOWN_STATE, downloadCount, url, 1)
         self._execute(query)
         return self.getDocumentWithId(docId)
 
