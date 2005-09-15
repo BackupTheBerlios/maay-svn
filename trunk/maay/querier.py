@@ -103,7 +103,7 @@ class MaayQuerier:
         provider.commit(cursor, update=False)
 
     def updateDocument(self, docId, filename, title, text, links, offset, fileSize, lastModTime, nodeID):
-        pass ## FIXME THIS is where adim and alf stopped porting the code
+        pass ## FIXME this is where adim and alf stopped porting the code
     
     def insertDocumentInfo(self, docId, title, mimetype, text, size, publicationTime, url):
         downloadCount = 0 # XXX 
