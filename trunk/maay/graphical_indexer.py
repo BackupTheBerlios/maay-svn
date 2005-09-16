@@ -18,3 +18,4 @@ class IndexerGui(Tk):
     def _build_interface(self):
         for line, (label, info) in enumerate(indexer.IndexerConfiguration.options):
             pass
+        
