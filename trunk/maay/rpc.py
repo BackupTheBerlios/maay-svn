@@ -3,10 +3,12 @@ from random import randint
 
 from twisted.web.xmlrpc import XMLRPC
 from twisted.cred.credentials import UsernamePassword
+from twisted.cred.error import UnauthorizedLogin
+from twisted.internet import defer
 
 from logilab.common.db import get_dbapi_compliant_module
 
-from maay.querier import MaayQuerier
+from maay.querier import MaayQuerier, IQuerier
 
 def make_uid(username, password):
     """forge a unique identifier"""
@@ -16,14 +18,25 @@ def make_uid(username, password):
 
 class MaayRPCServer(XMLRPC):
 
-    def __init__(self, dbhost, dbname):
+    def __init__(self, portal):
         XMLRPC.__init__(self)
         self._sessions = {}
-        self.dbhost = dbhost
-        self.dbname = dbname
+        self.portal = portal
         self.dbapiMod = get_dbapi_compliant_module('mysql')
-
+            
+    def _attachUser(self, (interface, querier, logout), username, password):
+        if interface is not IQuerier or querier is None:
+            print "Could not get Querier for", username
+            return '' # raise UnauthorizedLogin()
+        digest = make_uid(username, password)
+        self._sessions[digest] = querier
+        return digest
+    
     def xmlrpc_authenticate(self, username, password):
+        creds = UsernamePassword(username, password)
+        d = defer.maybeDeferred(self.portal.login, creds, None, IQuerier)
+        d.addCallback(self._attachUser, username, password)
+        return d
         # XXX: use maayPortal to authenticate
         try:
             querier = MaayQuerier(host=self.dbhost, database=self.dbname,

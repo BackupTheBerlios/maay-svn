@@ -7,6 +7,8 @@ from mimetypes import guess_type
 import re
 import time
 
+from zope.interface import Interface, implements
+
 import MySQLdb
 
 from maay.dbentity import *
@@ -19,8 +21,44 @@ MAX_STORED_SIZE = 65535
 
 WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN)) # XXX: need to handle diacritics signs
 
+class IQuerier(Interface):
+    """defines the High-Level interface to Maay SQL database"""
+
+    def findDocuments(words):
+        """returns all Documents matching <words>"""
+
+    def getFilesInformations(**wheres):
+        """returns a list of FileInfo's instances according
+        to DB's content
+        """
+
+    def insertDocument(docId, filename, title, text, links, offset, fileSize, lastModTime, nodeID):
+        """inserts a new Document in the database"""
+        
+    def updateDocument(docId, filename, title, text, links, offset, fileSize, lastModTime, nodeID):
+        """updates a Document in the database"""
+    
+    def insertDocumentInfo(docId, title, mimetype, text, size, publicationTime, url):
+        """inserts a record in the document_infos table"""
+        
+    def getScoresForDocument(document, text, links, offset):
+        """parse words from document's text and update DB infos"""
+
+    def getDocumentWithId(docId):
+        """searchs the DB for a document with id <docId> and builds a Document
+        instance with the results
+
+        :return: `Document` or None if no document matches docId
+        """
+
+    def close(self):
+        """closes the DB connection"""
+
+        
 class MaayQuerier:
     """High-Level interface to Maay SQL database"""
+    implements(IQuerier)
+    
     def __init__(self, host='', database='', user='', password=''):
         self._cnx = MySQLdb.connect(host=host, db=database,
                                     user=user, passwd=password)
@@ -38,7 +76,10 @@ class MaayQuerier:
             cursor.close()
             self._cnx.commit()
         return results
-        
+
+    def close(self):
+        self._cnx.close()
+    
     def findDocuments(self, words):
         if not words:
             return []
