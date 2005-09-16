@@ -19,7 +19,7 @@ def __get_data_dir():
         # XXX FIXME this probably does not work with py2exe
         return  os.path.join(__maay_dir, 'data') 
     else:
-        if __maay_dir.startswith('/home'):
+        if __maay_dir.startswith('/home') or __maay_dir.startswith('/Users'):
             # we are in a development directory
             return os.path.join(__maay_dir, 'data')
         else:
