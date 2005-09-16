@@ -37,16 +37,6 @@ class MaayRPCServer(XMLRPC):
         d = defer.maybeDeferred(self.portal.login, creds, None, IQuerier)
         d.addCallback(self._attachUser, username, password)
         return d
-        # XXX: use maayPortal to authenticate
-        try:
-            querier = MaayQuerier(host=self.dbhost, database=self.dbname,
-                              user=username, password=password)
-        except self.dbapiMod.OperationalError:
-            return ''
-        # XXX: dummy implementation
-        digest = make_uid(username, password)
-        self._sessions[digest] = querier
-        return digest
 
     def xmlrpc_lastIndexationTime(self, cnxId, filename):
         if self.cnxIsValid(cnxId):
