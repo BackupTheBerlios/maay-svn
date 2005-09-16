@@ -1,9 +1,8 @@
 """this module provides a simple document abstraction"""
 
 __revision__ = '$Id$'
-__all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore']
-
-import os
+__all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore'
+           'Word', 'Node', 'NodeInterest']
 
 class DBEntity:
     attributes = []
@@ -15,10 +14,11 @@ class DBEntity:
             assert attrname in self.attributes
             setattr(self, attrname, value)
         for keyattr in self.key:
-            assert keyattr in self.attributes, "invalid value for key: %s" % keyattr
+            assert keyattr in self.attributes, \
+                   "invalid value for key: %s" % keyattr
 
     def buildStateDict(self):
-        return dict([(attr, getattr(self, attr)) for attr in self.attribtutes])
+        return dict([(attr, getattr(self, attr)) for attr in self.attributes])
     stateDict = property(buildStateDict, doc="current object's state")
 
     def selectWhere(cls, cursor, **args):
@@ -49,7 +49,8 @@ class DBEntity:
                        if getattr(self, attr, None)]
         wheres = ['%s=%%(%s)s' % (keyattr, keyattr) for keyattr in self.key]
         where = ' AND '.join(wheres)
-        query = 'UPDATE %s SET %s WHERE %s' % (self.tableName, ', '.join(attrClauses),
+        query = 'UPDATE %s SET %s WHERE %s' % (self.tableName,
+                                               ', '.join(attrClauses),
                                                where)
         return query
 
@@ -255,7 +256,7 @@ class Word(DBEntity):
     attributes = ('word', 'claim_count', 'download_count')
     key = ('word',)
 
-class Nodes(DBEntity):
+class Node(DBEntity):
     """
     Attributes:
     -----------
@@ -298,7 +299,8 @@ class NodeInterest(DBEntity):
        other nodes
     """
     table = 'node_interests'
-    attributes = ('node_id', 'word', 'claim_count', 'specialisation', 'expertise')
+    attributes = ('node_id', 'word', 'claim_count',
+                  'specialisation', 'expertise')
     key = ('node_id', 'word')
 
     
