@@ -1,4 +1,6 @@
+# -*- coding: iso-8859-1 -*- 
 """provides the MaayQuerier class"""
+
 
 __revision__ = '$Id$'
 __metaclass__ = type
@@ -11,15 +13,18 @@ from zope.interface import Interface, implements
 
 import MySQLdb
 
-from maay.dbentity import *
+from maay.dbentity import Document, FileInfo, DocumentProvider, DocumentScore
 
 
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
 
 MAX_STORED_SIZE = 65535
-
-WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN)) # XXX: need to handle diacritics signs
+# XXX: need to handle diacritics signs
+# according to the PhD thesis, we should substitute the diacritics
+# chars with the non diacritics (e.g. révoltant -> revoltant)
+# find a portable way to do this with unicode (good luck, Luke)
+WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN)) 
 
 class IQuerier(Interface):
     """defines the High-Level interface to Maay SQL database"""
@@ -95,17 +100,19 @@ class MaayQuerier:
             ['D.%s' % col for col in columns])
         # for each row, build a dict from list of couples (attrname, value)
         # and build a DBEntity from this dict
-        results = [Document(**dict(zip(columns, row))) for row in self._execute(query, args)]
+        results = [Document(**dict(zip(columns, row)))
+                   for row in self._execute(query, args)]
         return results
 
 
     def getFilesInformations(self, **args):
         cursor = self._cnx.cursor()
-        results = FileInfo.selectWhere(cursor, filename=file_name)
+        results = FileInfo.selectWhere(cursor, filename=args['file_name'])
         cursor.close()
         return results
 
-    def insertDocument(self, docId, filename, title, text, links, offset, fileSize, lastModTime, nodeID):
+    def insertDocument(self, docId, filename, title, text, links, offset,
+                       fileSize, lastModTime, nodeID):
         mimetype = guess_type(filename)[0]
         doc = self.insertDocumentInfo(docId, title, mimetype, text, fileSize,
                                       lastModTime, filename)
@@ -133,18 +140,27 @@ class MaayQuerier:
         provider = DocumentProvider(doc.db_document_id, nodeID, int(time.time()))
         provider.commit(cursor, update=False)
 
-    def updateDocument(self, docId, filename, title, text, links, offset, fileSize, lastModTime, nodeID):
+    def updateDocument(self, docId, filename, title, text, links, offset,
+                       fileSize, lastModTime, nodeID):
         pass ## FIXME this is where adim and alf stopped porting the code
     
-    def insertDocumentInfo(self, docId, title, mimetype, text, size, publicationTime, url):
+    def insertDocumentInfo(self, docId, title, mimetype, text, size,
+                           publicationTime, url):
         downloadCount = 0 # XXX 
         # check if it exists first :
         title = MySQLdb.escape_string(title)
         text = MySQLdb.escape_string(text[:MAX_STORED_SIZE])
         url = MySQLdb.escape_string(url or "")
-        query = """INSERT INTO documents (document_id, mime_type, title, size, text, publication_time, state, download_count, url, indexed) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+        query = """INSERT INTO documents (document_id, mime_type, title,
+                                          size, text, publication_time,
+                                          state, download_count, url,
+                                          indexed)
+                VALUES ('%s', '%s', '%s', '%s', '%s',
+                        '%s', '%s',
+                        '%s', '%s', '%s')
                 """ %  (docId, mimetype, title, size, text,
-                        publicationTime, Document.UNKNOWN_STATE, downloadCount, url, 1)
+                        publicationTime, Document.UNKNOWN_STATE,
+                        downloadCount, url, 1)
         self._execute(query)
         return self.getDocumentWithId(docId)
 
@@ -166,10 +182,11 @@ class MaayQuerier:
 
         :return: `Document` or None if no document matches docId
         """
-        columns = ['db_document_id', 'document_id', 'mime_type', 'title', 'size',
-                   'text', 'publication_time', 'state', 'download_count', 'url']
-        query = 'SELECT %s FROM documents WHERE document_id=%%(docId)s' % (
-            ', '.join(columns))
+        columns = ['db_document_id', 'document_id', 'mime_type', 'title',
+                   'size', 'text', 'publication_time', 'state',
+                   'download_count', 'url']
+        query = 'SELECT %s FROM documents '\
+                'WHERE document_id=%%(docId)s' % (', '.join(columns))
         results = self._execute(query, {'docId' : docId})
         if results:
             # build a dict from list of couples (attrname, value) from the
