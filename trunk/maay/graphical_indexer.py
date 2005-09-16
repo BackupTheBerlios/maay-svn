@@ -15,7 +15,6 @@ class IndexerGui(Tk):
         self.title("Maay Indexer")
         self._build_interface()
         
-
     def _build_interface(self):
         for line, (label, info) in enumerate(indexer.IndexerConfiguration.options):
             pass
