@@ -1,7 +1,6 @@
 """this module provides a simple document abstraction"""
 
 __revision__ = '$Id$'
-
 __all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore']
 
 import os
@@ -77,20 +76,34 @@ class Document(DBEntity):
     """Represent a Document in the database
     A Document is different from a file, because several files can store
     the same document
+
     Attributes:
+    -----------
     
-    db_document_id (primary key): unique integer identifying the document
-    str document_id: SHA1 hash of the content of the document as a hex string
-    str mime_type: 
-    str title: 
-    int size: size in bytes
-    str text: textual content of the document, used to display excerpts
-    int publication_time:
-    char state: see below
-    float download_count:
-    str url:
-    float matching: defaults to 0
-    char indexed: defaults to '1'
+     * db_document_id (primary key): unique integer identifying the document
+
+     * str document_id: SHA1 hash of the content of the document as a hex string
+
+     * str mime_type: mime type string (max length = 40 chars)
+
+     * str title: title of the document (max length = 255 chars)
+
+     * int size: size in bytes
+     
+     * str text: textual content of the document, used to display excerpts
+     
+     * int publication_time: last modification date of the file
+       containing the doc (in seconds since Epoch)
+     
+     * char state: see below
+     
+     * float download_count: sum of the weights of the downloads
+     
+     * str url: url of the document if it was downloaded
+     
+     * float matching: defaults to 0
+     
+     * char indexed: defaults to '1'
 
     The state of a document can be (values in parenthesis give the
     French word used in the PhD thesis):
@@ -149,11 +162,23 @@ class Document(DBEntity):
 class FileInfo(DBEntity):
     """
     Attributes:
-    str file_name (primary key): the absolute path to the file
-    int file_time: time of last modification of the file according to the filesystem
-    int db_document_id: unique integer identifying the document
-    int state: see DocumentInfo.state attribute
-    int file_state: value can be one of REMOVED/CREATED/MODIFIED/UNMODIFIED/NOT_INDEXED _FILE_STATE
+    -----------
+    
+     * str file_name (primary key): the absolute path to the file
+     
+     * int file_time: time of last modification of the file according
+       to the filesystem
+       
+     * int db_document_id: unique integer identifying the document
+
+     * int state: see DocumentInfo.state attribute
+
+     * int file_state: value can be one of
+       - REMOVED_FILE_STATE
+       - CREATED_FILE_STATE
+       - MODIFIED_FILE_STATE
+       - UNMODIFIED_FILE_STATE
+       - NOT_INDEXED_FILE_STATE
     """
     attributes = ('file_name', 'file_time', 'db_document_id',
                   'state', 'file_state')
@@ -170,12 +195,25 @@ class FileInfo(DBEntity):
 class DocumentScore(DBEntity):
     """
     Attributes
-    int db_document_id (primary key): unique integer identifying the document
-    str word (primary key) : the word for which the score is computed
-    int position : offset of the word (in bytes) from the beginning of the document (in the current implementation, this is the offset of the last occurence of the word)
-    float download_count: 
-    float relevance:
-    float popularity:
+    -----------
+        
+     * int db_document_id (primary key): unique integer identifying
+    the document
+
+     * str word (primary key) : the word for which the score is computed
+
+     * int position : offset of the word (in bytes) from the beginning
+    of the document (in the current implementation, this is the offset
+    of the last occurence of the word)
+
+     * float download_count: sum of the download weights divided by
+    the length of the search queries
+
+     * float relevance: higher values mean that the word is used to
+    specify a given document among downlods
+    
+     * float popularity: higher values mean that the document is a
+    good answer to a query including the word
     """
     attributes = ('db_document_id', 'word', 'position', 'download_count',
                   'relevance', 'popularity')
@@ -185,19 +223,82 @@ class DocumentScore(DBEntity):
 class DocumentProvider(DBEntity):
     """
     Attributes
-    int db_document_id (primary key): unique integer identifying the document
-    str node_id (primary key): SHA1 hash value identifying a node as a hex string
-    int last_providing_time: last time the document was provided by the provider
+    -----------
+    
+     * int db_document_id (primary key): unique integer identifying
+       the document
+     
+     * str node_id (primary key): SHA1 hash value identifying a node
+       as a hex string
+     
+     * int last_providing_time: last time the document was provided by
+       the provider
     """
     attributes = ('db_document_id', 'node_id', 'last_providing_time')
     tableName = 'document_providers'
     key = ('db_document_id', 'node_id')
 
-## class Word(DBEntity):
-##     table = 'words'
+class Word(DBEntity):
+    """
+    Attributes:
+    -----------
+    
+     * str word: max length = MAX_WORD_SIZE = 50
+     
+     * float claim_count: sum(1/length_of_query) for all queries in
+       which the word appears
+     
+     * fload download_count: sum of the weights of the downloads
+       divided by the length of the queries
+    """
+    table = 'words'
+    attributes = ('word', 'claim_count', 'download_count')
+    key = ('word',)
 
-## class Nodes(DBEntity):
-##     table = 'nodes'
+class Nodes(DBEntity):
+    """
+    Attributes:
+    -----------
+    
+     * str node_id: SHA1 hash hex string
+     
+     * str ip : dotted numeric ip address
+     
+     * int port: port number on which maay is listening
+     
+     * int last_seen_time: date in seconds since epoch
+     
+     * float claim_count: total number of messages received from node
+     
+     * double affinity: caracterisation of interests similar to the
+       running node (values close to 1 ar better)
+     
+     * int bandwidth: constant for now (value = 10)
+    """
+    table = 'nodes'
+    attributes = ('node_id', 'ip', 'port', 'last_seen_time', 'counter',
+                  'claim_count', 'affinity', 'bandwidth')
+    key = ('node_id',)
 
-## class NodeInterest(DBEntity):
-##     table = 'node_interests'
+class NodeInterest(DBEntity):
+    """
+    Attributes:
+    -----------
+    
+     * str node_id: SHA1 hash hex string
+     
+     * str word: word on which interest is computed
+
+     * float claim_count:
+     
+     * float specialisation: interest of the node for a word compared
+       to other words
+     
+     * float expertise: interest of the node for a word compared to
+       other nodes
+    """
+    table = 'node_interests'
+    attributes = ('node_id', 'word', 'claim_count', 'specialisation', 'expertise')
+    key = ('node_id', 'word')
+
+    

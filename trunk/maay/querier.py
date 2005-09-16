@@ -15,8 +15,6 @@ from maay.dbentity import *
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
 
-
-
 MAX_STORED_SIZE = 65535
 
 WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN)) # XXX: need to handle diacritics signs
