@@ -10,7 +10,6 @@ import re
 import time
 
 from zope.interface import Interface, implements
-
 import MySQLdb
 
 from maay.dbentity import Document, FileInfo, DocumentProvider, DocumentScore

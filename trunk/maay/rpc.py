@@ -23,7 +23,7 @@ class MaayRPCServer(XMLRPC):
         self._sessions = {}
         self.portal = portal
         self.dbapiMod = get_dbapi_compliant_module('mysql')
-            
+        
     def _attachUser(self, (interface, querier, logout), username, password):
         if interface is not IQuerier or querier is None:
             print "Could not get Querier for", username
@@ -31,11 +31,13 @@ class MaayRPCServer(XMLRPC):
         digest = make_uid(username, password)
         self._sessions[digest] = querier
         return digest
-    
+
     def xmlrpc_authenticate(self, username, password):
+        """server authentication method"""
         creds = UsernamePassword(username, password)
-        d = defer.maybeDeferred(self.portal.login, creds, None, IQuerier)
+        d = self.portal.login(creds, None, IQuerier)
         d.addCallback(self._attachUser, username, password)
+        d.addErrback(lambda deferred: 'boom')
         return d
 
     def xmlrpc_lastIndexationTime(self, cnxId, filename):
@@ -45,7 +47,7 @@ class MaayRPCServer(XMLRPC):
             if len(fileInfos):
                 return fileInfos[0].file_time
             return 0
-        return None # XXX: need to differenciate bad cnxId and no last mod time
+        return -1 # XXX: need to differenciate bad cnxId and no last mod time
 
 
     def xmlrpc_updateDocument(self, cnxId, docId, filename, title, text,
