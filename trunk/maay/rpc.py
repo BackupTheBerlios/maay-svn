@@ -5,6 +5,7 @@ from twisted.web.xmlrpc import XMLRPC
 from twisted.cred.credentials import UsernamePassword
 from twisted.cred.error import UnauthorizedLogin
 from twisted.internet import defer
+## from twisted.python.failure import Failure
 
 from logilab.common.db import get_dbapi_compliant_module
 
@@ -47,6 +48,8 @@ class MaayRPCServer(XMLRPC):
             if len(fileInfos):
                 return fileInfos[0].file_time
             return 0
+        # XXX : could we return twisted.python.failure.Failure instance here ?
+##         return Failure(ValueError("invalid connexion")
         return -1 # XXX: need to differenciate bad cnxId and no last mod time
 
 
