@@ -13,7 +13,8 @@ from string import maketrans, translate
 from zope.interface import Interface, implements
 import MySQLdb
 
-from maay.dbentity import Document, FileInfo, DocumentProvider, DocumentScore
+from maay.dbentity import Document, FileInfo, DocumentProvider, DocumentScore, \
+     Word
 
 
 WORD_MIN_LEN = 2
@@ -58,7 +59,7 @@ class MaayQuerier:
     def __init__(self, host='', database='', user='', password='', connection=None):
         if connection is None:
             connection = MySQLdb.connect(host=host, db=database,
-                                        user=user, passwd=password)
+                                         user=user, passwd=password)
         self._cnx = connection
 
     def _execute(self, query, args=None):
@@ -68,6 +69,8 @@ class MaayQuerier:
             cursor.execute(query, args)
             results = cursor.fetchall()
         except:
+            import traceback
+            traceback.print_exc()
             print "GOT ERROR while executing %r/%s ... rollback" % (query, args)
             cursor.close()
             self._cnx.rollback()
@@ -114,21 +117,23 @@ class MaayQuerier:
         cursor = self._cnx.cursor()
 
         # insert or update in table document
-        doc = Document.selectWhere(cursor, document_id = content_hash)
+        doc = Document.selectWhere(cursor, document_id=content_hash)
         if not doc:
             doc = Document(document_id = content_hash,
-                           title = title,
-                           text = text,
-                           size = fileSize,
-                           publication_time = lastModifiedOn,
-                           download_count = 0.,
-                           url = filename,
-                           matching = 0.,
-                           indexed = '1',
-                           state = state)
+                           title=title,
+                           text=text,
+                           size=fileSize,
+                           publication_time=lastModifiedOn,
+                           download_count=0.,
+                           url=filename,
+                           matching=0.,
+                           indexed='1',
+                           state=state)
             doc.commit(cursor, update=False)
-            doc = Document.selectWhere(cursor, document_id = content_hash)[0]
-
+            doc = Document.selectWhere(cursor, document_id=content_hash)[0]
+        else:
+            #FIXME : update db
+            pass
 
         # insert or update in table file_info
         files = FileInfo.selectWhere(cursor,
@@ -141,24 +146,24 @@ class MaayQuerier:
             file_info.file_state = file_state
             file_info.commit(cursor, update=True)
         else:
-            file_info = FileInfo(db_document_id = doc.db_document_id,
-                                 file_name = filename,
-                                 file_time = lastModifiedOn,
-                                 state = state,
-                                 file_state = file_state)
-            file_info.commit(cursor, update = False)
+            file_info = FileInfo(db_document_id=doc.db_document_id,
+                                 file_name=filename,
+                                 file_time=lastModifiedOn,
+                                 state=state,
+                                 file_state=file_state)
+            file_info.commit(cursor, update=False)
 
-        self._updateScores(self, cursor, doc.db_document_id, text)
+        self._updateScores(cursor, doc.db_document_id, text)
         cursor.close()
 
 
     def _updateScores(self, cursor, db_document_id, text):
         # insert or update in table document_score
-        db_scores = self._getScoresDict(db_document_id)
+        db_scores = self._getScoresDict(cursor, db_document_id)
         doc_scores = {}
         # We update the document_score table only for the first
         # occurence of the word in the document
-        for match in WORDS_RGX.finditer(normalize_word(text)):
+        for match in WORDS_RGX.finditer(normalize_text(text)):
             word = match.group(0)
             if word in doc_scores:
                 continue
@@ -170,7 +175,7 @@ class MaayQuerier:
                     db_scores[word].commit(cursor, update=True)
             else:
                 # insert a row in the Word table if required
-                self._ensureWordInDatabase(word)
+                self._ensureWordInDatabase(cursor, word)
                 db_score = DocumentScore(db_document_id = db_document_id,
                                          word = word,
                                          position = position,
@@ -188,8 +193,8 @@ class MaayQuerier:
                            download_count = 0.)
             db_word.commit(cursor, update = False)
         
-    def _getScoresDict(self, db_document_id):
-        _scores = DocumentScore.selectWhere(cursor, db_document_id = db_document_id)
+    def _getScoresDict(self, cursor, db_document_id):
+        _scores = DocumentScore.selectWhere(cursor, db_document_id=db_document_id)
         db_scores = {}
         while _scores:
             score = _scores.pop()
@@ -236,7 +241,8 @@ _table = maketrans(
                    'uuuu'
                    'y'
                    )
-def normalize_word(word, table=_table):
+
+def normalize_text(word, table=_table):
     """turns everything to lowercase, and converts accentuated
     characters to non accentuated chars."""
     word = word.lower()

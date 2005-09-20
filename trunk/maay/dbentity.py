@@ -18,8 +18,12 @@ class DBEntity:
                    "invalid value for key: %s" % keyattr
 
     def buildStateDict(self):
-        return dict([(attr, getattr(self, attr)) for attr in self.attributes])
+        return dict([(attr, getattr(self, attr)) for attr in self.boundAttributes()])
     stateDict = property(buildStateDict, doc="current object's state")
+
+    def boundAttributes(self):
+        """returns the list of attributes for which a value is specified"""
+        return [attr for attr in self.attributes if hasattr(self, attr)]
 
     def _selectQuery(cls, whereColumns=()):
         if whereColumns:
@@ -50,8 +54,7 @@ class DBEntity:
 
     def _updateQuery(self):
         """generates an UPDATE query according to object's state"""
-        attrClauses = ['%s=%%(%s)s' % (attr, attr) for attr in self.attributes
-                       if getattr(self, attr, None)]
+        attrClauses = ['%s=%%(%s)s' % (attr, attr) for attr in self.boundAttributes()]
         wheres = ['%s=%%(%s)s' % (keyattr, keyattr) for keyattr in self.key]
         where = ' AND '.join(wheres)
         query = 'UPDATE %s SET %s WHERE %s' % (self.tableName,
@@ -62,9 +65,9 @@ class DBEntity:
     def _insertQuery(self):
         """generates an INSERT query according to object's state"""
         values = ['%%(%s)s' % attr for attr in self.attributes
-                  if getattr(self, attr, None)]
+                  if hasattr(self, attr)]
         query = 'INSERT INTO %s (%s) VALUES (%s)' % (self.tableName,
-                                                     ', '.join(self.attributes),
+                                                     ', '.join(self.boundAttributes()),
                                                      ', '.join(values))
         return query
 
@@ -145,7 +148,7 @@ class Document(DBEntity):
     attributes = ('db_document_id', 'document_id', 'mime_type', 'title',
                   'size', 'text', 'publication_time', 'state', 'download_count',
                   'url', 'matching', 'indexed')
-    tableName = 'document'
+    tableName = 'documents'
     key = ('db_document_id',)
     
     def readable_size(self):
@@ -189,7 +192,7 @@ class FileInfo(DBEntity):
     attributes = ('file_name', 'file_time', 'db_document_id',
                   'state', 'file_state')
     tableName = 'files'
-    key = ('db_document_id',)
+    key = ('file_name',)
     
     REMOVED_FILE_STATE = 0
     CREATED_FILE_STATE = 1
