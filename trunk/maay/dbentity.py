@@ -1,7 +1,7 @@
 """this module provides a simple document abstraction"""
 
 __revision__ = '$Id$'
-__all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore'
+__all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore',
            'Word', 'Node', 'NodeInterest']
 
 class DBEntity:
@@ -11,7 +11,7 @@ class DBEntity:
     
     def __init__(self, **values):
         for attrname, value in values.iteritems():
-            assert attrname in self.attributes
+            assert attrname in self.attributes, 'Unknown attribute %s' % attrname
             setattr(self, attrname, value)
         for keyattr in self.key:
             assert keyattr in self.attributes, \
@@ -21,15 +21,20 @@ class DBEntity:
         return dict([(attr, getattr(self, attr)) for attr in self.attributes])
     stateDict = property(buildStateDict, doc="current object's state")
 
-    def selectWhere(cls, cursor, **args):
-        if args:
-            wheres = ['%s=%%(%s)s' % (attr, attr) for attr in args]
-            where =  'WHERE ' + ' AND '.join(wheres)
+    def _selectQuery(cls, whereColumns=()):
+        if whereColumns:
+            wheres = ['%s=%%(%s)s' % (attr, attr) for attr in whereColumns]
+            where =  ' WHERE ' + ' AND '.join(wheres)
         else:
             where = ''
-        query = 'SELECT %s FROM %s %s' % (', '.join(cls.attributes),
+        query = 'SELECT %s FROM %s%s' % (', '.join(cls.attributes),
                                                 cls.tableName,
                                                 where)
+        return query
+    _selectQuery = classmethod(_selectQuery)
+
+    def selectWhere(cls, cursor, **args):
+        query = cls._selectQuery(args.keys())
         cursor.execute(query, args)
         results = cursor.fetchall()
         return [cls(**dict(zip(cls.attributes, row))) for row in results]
@@ -37,13 +42,13 @@ class DBEntity:
     
     def commit(self, cursor, update=False):
         if update:
-            query = self.updateQuery()
+            query = self._updateQuery()
         else:
-            query = self.insertQuery()
+            query = self._insertQuery()
         cursor.execute(query, self.stateDict)
         
 
-    def updateQuery(self):
+    def _updateQuery(self):
         """generates an UPDATE query according to object's state"""
         attrClauses = ['%s=%%(%s)s' % (attr, attr) for attr in self.attributes
                        if getattr(self, attr, None)]
@@ -54,7 +59,7 @@ class DBEntity:
                                                where)
         return query
 
-    def insertQuery(self):
+    def _insertQuery(self):
         """generates an INSERT query according to object's state"""
         values = ['%%(%s)s' % attr for attr in self.attributes
                   if getattr(self, attr, None)]
@@ -252,7 +257,7 @@ class Word(DBEntity):
      * fload download_count: sum of the weights of the downloads
        divided by the length of the queries
     """
-    table = 'words'
+    tableName = 'words'
     attributes = ('word', 'claim_count', 'download_count')
     key = ('word',)
 
@@ -276,7 +281,7 @@ class Node(DBEntity):
      
      * int bandwidth: constant for now (value = 10)
     """
-    table = 'nodes'
+    tableName = 'nodes'
     attributes = ('node_id', 'ip', 'port', 'last_seen_time', 'counter',
                   'claim_count', 'affinity', 'bandwidth')
     key = ('node_id',)
@@ -298,7 +303,7 @@ class NodeInterest(DBEntity):
      * float expertise: interest of the node for a word compared to
        other nodes
     """
-    table = 'node_interests'
+    tableName = 'node_interests'
     attributes = ('node_id', 'word', 'claim_count',
                   'specialisation', 'expertise')
     key = ('node_id', 'word')
