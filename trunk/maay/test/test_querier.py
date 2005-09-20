@@ -35,6 +35,11 @@ class QuerierTC(unittest.TestCase):
 
 Le petit chat est mort."""
         digest = sha.sha(text).hexdigest()
+        cursor = self.cnx.cursor()
+        # At this point, database should be emtpy, so no document
+        # should match <digest>
+        matchingDocs = Document.selectWhere(cursor, document_id=digest)
+        self.assertEquals(len(matchingDocs), 0)
         self.querier.indexDocument('/tmp/Tartuffe.txt',
                                    'Le Tartuffe',
                                    text,
@@ -44,7 +49,6 @@ Le petit chat est mort."""
                                    'text',
                                    Document.PUBLISHED_STATE,
                                    FileInfo.CREATED_FILE_STATE)
-        cursor = self.cnx.cursor()
         matchingDocs = Document.selectWhere(cursor, document_id=digest)
         self.assertEquals(len(matchingDocs), 1)
         self.assertEquals(matchingDocs[0].text, text)
