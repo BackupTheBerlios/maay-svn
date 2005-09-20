@@ -37,23 +37,12 @@ class IQuerier(Interface):
         to DB's content
         """
 
-    def insertDocument(docId, filename, title, text, links, offset, fileSize, lastModTime, nodeID):
-        """inserts a new Document in the database"""
-        
-    def updateDocument(docId, filename, title, text, links, offset, fileSize, lastModTime, nodeID):
-        """updates a Document in the database"""
-    
-    def insertDocumentInfo(docId, title, mimetype, text, size, publicationTime, url):
-        """inserts a record in the document_infos table"""
-        
-    def getDocumentWithId(docId):
-        """searchs the DB for a document with id <docId> and builds a Document
-        instance with the results
+    def indexDocument(filename, title, text, fileSize, lastModifiedOn,
+                      content_hash, mime_type, state, file_state):
+        """Inserts or update information in table documents,
+        file_info, document_score and word"""
 
-        :return: `Document` or None if no document matches docId
-        """
-
-    def close(self):
+    def close():
         """closes the DB connection"""
 
         
@@ -118,7 +107,8 @@ class MaayQuerier:
 
     def indexDocument(self, filename, title, text, fileSize, lastModifiedOn,
                       content_hash, mime_type, state, file_state):
-        """Inserts or update information in table documents, file_info, document_score and word"""
+        """Inserts or update information in table documents,
+        file_info, document_score and word"""
         # XXX Decide if we can compute the content_hash and mime_type
         # ourselves or if the indexer should do it and pass the values as an argument
         cursor = self._cnx.cursor()
