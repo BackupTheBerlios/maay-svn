@@ -27,8 +27,18 @@ def makeDocumentId(filename):
     content = file(filename, 'rb').read()
     return sha.sha(content).hexdigest()
     
-
+# TODO: manage published/private documents
+# TODO: manage periodical runs
+# TODO: memorize state of indexed document to avoid db lookup at each run
+# TODO: do an initial db query to initialize the indexation state (?)
 class Indexer:
+    """An Indexer instance periodically looks in the configured
+    directories for files to index If it detects changes in known
+    files, it sends a request to the Querier (via xmlrpc) to index the
+    file, giving the Querier information on the file. The querier may
+    decide to do nothing if it detects that the database is up-to-date.
+    """
+    
     def __init__(self, indexerConfig):
         self.indexerConfig = indexerConfig
         username = self.indexerConfig.user
@@ -49,21 +59,21 @@ class Indexer:
         for filename in self.getFileIterator():
             lastModificationTime = getLastModificationTime(filename)
             lastIndexationTime = self.getLastIndexationTime(filename)
-            fileSize = getFileSize(filename)
-            if lastIndexationTime == 0:
-                # means never been indexed
-                title, text, links, offset = converter.extractWordsFromFile(filename)
-                docId = makeDocumentId(filename)
-                self.insertFileInformations(docId, filename, title, text, links,
-                                            offset, fileSize, lastModificationTime)
-            elif lastIndexationTime < lastModificationTime:
-                # file has changed since last modification
-                title, text, links, offset = converter.extractWordsFromFile(filename)
-                docId = makeDocumentId(filename)
-                self.updateFileInformations(docId, filename, title, text, links,
-                                            offset, fileSize, lastModificationTime)
-            else:
+            if lastIndexationTime > lastModificationTime:
                 print "%s didn't change since last indexation"
+            else:
+                fileSize = getFileSize(filename)
+                title, text, links, offset = converter.extractWordsFromFile(filename)
+                docId = makeDocumentId(filename)
+
+                if lastIndexationTime == 0: # means never indexed
+                    # XXX FIXME: need to provide nodeId
+                    self.insertFileInformations(docId, filename, title, text, links,
+                                                offset, fileSize, lastModificationTime)
+                elif lastIndexationTime < lastModificationTime: 
+                    # XXX FIXME: need to provide nodeId
+                    self.updateFileInformations(docId, filename, title, text, links,
+                                                offset, fileSize, lastModificationTime)
 
     def getLastIndexationTime(self, filename):
         lastIndexationTime = self.serverProxy.lastIndexationTime(self.cnxId, filename)
