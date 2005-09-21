@@ -33,7 +33,7 @@ class IQuerier(Interface):
     def findDocuments(words):
         """returns all Documents matching <words>"""
 
-    def getFilesInformations(**wheres):
+    def getFileInformations(filename):
         """returns a list of FileInfo's instances according
         to DB's content
         """
@@ -102,11 +102,12 @@ class MaayQuerier:
         return results
 
 
-    def getFilesInformations(self, **args):
+    def getFileInformations(self, filename):
         cursor = self._cnx.cursor()
-        results = FileInfo.selectWhere(cursor, filename=args['file_name'])
+        results = FileInfo.selectWhere(cursor, file_name=filename)
         cursor.close()
-        return results
+        print results
+        return list(results)
 
     def indexDocument(self, filename, title, text, fileSize, lastModifiedOn,
                       content_hash, mime_type, state, file_state):
@@ -116,36 +117,49 @@ class MaayQuerier:
         # ourselves or if the indexer should do it and pass the values as an argument
         cursor = self._cnx.cursor()
 
-        # insert or update in table document
-        doc = Document.selectWhere(cursor, document_id=content_hash)
-        if not doc:
-            doc = Document(document_id=content_hash,
-                           title=title,
-                           text=text,
-                           size=fileSize,
-                           publication_time=lastModifiedOn,
-                           download_count=0.,
-                           url=filename,
-                           matching=0.,
-                           indexed='1',
-                           state=state)
-            doc.commit(cursor, update=False)
-            doc = Document.selectWhere(cursor, document_id=content_hash)[0]
-        else:
-            #FIXME : update db
-            pass
-
         # insert or update in table file_info
-        files = FileInfo.selectWhere(cursor,
-                                     db_document_id=doc.db_document_id,
-                                     file_name=filename)
-        if files:
-            file_info = files[0]
+        fileinfo = FileInfo.selectWhere(cursor,
+                                        file_name=filename)
+        if fileinfo:
+            fileinfo = fileinfo[0]
             file_info.file_time = lastModifiedOn
             file_info.state = state
             file_info.file_state = file_state
+            doc = Document.selectWhere(cursor,
+                                       db_document_id=file_info.db_document_id)
+            if doc.docId!=content_hash:
+                # the contents have changed
+                # we create a new Document (to avoid messing up if we have
+                # multiple files for this document)
+                doc = self._createDocument(content_hash,
+                                           title,
+                                           text,
+                                           fileSize,
+                                           lastModifiedOn,
+                                           filename,
+                                           state)
+                file_info.db_document_id = doc.db_document_id
             file_info.commit(cursor, update=True)
         else:
+            # file unknown
+            # try to find a Document with same hash value
+            doc = Document.selectWhere(cursor, document_id=content_hash)
+            if doc:
+                doc = doc[0]
+                doc.state = state
+                doc.publication_time = max(doc.publication_time, lastModifiedOn)
+                doc.commit(cursor, update=True)
+            else:
+                doc = self._createDocument(content_hash,
+                                           title,
+                                           text,
+                                           fileSize,
+                                           lastModifiedOn,
+                                           filename,
+                                           state)
+                doc.commit(cursor, update=False)
+                doc = Document.selectWhere(cursor, document_id=content_hash)[0]
+
             file_info = FileInfo(db_document_id=doc.db_document_id,
                                  file_name=filename,
                                  file_time=lastModifiedOn,
@@ -156,6 +170,21 @@ class MaayQuerier:
         self._updateScores(cursor, doc.db_document_id, text)
         cursor.close()
 
+    def _createDocument(self, cursor, content_hash, title, text, fileSize,
+                        lastModifiedOn, filename, state):
+        doc = Document(document_id=content_hash,
+                       title=title,
+                       text=text,
+                       size=fileSize,
+                       publication_time=lastModifiedOn,
+                       download_count=0.,
+                       url=filename,
+                       matching=0.,
+                       indexed='1',
+                       state=state)
+        doc.commit(cursor, update=False)
+        doc = Document.selectWhere(cursor, document_id=content_hash)[0]
+        return doc
 
     def _updateScores(self, cursor, db_document_id, text):
         # insert or update in table document_score

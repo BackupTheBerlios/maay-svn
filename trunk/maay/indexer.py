@@ -10,22 +10,25 @@ __revision__ = '$Id$'
 import os, stat
 import sha
 from xmlrpclib import ServerProxy
+import mimetypes
 
 from maay import converter
 from maay.configuration import Configuration
+from maay.dbentity import Document
 
 class AuthenticationError(Exception):
     """raised when authentication on xmlrpc server failed"""
 
-def getLastModificationTime(filename):
-    return int(os.stat(filename)[stat.ST_MTIME])
-
-def getFileSize(filename):
-    return int(os.stat(filename)[stat.ST_SIZE])
-
 def makeDocumentId(filename):
-    content = file(filename, 'rb').read()
-    return sha.sha(content).hexdigest()
+    """return the SHA hash value from of the contents of the file"""
+    stream = file(filename, 'rb')
+    hasher = sha.sha()
+    data = stream.read(4096)
+    while data:        
+        hasher.update(data)
+        data = stream.read(4096)
+    stream.close()
+    return hasher.hexdigest()
     
 # TODO: manage published/private documents
 # TODO: manage periodical runs
@@ -45,7 +48,7 @@ class Indexer:
         password = self.indexerConfig.password
         host = self.indexerConfig.host
         port = self.indexerConfig.port
-        self.serverProxy = ServerProxy('http://%s:%s' % (host, port))
+        self.serverProxy = ServerProxy('http://%s:%s' % (host, port), allow_none=True)
         self.cnxId = self.serverProxy.authenticate(username, password)
         if not self.cnxId:
             raise AuthenticationError("Failed to connect as '%s'" % username)
@@ -57,40 +60,35 @@ class Indexer:
 
     def start(self):
         for filename in self.getFileIterator():
-            lastModificationTime = getLastModificationTime(filename)
+            lastModificationTime = os.path.getmtime(filename)
             lastIndexationTime = self.getLastIndexationTime(filename)
             if lastIndexationTime > lastModificationTime:
                 print "%s didn't change since last indexation"
             else:
-                fileSize = getFileSize(filename)
+                fileSize = os.path.getsize(filename)
                 title, text, links, offset = converter.extractWordsFromFile(filename)
                 docId = makeDocumentId(filename)
+                mime_type = mimetypes.guess_types(filename)
 
-                if lastIndexationTime == 0: # means never indexed
-                    # XXX FIXME: need to provide nodeId
-                    self.insertFileInformations(docId, filename, title, text, links,
-                                                offset, fileSize, lastModificationTime)
-                elif lastIndexationTime < lastModificationTime: 
-                    # XXX FIXME: need to provide nodeId
-                    self.updateFileInformations(docId, filename, title, text, links,
-                                                offset, fileSize, lastModificationTime)
-
+                self.indexDocument(filename, title, fileSize, lastModificationTime,
+                                   docId, mime_type, Document.PUBLISHED_STATE)
+        # FIXME: do some cleanup of the database after indexing
+        # * remove FileInfo for files that are no longer on disk
+        # * remove Documents with no corresponding files
+        
     def getLastIndexationTime(self, filename):
         lastIndexationTime = self.serverProxy.lastIndexationTime(self.cnxId, filename)
         if lastIndexationTime is None:
             raise AuthenticationError("Bad cnxId sent to the server")
         return lastIndexationTime
 
-    def updateFileInformations(self, docId, filename, title, text, links,
-                               offset, fileSize, lastModTime):
-        self.serverProxy.insertDocument(self.cnxId, docId, filename, title, text,
-                                        links, offset, fileSize, lastModTime)
+    def indexDocument(self, filename, title, text, fileSize,
+                               lastModTime, content_hash, mime_type, state, file_state=None):
         print "I should now update DB with all these new words ! (%s)" % filename
+        self.serverProxy.indexDocument(self.cnxId, filename, title, text,
+                                       fileSize, lastModTime, content_hash,
+                                       mime_type, state, file_state)
         
-    def insertFileInformations(self, docId, filename, title, text, links,
-                               offset, fileSize, lastModTime):
-        self.serverProxy.updatetDocument(self.cnxId, docId, filename, title, text,
-                                         links, offset, fileSize, lastModTime)
     
      
 class FileIterator:
@@ -99,9 +97,9 @@ class FileIterator:
         self.indexed = indexed
         self.skipped = skipped or []
         for dirpath in self.indexed:
-            assert dirpath.startswith(os.path.sep), "relative paths not supported !"
+            assert os.path.isabs(dirpath), "relative paths not supported !"
         for dirpath in self.skipped:
-            assert dirpath.startswith(os.path.sep), "relative paths not supported !"
+            assert os.path.isabs(dirpath), "relative paths not supported !"
 
     def __iter__(self):
         for path in self.indexed:

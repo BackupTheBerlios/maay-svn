@@ -44,29 +44,22 @@ class MaayRPCServer(XMLRPC):
     def xmlrpc_lastIndexationTime(self, cnxId, filename):
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
-            fileInfos = querier.getFilesInformations(file_name=filename)
+            fileInfos = querier.getFileInformations(filename)
             if len(fileInfos):
                 return fileInfos[0].file_time
             return 0
         # XXX : could we return twisted.python.failure.Failure instance here ?
 ##         return Failure(ValueError("invalid connexion")
         return -1 # XXX: need to differenciate bad cnxId and no last mod time
-
-
-    def xmlrpc_updateDocument(self, cnxId, docId, filename, title, text,
-                              links, offset, fileSize, lastModTime):
-        if self.cnxIsValid(cnxId):
-            querier = self._sessions[cnxId]
-            querier.udpateDocument(docId, filename, title, text, links,
-                                   offset, fileSize, lastModTime)
-        return False
     
-    def xmlrpc_insertDocument(self, cnxId, docId, filename, title, text,
-                              links, offset, fileSize, lastModTime):
+    def xmlrpc_indexDocument(self, cnxId, filename, title, text, fileSize,
+                             lastModifiedOn, content_hash, mime_type, state,
+                             file_state):
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
-            querier.insertDocument(docId, filename, title, text,
-                                   links, offset, fileSize, lastModTime)
+            querier.indexDocument(filename, title, text, fileSize,
+                             lastModifiedOn, content_hash, mime_type, state,
+                             file_state)
         return None
     
     def cnxIsValid(self, cnxId):
