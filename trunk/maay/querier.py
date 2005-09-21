@@ -85,15 +85,16 @@ class MaayQuerier:
         if not words:
             return []
         columns = ['document_id', 'title', 'size', 'text', 'url', 'mime_type']
-        args = {'words' : '(' + ','.join([repr(word) for word in words]) + ')',
+        args = {# 'words' : words, # '(' + ','.join([repr(word) for word in words]) + ')',
                 'lenwords' : len(words)}
+        strwords = '(' + ','.join([repr(word) for word in words]) + ')'
         # XXX: what is the HAVING clause supposed to do ?
         query = """SELECT %s
                     FROM documents D, document_scores DS 
-                    WHERE DS.db_document_id=D.db_document_id AND DS.word IN %%(words)s
+                    WHERE DS.db_document_id=D.db_document_id AND DS.word IN %s
                     GROUP BY DS.db_document_id
                     HAVING count(DS.db_document_id) = %%(lenwords)s""" % (
-            ['D.%s' % col for col in columns])
+            ', '.join(['D.%s' % col for col in columns]), strwords)
         # for each row, build a dict from list of couples (attrname, value)
         # and build a DBEntity from this dict
         results = [Document(**dict(zip(columns, row)))
