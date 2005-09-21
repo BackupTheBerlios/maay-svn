@@ -115,7 +115,6 @@ class MaayQuerier:
         # XXX Decide if we can compute the content_hash and mime_type
         # ourselves or if the indexer should do it and pass the values as an argument
         cursor = self._cnx.cursor()
-
         # insert or update in table file_info
         fileinfo = FileInfo.selectWhere(cursor,
                                         file_name=filename)
@@ -164,7 +163,6 @@ class MaayQuerier:
                                            lastModifiedOn,
                                            filename,
                                            state)
-                doc.commit(cursor, update=False)
                 doc = Document.selectWhere(cursor, document_id=content_hash)[0]
 
             fileinfo = FileInfo(db_document_id=doc.db_document_id,
@@ -176,7 +174,8 @@ class MaayQuerier:
 
         self._updateScores(cursor, doc.db_document_id, text)
         cursor.close()
-
+        self._cnx.commit()        
+        
     def _createDocument(self, cursor, content_hash, title, text, fileSize,
                         lastModifiedOn, filename, state):
         doc = Document(document_id=content_hash,
