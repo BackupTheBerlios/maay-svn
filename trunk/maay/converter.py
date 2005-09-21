@@ -3,8 +3,8 @@
 Typical use ::
 
     >>> from maay.converter import extractWordsFromFile
-    >>> words = extractWordsFromFile('foo.pdf')
-    >>> words = extractWordsFromFile('foo.doc')
+    >>> title, text, links, offset = extractWordsFromFile('foo.pdf')
+    >>> title, text, links, offset = extractWordsFromFile('foo.doc')
 
 To define a new command-based converter, just extend the
 CommandBasedConverter class and define MIME_TYPE and
@@ -23,6 +23,8 @@ __revision__ = '$Id$'
 
 import os
 from mimetypes import guess_type
+
+from maay.texttool import TextParser, MaayHTMLParser as HTMLParser
 
 # REGISTRY is a mimetype / converterList map
 REGISTRY = {}
