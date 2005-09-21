@@ -87,6 +87,10 @@ class RPCServerTC(unittest.TestCase):
         self.assertEquals(unittest.deferredResult(retValue), 0)
 
 if __name__ == '__main__':
+    # FIXME: the following is nicer but triggers an assertion
+    #        because we imported twisted.internet.reactor
+##     from  twisted.scripts.trial import run
+##     run()
     import sys
     import os
     os.system('trial %s'%sys.argv[0])
