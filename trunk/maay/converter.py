@@ -22,48 +22,13 @@ it will use your converter.
 __revision__ = '$Id$'
 
 import os
-import re
 from mimetypes import guess_type
-from maay.querier import normalize_text
-
-TAG = re.compile('<.*?>', re.S)
-def remove_tags(htmlsource):
-    return TAG.sub('', htmlsource)
 
 # REGISTRY is a mimetype / converterList map
 REGISTRY = {}
 
 class IndexationFailure(Exception):
     """raised when an indexation has failed"""
-
-
-class TextParser:
-    def parseFile(self, filename):
-        """returns a 4-uple (title, normalized_text, links, offset)
-        
-        Aglorithm taken from original texttotext implementation
-        """
-        content = file(filename).read()
-        return self.parseString(content)
-
-    def parseString(self, source):
-        table = ''.join([' ' * 32] + [chr(i) for i in xrange(32, 256)])
-        translated = normalize_text(source.translate(table))
-        # normalize white spaces
-        result = ' '.join(translated.split())
-        title = result[:60]
-        return title, result, [], 0
-        
-
-class HTMLParser:
-    def parseFile(self, filename):
-        """returns a 4-uple (title, normalized_text, links, offset)
-        TODO: port original code from htmltotext
-        """
-        # XXX: really dummy implementation !!
-        source = file(filename).read()
-        return TextParser().parseString(source)
-
 
 class MetaConverter(type):
     """a simple metaclass for automatic converter registration"""

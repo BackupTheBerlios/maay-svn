@@ -14,7 +14,7 @@ import MySQLdb
 
 from maay.dbentity import Document, FileInfo, DocumentProvider, DocumentScore, \
      Word
-
+from maay.texttool import normalize_text
 
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
@@ -235,53 +235,3 @@ class MaayQuerier:
             score = _scores.pop()
             db_scores[score.word] = score
         return db_scores
-
-        
-from string import maketrans
-_table = maketrans(
-                   '\xc0\xc1\xc2\xc3\xc4\xc5'
-                   '\xc7'
-                   '\xc8\xc9\xca\xcb'
-                   '\xcc\xcd\xce\xcf'
-                   '\xd0'
-                   '\xd1'
-                   '\xd2\xd3\xd4\xd5\xd6\xd8'
-                   '\xd9\xda\xdb\xdc'
-                   '\xdd'
-                   '\xe0\xe1\xe2\xe3\xe4\xe5'
-                   '\xe7'
-                   '\xe8\xe9\xea\xeb'
-                   '\xec\xed\xee\xef'
-                   '\xf0'
-                   '\xf1'
-                   '\xf2\xf3\xf4\xf5\xf6\xf8'
-                   '\xf9\xfa\xfb\xfc'
-                   '\xff'
-                   ,
-                   'aaaaaa'
-                   'c'
-                   'eeee'
-                   'iiii'
-                   'o'
-                   'n'
-                   'oooooo'
-                   'uuuu'
-                   'y'
-                   'aaaaaa'
-                   'c'
-                   'eeee'
-                   'iiii'
-                   'o'
-                   'n'
-                   'oooooo'
-                   'uuuu'
-                   'y'
-                   )
-del maketrans
-
-def normalize_text(text, table=_table):
-    """turns everything to lowercase, and converts accentuated
-    characters to non accentuated chars."""
-    return text.lower().translate(table)
-
-del _table
