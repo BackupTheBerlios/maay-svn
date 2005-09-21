@@ -46,7 +46,6 @@ class Configuration(BaseConfiguration):
                                    config_file=self.config_file)
 
     def load(self):
-        print "CONFIG FILE =", self.config_file
         # first, load config from file
         if self.config_file and os.path.exists(self.config_file):
             self.load_file_configuration(self.config_file)

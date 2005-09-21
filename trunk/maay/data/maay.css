@@ -1,3 +1,9 @@
+/** login page ********/
+table.loginTable {
+  width: 100%;
+}
+
+/** search page *******/
 input.searchButton {
   background: #FFF0FF;
   border: 1px outset #ff2222;

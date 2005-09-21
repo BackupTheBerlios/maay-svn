@@ -151,4 +151,4 @@ CREATE TABLE `words` (
 -- maay user
 -- ---------------------------------------------------------
 
-grant all on maay.* to "maay"@"localhost" identified by "<maille>";
+grant all on maay.* to "maay"@"localhost" identified by "maay";

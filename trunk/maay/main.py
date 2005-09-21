@@ -19,7 +19,7 @@ from logilab.common.textutils import normalize_text
 
 from maay.querier import MaayQuerier, IQuerier
 from maay.rpc import MaayRPCServer
-from maay.configuration import get_path_of
+from maay.configuration import get_path_of, Configuration
 
 class MaayPage(rend.Page):
     child_maaycss = static.File(get_path_of('maay.css'))
@@ -36,7 +36,7 @@ class LoginForm(MaayPage):
             tags.head[tags.title["Maay Login Page"]],
             tags.body[
                 tags.form(action=guard.LOGIN_AVATAR, method='post')[
-                    tags.table[
+                    tags.table(_class="loginTable")[
                         tags.tr[
                             tags.td[ "Username:" ],
                             tags.td[ tags.input(type='text', name='username') ],
@@ -99,11 +99,6 @@ class ResultsPage(MaayPage):
         return context.tag
 
 
-## DB prefs (will be loaded from a pref file) ########################
-DB_HOST = 'crater.logilab.fr'
-DB_NAME = 'maay'
-
-
 ## nevow app/server setup ############################################
 class MaayRealm:
     """simple realm for Maay application"""
@@ -146,9 +141,10 @@ class MaayRealm:
 
 class MaayPortal(portal.Portal):
     """Portal for Maay authentication system"""
-    def __init__(self):
+    def __init__(self, webappConfig):
         realm = MaayRealm()
-        checker = DBAuthChecker(realm, DB_HOST, DB_NAME)
+        checker = DBAuthChecker(realm, webappConfig.db_host,
+                                webappConfig.db_name)
         portal.Portal.__init__(self, realm, (checker,))
         self.registerChecker(AllowAnonymousAccess(), IAnonymous)
     
@@ -179,8 +175,27 @@ class DBAuthChecker:
         return defer.succeed(creds.username)
 
 
+class WebappConfiguration(Configuration):
+    options = [
+        ('db-name',
+         {'type' : "string", 'metavar' : "<dbname>", 'short' : "d",
+          'help' : "name of the Maay database",
+          'default' : "maay",
+          }),
+        ('db-host',
+         {'type' : "string", 'metavar' : "<dbhost>", 'short' : "H",
+          'help' : "which server hosts the database",
+          'default' : "localhost",
+          }),
+        ]
+
+    config_file = 'webapp.ini'
+
+    
 def run():
-    maayPortal = MaayPortal()
+    webappConfig = WebappConfiguration()
+    webappConfig.load()
+    maayPortal = MaayPortal(webappConfig)
     website = appserver.NevowSite(guard.SessionWrapper(maayPortal))
     rpcserver = server.Site(MaayRPCServer(maayPortal))
     reactor.listenTCP(8080, website)
