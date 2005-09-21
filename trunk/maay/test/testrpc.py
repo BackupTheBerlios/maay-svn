@@ -17,7 +17,7 @@ from twisted.cred.credentials import IUsernamePassword
 
 from maay import rpc
 from maay.querier import MaayQuerier
-from maay.main import MaayPortal
+from maay.main import MaayPortal, WebappConfiguration
 
 class FakeConnection:
     def cursor(self):
@@ -54,7 +54,7 @@ rpc.make_uid = lambda username, password: username+password
 
 class RPCServerTC(unittest.TestCase):
     def setUp(self):
-        portal = MaayPortal()
+        portal = MaayPortal(WebappConfiguration())
         portal.registerChecker(FakeChecker(portal.realm))
         rpcserver = server.Site(rpc.MaayRPCServer(portal))
         self.p = reactor.listenTCP(0, rpcserver, interface="127.0.0.1")
