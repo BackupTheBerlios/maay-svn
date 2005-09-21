@@ -85,3 +85,8 @@ class RPCServerTC(unittest.TestCase):
         cnxId = unittest.deferredResult(d)
         retValue = self._callRemote('lastIndexationTime', cnxId, 'foo.pdf')
         self.assertEquals(unittest.deferredResult(retValue), 0)
+
+if __name__ == '__main__':
+    import sys
+    import os
+    os.system('trial %s'%sys.argv[0])
