@@ -119,7 +119,7 @@ class MaayQuerier:
         # insert or update in table document
         doc = Document.selectWhere(cursor, document_id=content_hash)
         if not doc:
-            doc = Document(document_id = content_hash,
+            doc = Document(document_id=content_hash,
                            title=title,
                            text=text,
                            size=fileSize,
@@ -138,7 +138,7 @@ class MaayQuerier:
         # insert or update in table file_info
         files = FileInfo.selectWhere(cursor,
                                      db_document_id=doc.db_document_id,
-                                     file_name = filename)
+                                     file_name=filename)
         if files:
             file_info = files[0]
             file_info.file_time = lastModifiedOn
@@ -176,22 +176,22 @@ class MaayQuerier:
             else:
                 # insert a row in the Word table if required
                 self._ensureWordInDatabase(cursor, word)
-                db_score = DocumentScore(db_document_id = db_document_id,
-                                         word = word,
-                                         position = position,
-                                         download_count = 0.,
-                                         relevance = 0.,
-                                         popularity = 0.)
+                db_score = DocumentScore(db_document_id=db_document_id,
+                                         word=word,
+                                         position=position,
+                                         download_count=0.,
+                                         relevance=0.,
+                                         popularity=0.)
                 db_score.commit(cursor, update = False)
                     
 
     def _ensureWordInDatabase(self, cursor, word):
-        db_words = Word.selectWhere(cursor, word = word)
+        db_words = Word.selectWhere(cursor, word=word)
         if not db_words:
-            db_word = Word(word = word,
-                           claim_count = 0.,
-                           download_count = 0.)
-            db_word.commit(cursor, update = False)
+            db_word = Word(word=word,
+                           claim_count=0.,
+                           download_count=0.)
+            db_word.commit(cursor, update=False)
         
     def _getScoresDict(self, cursor, db_document_id):
         _scores = DocumentScore.selectWhere(cursor, db_document_id=db_document_id)
