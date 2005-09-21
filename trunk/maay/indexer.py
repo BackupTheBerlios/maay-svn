@@ -66,8 +66,13 @@ class Indexer:
                 print "%s didn't change since last indexation"
             else:
                 fileSize = os.path.getsize(filename)
-                title, text, links, offset = converter.extractWordsFromFile(filename)
+                try:
+                    title, text, links, offset = converter.extractWordsFromFile(filename)
+                except converter.IndexationFailure, exc:
+                    print exc
+                    continue
                 docId = makeDocumentId(filename)
+                mime_type = mimetypes.guess_type(filename)[0]
                 mime_type = mimetypes.guess_type(filename)
 
                 self.indexDocument(filename, title, text, fileSize, lastModificationTime,
@@ -139,12 +144,16 @@ class IndexerConfiguration(Configuration):
         ('user',
          {'type': 'string',
           'metavar': '<userid>', 'short': 'u',
-          'help': 'identifier to use to connect to the database'}),
+          'help': 'identifier to use to connect to the database',
+          'default' : "maay",
+          }),
 
         ('password',
          {'type': 'string',
           'metavar': '<password>', 'short' : "p",
-          'help': 'password to use to connect to the database'}),
+          'help': 'password to use to connect to the database',
+          'default' : "maay",
+          }),
 
         ('index-dir',
          {'type': 'csv',

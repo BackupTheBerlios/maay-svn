@@ -30,6 +30,7 @@ class MaayRPCServer(XMLRPC):
             print "Could not get Querier for", username
             return '' # raise UnauthorizedLogin()
         digest = make_uid(username, password)
+        # print "Registering querier for %s (digets=%s)" % (username, digest)
         self._sessions[digest] = querier
         return digest
 

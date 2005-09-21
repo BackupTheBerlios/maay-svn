@@ -13,6 +13,9 @@ class ConvertersTC(unittest.TestCase):
                      'foo.doc', 'foo.rtf']
         for filename in filenames:
             mimetype = guess_type(filename)[0]
+            if mimetype is None:
+                print "Your config can't guess %s 's filetype" % filename
+                continue
             converters = converter.REGISTRY[mimetype]
             for klass in converters:
                 self.assertEquals(klass.MIME_TYPE, mimetype)
@@ -34,6 +37,10 @@ class ConvertersTC(unittest.TestCase):
             MIME_TYPE = 'application/pdf'
         new_converters = converter.REGISTRY.get('application/pdf', [])
         self.assertEquals(new_converters, [MyConverter] + original_converters)
+
+    def testIndexationFailure(self):
+        self.assertRaises(converter.IndexationFailure, converter.extractWordsFromFile,
+                          'AUTHORS')
 
 if __name__ == '__main__':
     unittest.main()

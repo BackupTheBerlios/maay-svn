@@ -24,6 +24,7 @@ __revision__ = '$Id$'
 import os
 import re
 from mimetypes import guess_type
+from maay.querier import normalize_text
 
 TAG = re.compile('<.*?>', re.S)
 def remove_tags(htmlsource):
@@ -47,7 +48,7 @@ class TextParser:
 
     def parseString(self, source):
         table = ''.join([' ' * 32] + [chr(i) for i in xrange(32, 256)])
-        translated = source.translate(table)
+        translated = normalize_text(source.translate(table))
         # normalize white spaces
         result = ' '.join(translated.split())
         title = result[:60]
@@ -148,5 +149,4 @@ def extractWordsFromFile(filename):
         except IndexationFailure, exc:
             print "indexation failed for %s, trying another converter" % filename
             continue
-    print "Could not index file %r" % filename
-    return []
+    raise IndexationFailure("Could not index file %r" % filename)
