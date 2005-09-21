@@ -14,7 +14,7 @@ import mimetypes
 
 from maay import converter
 from maay.configuration import Configuration
-from maay.dbentity import Document
+from maay.dbentity import Document, FileInfo
 
 class AuthenticationError(Exception):
     """raised when authentication on xmlrpc server failed"""
@@ -68,9 +68,9 @@ class Indexer:
                 fileSize = os.path.getsize(filename)
                 title, text, links, offset = converter.extractWordsFromFile(filename)
                 docId = makeDocumentId(filename)
-                mime_type = mimetypes.guess_types(filename)
+                mime_type = mimetypes.guess_type(filename)
 
-                self.indexDocument(filename, title, fileSize, lastModificationTime,
+                self.indexDocument(filename, title, text, fileSize, lastModificationTime,
                                    docId, mime_type, Document.PUBLISHED_STATE)
         # FIXME: do some cleanup of the database after indexing
         # * remove FileInfo for files that are no longer on disk
@@ -83,7 +83,8 @@ class Indexer:
         return lastIndexationTime
 
     def indexDocument(self, filename, title, text, fileSize,
-                               lastModTime, content_hash, mime_type, state, file_state=None):
+                      lastModTime, content_hash, mime_type, state,
+                      file_state=FileInfo.CREATED_FILE_STATE):
         print "I should now update DB with all these new words ! (%s)" % filename
         self.serverProxy.indexDocument(self.cnxId, filename, title, text,
                                        fileSize, lastModTime, content_hash,

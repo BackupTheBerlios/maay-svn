@@ -47,7 +47,7 @@ class TextParser:
 
     def parseString(self, source):
         table = ''.join([' ' * 32] + [chr(i) for i in xrange(32, 256)])
-        translated = content.translate(table)
+        translated = source.translate(table)
         # normalize white spaces
         result = ' '.join(translated.split())
         title = result[:60]

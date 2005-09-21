@@ -49,7 +49,12 @@ class DBEntity:
             query = self._updateQuery()
         else:
             query = self._insertQuery()
-        cursor.execute(query, self.stateDict)
+        try:
+            cursor.execute(query, self.stateDict)
+        except Exception, exc:
+            print "commit error:", exc
+            print query
+            raise
         
 
     def _updateQuery(self):
@@ -80,7 +85,9 @@ class DBEntity:
         return '%s: %s' % (self.__class__.__name__,
                            ', '.join(['%s=%s' % (attr, getattr(self, attr))
                                       for attr in self.attributes]))
-
+    def __repr__(self):
+        return str(self)
+    
 class Document(DBEntity):
     """Represent a Document in the database
     A Document is different from a file, because several files can store
@@ -205,7 +212,7 @@ class DocumentScore(DBEntity):
     """
     Attributes
     -----------
-        
+
      * int db_document_id (primary key): unique integer identifying
     the document
 

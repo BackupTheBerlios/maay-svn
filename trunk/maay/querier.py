@@ -8,7 +8,6 @@ __metaclass__ = type
 from mimetypes import guess_type
 import re
 import time
-from string import maketrans, translate
 
 from zope.interface import Interface, implements
 import MySQLdb
@@ -106,7 +105,6 @@ class MaayQuerier:
         cursor = self._cnx.cursor()
         results = FileInfo.selectWhere(cursor, file_name=filename)
         cursor.close()
-        print results
         return list(results)
 
     def indexDocument(self, filename, title, text, fileSize, lastModifiedOn,
@@ -122,24 +120,31 @@ class MaayQuerier:
                                         file_name=filename)
         if fileinfo:
             fileinfo = fileinfo[0]
-            file_info.file_time = lastModifiedOn
-            file_info.state = state
-            file_info.file_state = file_state
+            fileinfo.file_time = lastModifiedOn
+            fileinfo.state = state
+            fileinfo.file_state = file_state
             doc = Document.selectWhere(cursor,
-                                       db_document_id=file_info.db_document_id)
-            if doc.docId!=content_hash:
-                # the contents have changed
-                # we create a new Document (to avoid messing up if we have
-                # multiple files for this document)
-                doc = self._createDocument(content_hash,
+                                       db_document_id=fileinfo.db_document_id)
+            if not doc or doc[0].document_id!=content_hash :
+                # no document was found or a document with another content
+                # in both case, we create a new Document in database
+                # (we don't want to modify the existing one, because it
+                # can be shared by several files)
+                doc = self._createDocument(cursor,
+                                           content_hash,
                                            title,
                                            text,
                                            fileSize,
                                            lastModifiedOn,
                                            filename,
                                            state)
-                file_info.db_document_id = doc.db_document_id
-            file_info.commit(cursor, update=True)
+                fileinfo.db_document_id = doc.db_document_id
+            else:
+                # document has not changed
+                doc = doc[0]
+                
+            fileinfo.commit(cursor, update=True)
+                
         else:
             # file unknown
             # try to find a Document with same hash value
@@ -150,7 +155,8 @@ class MaayQuerier:
                 doc.publication_time = max(doc.publication_time, lastModifiedOn)
                 doc.commit(cursor, update=True)
             else:
-                doc = self._createDocument(content_hash,
+                doc = self._createDocument(cursor,
+                                           content_hash,
                                            title,
                                            text,
                                            fileSize,
@@ -160,12 +166,12 @@ class MaayQuerier:
                 doc.commit(cursor, update=False)
                 doc = Document.selectWhere(cursor, document_id=content_hash)[0]
 
-            file_info = FileInfo(db_document_id=doc.db_document_id,
+            fileinfo = FileInfo(db_document_id=doc.db_document_id,
                                  file_name=filename,
                                  file_time=lastModifiedOn,
                                  state=state,
                                  file_state=file_state)
-            file_info.commit(cursor, update=False)
+            fileinfo.commit(cursor, update=False)
 
         self._updateScores(cursor, doc.db_document_id, text)
         cursor.close()
@@ -231,6 +237,7 @@ class MaayQuerier:
         return db_scores
 
         
+from string import maketrans
 _table = maketrans(
                    '\xc0\xc1\xc2\xc3\xc4\xc5'
                    '\xc7'
@@ -270,12 +277,11 @@ _table = maketrans(
                    'uuuu'
                    'y'
                    )
+del maketrans
 
-def normalize_text(word, table=_table):
+def normalize_text(text, table=_table):
     """turns everything to lowercase, and converts accentuated
     characters to non accentuated chars."""
-    word = word.lower()
-    return translate(word, table)
+    return text.lower().translate(table)
 
-del maketrans
 del _table
