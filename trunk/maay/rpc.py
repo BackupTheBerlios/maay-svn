@@ -52,9 +52,10 @@ class MaayRPCServer(XMLRPC):
             if len(fileInfos):
                 time = fileInfos[0].file_time
             time = 0
-        # XXX : could we return twisted.python.failure.Failure instance here ?
-##         return Failure(ValueError("invalid connexion")
-        time = -1 # XXX: need to differenciate bad cnxId and no last mod time
+        else:
+            # XXX : could we return twisted.python.failure.Failure instance here ?
+            ## return Failure(ValueError("invalid connexion")
+            time = -1 # XXX: need to differenciate bad cnxId and no last mod time
         print 'done'
         return time
     
