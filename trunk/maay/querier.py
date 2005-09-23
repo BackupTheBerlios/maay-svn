@@ -10,11 +10,12 @@ import re
 import time
 
 from zope.interface import Interface, implements
-import MySQLdb
+
+from logilab.common.db import get_dbapi_compliant_module
 
 from maay.dbentity import Document, FileInfo, DocumentProvider, DocumentScore, \
      Word
-from maay.texttool import normalize_text
+from maay.texttool import normalizeText
 
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
@@ -26,6 +27,11 @@ MAX_STORED_SIZE = 65535
 # find a portable way to do this with unicode (good luck, Luke)
 WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN)) 
 
+
+class MaayAuthenticationError(Exception):
+    """raised on db authentication failure"""
+
+    
 class IQuerier(Interface):
     """defines the High-Level interface to Maay SQL database"""
 
@@ -57,8 +63,13 @@ class MaayQuerier:
     
     def __init__(self, host='', database='', user='', password='', connection=None):
         if connection is None:
-            connection = MySQLdb.connect(host=host, db=database,
-                                         user=user, passwd=password)
+            dbapiMod = get_dbapi_compliant_module('mysql')
+            try:
+                connection = dbapiMod.connect(host=host, database=database,
+                                              user=user, password=password)
+            except dpapiMod.OperationalError:
+                raise MaayAuthenticationError("Failed to authenticate user %r"
+                                              % user)
         self._cnx = connection
 
     def _execute(self, query, args=None):
@@ -198,7 +209,7 @@ class MaayQuerier:
         doc_scores = {}
         # We update the document_score table only for the first
         # occurence of the word in the document
-        for match in WORDS_RGX.finditer(normalize_text(text)):
+        for match in WORDS_RGX.finditer(normalizeText(text)):
             word = match.group(0)
             if word in doc_scores:
                 continue

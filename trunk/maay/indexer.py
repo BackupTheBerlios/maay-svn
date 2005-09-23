@@ -8,16 +8,15 @@ TODO: analyse the God class into something understandable
 __revision__ = '$Id$'
 
 import os, stat
+import sys
 import sha
-from xmlrpclib import ServerProxy
+from xmlrpclib import ServerProxy, Binary
 import mimetypes
 
 from maay import converter
 from maay.configuration import Configuration
 from maay.dbentity import Document, FileInfo
-
-class AuthenticationError(Exception):
-    """raised when authentication on xmlrpc server failed"""
+from maay.querier import MaayAuthenticationError
 
 def makeDocumentId(filename):
     """return the SHA hash value from of the contents of the file"""
@@ -51,7 +50,7 @@ class Indexer:
         self.serverProxy = ServerProxy('http://%s:%s' % (host, port), allow_none=True)
         self.cnxId = self.serverProxy.authenticate(username, password)
         if not self.cnxId:
-            raise AuthenticationError("Failed to connect as '%s'" % username)
+            raise MaayAuthenticationError("Failed to connect as '%s'" % username)
         
     def getFileIterator(self):
         indexed = self.indexerConfig.index_dir
@@ -75,7 +74,8 @@ class Indexer:
                 mime_type = mimetypes.guess_type(filename)[0]
                 mime_type = mimetypes.guess_type(filename)
 
-                self.indexDocument(filename, title, text, fileSize, lastModificationTime,
+                self.indexDocument(filename, Binary(title), Binary(text), fileSize,
+                                   lastModificationTime,
                                    docId, mime_type, Document.PUBLISHED_STATE)
         # FIXME: do some cleanup of the database after indexing
         # * remove FileInfo for files that are no longer on disk
@@ -84,7 +84,7 @@ class Indexer:
     def getLastIndexationTime(self, filename):
         lastIndexationTime = self.serverProxy.lastIndexationTime(self.cnxId, filename)
         if lastIndexationTime is None:
-            raise AuthenticationError("Bad cnxId sent to the server")
+            raise MaayAuthenticationError("Bad cnxId sent to the server")
         return lastIndexationTime
 
     def indexDocument(self, filename, title, text, fileSize,
@@ -174,7 +174,11 @@ class IndexerConfiguration(Configuration):
 def run():
     indexerConfig = IndexerConfiguration()
     indexerConfig.load()
-    indexer = Indexer(indexerConfig)
+    try:
+        indexer = Indexer(indexerConfig)
+    except MaayAuthenticationError, exc:
+        print "AuthenticationError:", exc
+        sys.exit(1)
     indexer.start()
 
 if __name__ == '__main__':
