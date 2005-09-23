@@ -6,7 +6,7 @@ import sha
 
 from logilab.common.testlib import MockConnection
 from logilab.common.db import get_connection
-from maay.querier import MaayQuerier, normalize_text, Document, FileInfo
+from maay.querier import MaayQuerier, normalizeText, Document, FileInfo
 
 
 
@@ -31,9 +31,10 @@ class QuerierTC(unittest.TestCase):
         self.assertEquals(list(answ), [])
 
     def testIndexDocument(self):
-        text = """Le tartuffe, de Jean-Baptiste Poquelin, dit Molière.
+        text = u"""Le tartuffe, de Jean-Baptiste Poquelin, dit Molière.
 
 Le petit chat est mort."""
+        text = normalizeText(text)
         digest = sha.sha(text).hexdigest()
         cursor = self.cnx.cursor()
         # At this point, database should be emtpy, so no document
@@ -54,8 +55,8 @@ Le petit chat est mort."""
         self.assertEquals(matchingDocs[0].text, text)
         
 
-    def test_normalize_text(self):
-        self.assertEquals(normalize_text("ÉtùïÄç"), "etuiac")
+    def test_normalizeText(self):
+        self.assertEquals(normalizeText(u"ÉtùïÄç"), "etuiac")
 
 
 if __name__ == '__main__':

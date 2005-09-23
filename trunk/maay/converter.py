@@ -18,11 +18,15 @@ optionally OUTPUT_TYPE variables ::
 
 and that's it. Next time the indexer will try to index a PDF file,
 it will use your converter.
+
 """
 __revision__ = '$Id$'
 
+# XXX: need to handle file encodings
+
 import os
 from mimetypes import guess_type
+from tempfile import mkdtemp
 
 from maay.texttool import TextParser, MaayHTMLParser as HTMLParser
 
@@ -47,6 +51,8 @@ class BaseConverter:
     """base converter class"""
     __metaclass__ = MetaConverter
     OUTPUT_TYPE = 'text'
+    # None means "let the text parser guess the encoding"
+    OUTPUT_ENCODING = None
 
     def getParser(self):
         if self.OUTPUT_TYPE == 'html':
@@ -60,7 +66,7 @@ class BaseConverter:
         :returns: a word-vector
         """
         parser = self.getParser()
-        return parser.parseFile(filename)
+        return parser.parseFile(filename, self.OUTPUT_ENCODING)
 
 
 class RawTextConverter(BaseConverter):
@@ -76,21 +82,34 @@ class HTMLConverter(BaseConverter):
 class CommandBasedConverter(BaseConverter):
     COMMAND = None
     def extractWordsFromFile(self, filename):
-        command_args = {'input' : filename, 'output' : '/tmp/out.txt'}
+        outputDir = mkdtemp()
+        outputFile = os.path.join(outputDir, 'out.txt')
+        command_args = {'input' : filename, 'output' : outputFile}
         cmd = self.COMMAND % command_args
         print "Executing %r" % cmd
         errcode = os.system(cmd)
-        if errcode == 0: # OK
-            parser = self.getParser()
-            return parser.parseFile('/tmp/out.txt')
-        else:
-            raise IndexationFailure('Unable to index %r' % filename)
-
+        try:
+            if errcode == 0: # OK
+                parser = self.getParser()
+                return parser.parseFile(outputFile, self.OUTPUT_ENCODING)
+            else:
+                raise IndexationFailure('Unable to index %r' % filename)
+        finally:
+            if os.path.isfile(outputFile):
+                os.remove(outputFile)
+            os.rmdir(outputDir)
 
 class PDFConverter(CommandBasedConverter):
+    """among other things, man pdftotext says ::
+
+      -enc encoding-name
+        Sets the encoding to use for text output [...] Default is
+        "Latin1"
+    """
     COMMAND = "pdftotext -htmlmeta %(input)s %(output)s"
     OUTPUT_TYPE = 'html'
     MIME_TYPE = 'application/pdf'
+    OUTPUT_ENCODING = 'iso-8859-1'
 
 class PSConverter(CommandBasedConverter):
     COMMAND = "ps2ascii %(input)s %(output)s"
