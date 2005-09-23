@@ -65,7 +65,8 @@ class MaayRPCServer(XMLRPC):
         """
         print "call indexDocument"
         title = title.data
-        text = text.data
+        # Uh ? FIXME : encoding should be passed as a parameter
+        text = unicode(text.data, 'ISO-8859-1') 
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
             querier.indexDocument(filename, title, text, fileSize,
