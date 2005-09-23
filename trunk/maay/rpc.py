@@ -7,8 +7,6 @@ from twisted.cred.error import UnauthorizedLogin
 from twisted.internet import defer
 ## from twisted.python.failure import Failure
 
-from logilab.common.db import get_dbapi_compliant_module
-
 from maay.querier import MaayQuerier, IQuerier
 
 def make_uid(username, password):
@@ -23,7 +21,6 @@ class MaayRPCServer(XMLRPC):
         XMLRPC.__init__(self)
         self._sessions = {}
         self.portal = portal
-        self.dbapiMod = get_dbapi_compliant_module('mysql')
         
     def _attachUser(self, (interface, querier, logout), username, password):
         if interface is not IQuerier or querier is None:
@@ -40,7 +37,7 @@ class MaayRPCServer(XMLRPC):
         creds = UsernamePassword(username, password)
         d = self.portal.login(creds, None, IQuerier)
         d.addCallback(self._attachUser, username, password)
-        d.addErrback(lambda deferred: 'boom')
+        d.addErrback(lambda deferred: '')
         print "done"
         return d
 
@@ -62,12 +59,18 @@ class MaayRPCServer(XMLRPC):
     def xmlrpc_indexDocument(self, cnxId, filename, title, text, fileSize,
                              lastModifiedOn, content_hash, mime_type, state,
                              file_state):
+        """
+        :type title: xmlrpclib.Binary
+        :type text: xmlrpclib.Binary
+        """
         print "call indexDocument"
+        title = title.data
+        text = text.data
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
             querier.indexDocument(filename, title, text, fileSize,
-                             lastModifiedOn, content_hash, mime_type, state,
-                             file_state)
+                                  lastModifiedOn, content_hash, mime_type, state,
+                                  file_state)
         print "done"
         return 0
     
