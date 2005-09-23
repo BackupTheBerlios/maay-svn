@@ -17,7 +17,7 @@ from nevow import inevow, rend, tags, guard, loaders, appserver
 
 from logilab.common.textutils import normalize_text
 
-from maay.querier import MaayQuerier, IQuerier
+from maay.querier import MaayQuerier, IQuerier, MaayAuthenticationError
 from maay.rpc import MaayRPCServer
 from maay.configuration import get_path_of, Configuration
 
@@ -93,7 +93,8 @@ class ResultsPage(MaayPage):
     def render_row(self, context, data):
         document = data
         context.fillSlots('doctitle',  document.title)
-        context.fillSlots('abstract', normalize_text(document.abstract))
+        # XXX abstract attribute should be a unicode string
+        context.fillSlots('abstract', normalize_text(unicode(document.abstract)))
         context.fillSlots('docurl', document.url)
         context.fillSlots('readable_size', document.readable_size())
         return context.tag
@@ -162,14 +163,11 @@ class DBAuthChecker:
         self.dbname = dbname
     
     def requestAvatarId(self, creds):
-        print "REQUESTING AVATAR ID for %s/%s" % (creds.username, creds.password)
         try:
             querier = MaayQuerier(host=self.dbhost, database=self.dbname,
                                   user=creds.username, password=creds.password)
-        except: # Find which exceptions are raised (MySQLdb.OperationalError)
+        except MaayAuthenticationError:
             print "Got Authentication Error !"
-            import traceback
-            traceback.print_exc()
             return failure.Failure(error.UnauthorizedLogin())
         self.realm.createUserSession(creds.username, querier)
         return defer.succeed(creds.username)
