@@ -99,7 +99,10 @@ class MaayQuerier:
         args = {# 'words' : words, # '(' + ','.join([repr(word) for word in words]) + ')',
                 'lenwords' : len(words)}
         strwords = '(' + ','.join([repr(word) for word in words]) + ')'
-        # XXX: what is the HAVING clause supposed to do ?
+        # what is the HAVING clause supposed to do ?
+        # Answer: we select all documents containing one of the words that we are looking for, 
+        # group them by their identifier, and only keep those identifier which appeared
+        # once for each word we were looking for. 
         query = """SELECT %s
                     FROM documents D, document_scores DS 
                     WHERE DS.db_document_id=D.db_document_id AND DS.word IN %s
