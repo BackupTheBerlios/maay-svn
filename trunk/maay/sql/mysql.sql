@@ -2,7 +2,7 @@
 -- maay database
 -- ---------------------------------------------------------
 
-create database maay;
+CREATE DATABASE maay DEFAULT CHARACTER SET utf-8;
 
 use maay;
 
