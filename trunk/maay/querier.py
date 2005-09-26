@@ -15,17 +15,7 @@ from logilab.common.db import get_dbapi_compliant_module
 
 from maay.dbentity import Document, FileInfo, DocumentProvider, DocumentScore, \
      Word
-from maay.texttool import normalizeText
-
-WORD_MIN_LEN = 2
-WORD_MAX_LEN = 50
-
-MAX_STORED_SIZE = 65535
-# XXX: need to handle diacritics signs
-# according to the PhD thesis, we should substitute the diacritics
-# chars with the non diacritics (e.g. révoltant -> revoltant)
-# find a portable way to do this with unicode (good luck, Luke)
-WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN)) 
+from maay.texttool import normalizeText, WORDS_RGX
 
 
 class MaayAuthenticationError(Exception):
@@ -66,7 +56,8 @@ class MaayQuerier:
             dbapiMod = get_dbapi_compliant_module('mysql')
             try:
                 connection = dbapiMod.connect(host=host, database=database,
-                                              user=user, password=password)
+                                              user=user, password=password,
+                                              unicode=True)
             except dpapiMod.OperationalError:
                 raise MaayAuthenticationError("Failed to authenticate user %r"
                                               % user)
@@ -93,28 +84,12 @@ class MaayQuerier:
         self._cnx.close()
     
     def findDocuments(self, words):
-        if not words:
-            return []
-        columns = ['document_id', 'title', 'size', 'text', 'url', 'mime_type']
-        args = {# 'words' : words, # '(' + ','.join([repr(word) for word in words]) + ')',
-                'lenwords' : len(words)}
-        strwords = '(' + ','.join([repr(word) for word in words]) + ')'
-        # what is the HAVING clause supposed to do ?
-        # Answer: we select all documents containing one of the words that we are looking for, 
-        # group them by their identifier, and only keep those identifier which appeared
-        # once for each word we were looking for. 
-        query = """SELECT %s
-                    FROM documents D, document_scores DS 
-                    WHERE DS.db_document_id=D.db_document_id AND DS.word IN %s
-                    GROUP BY DS.db_document_id
-                    HAVING count(DS.db_document_id) = %%(lenwords)s""" % (
-            ', '.join(['D.%s' % col for col in columns]), strwords)
-        # for each row, build a dict from list of couples (attrname, value)
-        # and build a DBEntity from this dict
-        results = [Document(**dict(zip(columns, row)))
-                   for row in self._execute(query, args)]
-        return results
-
+        """Find all indexed documents containing all the words in the list"""
+        try:
+            cursor = self._cnx.cursor()
+            return Document.selectContaining(cursor, xwords)
+        finally:
+            cursor.close()
 
     def getFileInformations(self, filename):
         cursor = self._cnx.cursor()

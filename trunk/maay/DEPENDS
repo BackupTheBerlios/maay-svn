@@ -2,5 +2,5 @@ python-twisted (>= 2.0.1)
 python-twisted-web
 python-nevow (SVN)
 python-zopeinterface (>= 3.0.1)
-logilab-common
+logilab-common (not yet release version, for unicode support in dbapi)
 python-mysqldb

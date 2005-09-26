@@ -4,6 +4,8 @@ __revision__ = '$Id$'
 __all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore',
            'Word', 'Node', 'NodeInterest']
 
+from maay.texttool import normalizeText, WORD_MIN_LEN, WORD_MAX_LEN
+
 class DBEntity:
     attributes = []
     tableName = None
@@ -173,6 +175,51 @@ class Document(DBEntity):
     def get_abstract(self):
         return self.text[:200]
     abstract = property(get_abstract)
+
+
+    def _selectContainingQuery(cls, words):
+        words = [normalizeText(unicode(w))
+                 for w in words
+                 if WORD_MIN_LEN <= len(w) <= WORD_MAX_LEN]
+        if not words:
+            return ''
+
+        # Question: what is the HAVING clause supposed to do ?
+        # Answer: we select all documents containing one of the words
+        # that we are looking for, group them by their identifier, and
+        # only keep those identifier which appeared once for each word
+        # we were looking for.
+        query = ("SELECT D.document_id, "
+                        "D.title, "
+                        "D.size, "
+                        "D.text, "
+                        "D.url, "
+                        "D.mime_type "
+                 "FROM documents D, document_scores DS "
+                 "WHERE DS.db_document_id=D.db_document_id "
+                     "AND DS.word IN (%s) "
+                   "GROUP BY DS.db_document_id "
+                   "HAVING count(DS.db_document_id) = %%s" % \
+                   (', '.join(['%s'] * len(words))))
+
+        return query, words + [len(words)]
+
+    _selectContainingQuery = classmethod(_selectContainingQuery)
+
+    def selectContaining(cls, cursor, words):
+        query, params= cls._selectContainingQuery(words)
+        if query:
+            cursor.execute(query, params)
+            results = cursor.fetchall()
+            return [cls(**dict(zip(['document_id', 'title', 'size', 'text', 'url', 'mime_type'],
+                                   row)))
+                    for row in results]
+        else:
+            return []
+    selectContaining = classmethod(selectContaining)
+    
+    
+
 
 
 class FileInfo(DBEntity):

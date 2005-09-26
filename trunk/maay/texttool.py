@@ -7,6 +7,14 @@ from HTMLParser import HTMLParser
 import codecs
 import re
 
+WORD_MIN_LEN = 2
+WORD_MAX_LEN = 50
+
+MAX_STORED_SIZE = 65535
+WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN)) 
+
+
+
 CHARSET_RGX = re.compile('charset=([^\s"]*)', re.I | re.S | re.U)
 XML_ENCODING_RGX = re.compile('<\?xml version=[^\s]*\s*encoding=([^\s]*)\s*\?>', re.I | re.S | re.U)
 
