@@ -70,5 +70,10 @@ class HTMLParserTC(unittest.TestCase):
             
             ]
 
+    def test_parseDifficultFile(self):
+        filename = join(DATADIR, 'node22.html')
+        title, text, links, offset = self.parser.parseFile(filename)
+        self.assertEquals(type(text), unicode)
+
 if __name__ == '__main__':
     unittest.main()
