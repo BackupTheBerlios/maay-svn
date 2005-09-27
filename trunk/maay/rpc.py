@@ -52,7 +52,25 @@ class MaayRPCServer(XMLRPC):
             ## return Failure(ValueError("invalid connexion")
             time = -1 # XXX: need to differenciate bad cnxId and no last mod time
         return time
-    
+
+    def xmlrpc_getIndexedFiles(self, cnxId):
+        if self.cnxIsValid(cnxId):
+            querier = self._sessions[cnxId]
+            return querier.getIndexedFiles()
+        return []
+        
+    def xmlrpc_removeFileInfo(self, cnxId, filename):
+        if self.cnxIsValid(cnxId):
+            querier = self._sessions[cnxId]
+            return querier.removeFileInfo(filename)
+        return 0
+
+    def xmlrpc_removeUnreferencedDocuments(self, cnxId):
+        if self.cnxIsValid(cnxId):
+            querier = self._sessions[cnxId]
+            return querier.removeUnreferencedDocuments()
+        return -1
+                    
     def xmlrpc_indexDocument(self, cnxId, filename, title, text, fileSize,
                              lastModifiedOn, content_hash, mime_type, state,
                              file_state):

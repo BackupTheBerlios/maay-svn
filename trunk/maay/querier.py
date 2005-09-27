@@ -33,11 +33,23 @@ class IQuerier(Interface):
         to DB's content
         """
 
+    def getIndexedFiles():
+        """returns a list of indexed file names as strings
+        """
+
     def indexDocument(filename, title, text, fileSize, lastModifiedOn,
                       content_hash, mime_type, state, file_state):
         """Inserts or update information in table documents,
         file_info, document_score and word"""
 
+    def removeFileInfo(filename):
+        """remove filename from the database `files` table"""
+
+    def removeUnreferencedDocuments():
+        """remove rows in `documents` table when no row in `files` or
+        `document_providers` table reference them, as well as the
+        corresponding `document_scores` rows"""
+        
     def close():
         """closes the DB connection"""
 
@@ -96,6 +108,41 @@ class MaayQuerier:
         results = FileInfo.selectWhere(cursor, file_name=filename)
         cursor.close()
         return list(results)
+
+    def getIndexedFiles(self):
+        cursor = self._cnx.cursor()
+        results = FileInfo.selectWhere(cursor)
+        cursor.close()
+        return  [f.file_name for f in results]    
+        
+    def removeFileInfo(self, filename):
+        """remove filename from the database `files` table"""
+        cursor = self._cnx.cursor()
+        rows = cursor.execute('DELETE FROM files WHERE file_name = %s', filename)
+        cursor.close()
+        self._cnx.commit()
+        print "removed %s" % filename
+        return rows
+
+    def removeUnreferencedDocuments(self):
+        """remove rows in `documents` table when no row in `files` or
+        `document_providers` table reference them, as well as the
+        corresponding `document_scores` rows"""
+        cursor = self._cnx.cursor()
+        query1 = """DELETE documents
+                    FROM documents LEFT JOIN files
+                                   ON documents.db_document_id = files.db_document_id
+                    WHERE files.db_document_id IS NULL"""
+        rows = cursor.execute(query1)
+        query2 = """DELETE document_scores
+                    FROM document_scores LEFT JOIN documents
+                                   ON document_scores.db_document_id = documents.db_document_id
+                    WHERE documents.db_document_id IS NULL"""
+        rows += cursor.execute(query2)
+        cursor.close()
+        self._cnx.commit()
+        print "removed %d rows related to unreferenced documents" % rows
+        return rows
 
     def indexDocument(self, filename, title, text, fileSize, lastModifiedOn,
                       content_hash, mime_type, state, file_state):

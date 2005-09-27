@@ -11,6 +11,7 @@ import os
 import time
 import sys
 import sha
+from sets import Set
 from xmlrpclib import ServerProxy, Binary
 import mimetypes
 
@@ -60,7 +61,9 @@ class Indexer:
         return FileIterator(indexed, skipped)
 
     def start(self):
+        existingFiles = Set()
         for filename in self.getFileIterator():
+            existingFiles.add(filename)
             lastModificationTime = os.path.getmtime(filename)
             lastIndexationTime = self.getLastIndexationTime(filename)
             if lastIndexationTime >= lastModificationTime:
@@ -81,9 +84,16 @@ class Indexer:
                 self.indexDocument(filename, title, text, fileSize,
                                    lastModificationTime,
                                    docId, mime_type, Document.PUBLISHED_STATE)
-        # FIXME: do some cleanup of the database after indexing:
-        # * remove FileInfo for files that are no longer on disk
-        # * remove Documents with no corresponding files
+
+        indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
+        oldFiles = indexedFiles - existingFiles
+        for filename in oldFiles:
+            if self.verbose:
+                print "Requesting unindexation of %s" % filename
+            self.serverProxy.removeFileInfo(self.cnxId, filename)
+        if self.verbose:
+            print "Requesting cleanup of unreferenced documents"
+        self.serverProxy.removeUnreferencedDocuments(self.cnxId)
         
     def getLastIndexationTime(self, filename):
         lastIndexationTime = self.serverProxy.lastIndexationTime(self.cnxId, filename)
@@ -105,12 +115,9 @@ class Indexer:
 class FileIterator:
     """provide a simple way to walk through indexed dirs"""
     def __init__(self, indexed, skipped=None):
-        self.indexed = indexed
-        self.skipped = skipped or []
-        for dirpath in self.indexed:
-            assert os.path.isabs(dirpath), "relative paths not supported !"
-        for dirpath in self.skipped:
-            assert os.path.isabs(dirpath), "relative paths not supported !"
+        self.indexed = [os.path.abspath(p) for p in indexed]
+        skipped = skipped or []
+        self.skipped = [os.path.abspath(p) for p in skipped]
 
     def __iter__(self):
         for path in self.indexed:
