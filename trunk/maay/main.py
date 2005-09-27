@@ -2,6 +2,10 @@
 
 __revision__ = '$Id$'
 
+import warnings
+warnings.filterwarnings("ignore", ".*", DeprecationWarning, "nevow.static")
+warnings.filterwarnings("ignore", ".*", DeprecationWarning, "twisted.python.reflect")
+
 from zope.interface import implements
 
 from twisted.cred import portal, checkers, error
