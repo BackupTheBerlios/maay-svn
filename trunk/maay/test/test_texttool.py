@@ -71,9 +71,14 @@ class HTMLParserTC(unittest.TestCase):
             ]
 
     def test_parseDifficultFile(self):
-        filename = join(DATADIR, 'node22.html')
-        title, text, links, offset = self.parser.parseFile(filename)
-        self.assertEquals(type(text), unicode)
-
+        # This file has got some weird, non HTML compliant content
+        # and is not handled properly by HTMLParser 
+        stream = file(join(DATADIR, 'node22.html'))
+        data = stream.read()
+        stream.close()
+        title, text, links, offset = self.parser.parseString(data)
+        self.assertEquals(title, u'21 Porting to Python 2.3')
+        self.failUnless(len(text)>10)
+        
 if __name__ == '__main__':
     unittest.main()

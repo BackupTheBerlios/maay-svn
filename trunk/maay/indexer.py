@@ -7,7 +7,8 @@ TODO: analyse the God class into something understandable
 
 __revision__ = '$Id$'
 
-import os, stat
+import os
+import time
 import sys
 import sha
 from xmlrpclib import ServerProxy, Binary
@@ -49,6 +50,7 @@ class Indexer:
         port = self.indexerConfig.port
         self.serverProxy = ServerProxy('http://%s:%s' % (host, port), allow_none=True)
         self.cnxId = self.serverProxy.authenticate(username, password)
+        self.verbose = indexerConfig.verbose
         if not self.cnxId:
             raise MaayAuthenticationError("Failed to connect as '%s'" % username)
         
@@ -61,23 +63,25 @@ class Indexer:
         for filename in self.getFileIterator():
             lastModificationTime = os.path.getmtime(filename)
             lastIndexationTime = self.getLastIndexationTime(filename)
-            if lastIndexationTime > lastModificationTime:
-                print "%s didn't change since last indexation"
+            if lastIndexationTime >= lastModificationTime:
+                if self.verbose:
+                    print "%s didn't change since last indexation" % filename
             else:
                 fileSize = os.path.getsize(filename)
                 try:
                     title, text, links, offset = converter.extractWordsFromFile(filename)
                 except converter.IndexationFailure, exc:
-                    print exc
+                    if self.verbose:
+                        print exc
                     continue
                 docId = makeDocumentId(filename)
                 mime_type = mimetypes.guess_type(filename)[0]
                 mime_type = mimetypes.guess_type(filename)
 
-                self.indexDocument(filename, Binary(title), Binary(text), fileSize,
+                self.indexDocument(filename, title, text, fileSize,
                                    lastModificationTime,
                                    docId, mime_type, Document.PUBLISHED_STATE)
-        # FIXME: do some cleanup of the database after indexing
+        # FIXME: do some cleanup of the database after indexing:
         # * remove FileInfo for files that are no longer on disk
         # * remove Documents with no corresponding files
         
@@ -90,7 +94,8 @@ class Indexer:
     def indexDocument(self, filename, title, text, fileSize,
                       lastModTime, content_hash, mime_type, state,
                       file_state=FileInfo.CREATED_FILE_STATE):
-        print "I should now update DB with all these new words ! (%s)" % filename
+        if self.verbose:
+            print "Requesting indexation of %s" % filename
         self.serverProxy.indexDocument(self.cnxId, filename, title, text,
                                        fileSize, lastModTime, content_hash,
                                        mime_type, state, file_state)
@@ -165,6 +170,12 @@ class IndexerConfiguration(Configuration):
          {'type': 'csv',
           'metavar': '<csv>', 'short': 's',
           'help': 'skip this directory'
+          }),
+        ('verbose',
+         {'type': 'yn',
+          'metavar': '<y or n>', 'short': 'v',
+          'help': 'enable verbose mode',
+          "default": False,
           }),
         ]
 

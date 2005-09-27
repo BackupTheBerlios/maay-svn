@@ -87,7 +87,7 @@ class MaayQuerier:
         """Find all indexed documents containing all the words in the list"""
         try:
             cursor = self._cnx.cursor()
-            return Document.selectContaining(cursor, xwords)
+            return Document.selectContaining(cursor, words)
         finally:
             cursor.close()
 

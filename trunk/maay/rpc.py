@@ -33,27 +33,24 @@ class MaayRPCServer(XMLRPC):
 
     def xmlrpc_authenticate(self, username, password):
         """server authentication method"""
-        print "call authenticate"
         creds = UsernamePassword(username, password)
         d = self.portal.login(creds, None, IQuerier)
         d.addCallback(self._attachUser, username, password)
         d.addErrback(lambda deferred: '')
-        print "done"
         return d
 
     def xmlrpc_lastIndexationTime(self, cnxId, filename):
-        print "call lastIndexationTime"
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
             fileInfos = querier.getFileInformations(filename)
             if len(fileInfos):
                 time = fileInfos[0].file_time
-            time = 0
+            else:
+                time = 0
         else:
             # XXX : could we return twisted.python.failure.Failure instance here ?
             ## return Failure(ValueError("invalid connexion")
             time = -1 # XXX: need to differenciate bad cnxId and no last mod time
-        print 'done'
         return time
     
     def xmlrpc_indexDocument(self, cnxId, filename, title, text, fileSize,
@@ -63,16 +60,14 @@ class MaayRPCServer(XMLRPC):
         :type title: xmlrpclib.Binary
         :type text: xmlrpclib.Binary
         """
-        print "call indexDocument"
-        title = title.data
+        title = unicode(title, 'utf-8')
         # Uh ? FIXME : encoding should be passed as a parameter
-        text = unicode(text.data, 'ISO-8859-1') 
+        text = unicode(text, 'utf-8')
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
             querier.indexDocument(filename, title, text, fileSize,
                                   lastModifiedOn, content_hash, mime_type, state,
                                   file_state)
-        print "done"
         return 0
     
     def cnxIsValid(self, cnxId):
