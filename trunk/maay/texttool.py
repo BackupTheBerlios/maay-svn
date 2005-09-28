@@ -3,10 +3,12 @@
 
 __revision__ = '$Id$'
 
-from HTMLParser import HTMLParser
+from HTMLParser import HTMLParser, HTMLParseError
 import codecs
 import re
 import mimetypes
+import gzip
+import bz2
 
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
@@ -39,7 +41,12 @@ def guessEncoding(filename):
         FF FE 	        UTF-16, little-endian
         EF BB BF 	UTF-8
     """
-    stream = file(filename, 'rb')
+    if filename.endswith(".gz"):
+        stream = gzip.open(filename, 'rb')
+    elif filename.endswith(".bz2"):
+        stream = bz2.BZ2File(filename, 'rb')
+    else:
+        stream = file(filename, 'rb')
     try:
         buffer = stream.read(4)
         # try to guess from BOM
@@ -70,6 +77,24 @@ def guessEncoding(filename):
         stream.close()
 
 
+def open(filename, mode='rb', encoding='ascii', errors='strict'):
+    """open potentially compressed files using a codec converter"""
+    if 'r' in mode:
+        converter = codecs.getreader(encoding)
+    elif 'w' in mode:
+        converter = codecs.getwriter(encoding)
+    else:
+        raise ValueError("Unsupported mode '%s'" % mode)
+    
+    if filename.endswith('.gz'):
+        opener = gzip.open
+    elif filename.endswith('.bz2'):
+        opener = bz2.BZ2File
+    else:
+        opener = file
+
+    return converter(opener(filename, mode), errors)
+
 class AbstractParser:
     """base-class for file parsers"""
     def parseFile(self, filename, encoding=None):
@@ -78,7 +103,7 @@ class AbstractParser:
         :param encoding: if None, then need to be guessed
         """
         encoding = encoding or guessEncoding(filename)
-        stream = codecs.open(filename, 'r', encoding, errors='ignore')
+        stream = open(filename, 'rb', encoding, errors='ignore')
         try:
             return self.parseString(stream.read())
         finally:
@@ -127,7 +152,10 @@ class MaayHTMLParser(AbstractParser, HTMLParser):
             self.textbuf.append(data)
     
     def parseString(self, source):
-        self.feed(source)
+        try:
+            self.feed(source)
+        except HTMLParseError, exc:
+            print "Error parsing document: %s" % exc
         result = normalizeText(u''.join(self.textbuf))
         return self.title, result, self.links, 0
 

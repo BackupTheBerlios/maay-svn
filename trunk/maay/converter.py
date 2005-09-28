@@ -23,13 +23,14 @@ it will use your converter.
 __revision__ = '$Id$'
 
 # TODO: add support for xls, ppt,  openoffice, mp3, ogg
-# TODO: add support for compressed files (compress, gzip, bzip2)
 
 # XXX: need to handle file encodings
 
 import os
 from mimetypes import guess_type
 from tempfile import mkdtemp
+import gzip
+import bz2
 
 from maay.texttool import TextParser, MaayHTMLParser as HTMLParser
 
@@ -87,8 +88,23 @@ class CommandBasedConverter(BaseConverter):
 
     def extractWordsFromFile(self, filename):
         outputDir = mkdtemp()
-        outputFile = os.path.join(outputDir, 'out.txt')
-        command_args = {'input' : filename, 'output' : outputFile}
+        if filename.endswith('.gz') or filename.endswith('.bz2'):
+            print "Decompressing %s" % filename
+            if filename.endswith('.gz'):
+                opener = gzip.open
+            else:
+                opener = bz2.BZ2File
+            compressed = opener(filename, 'rb')
+            uncompressedFile = os.path.join(outputDir, 'uncompressed')
+            uncompressed = file(uncompressedFile, 'wb')
+            uncompressed.write(compressed.read())
+            compressed.close()
+            uncompressed.close()
+            
+        else:
+            uncompressedFile = ''
+        outputFile = os.path.join(outputDir, 'outfile')
+        command_args = {'input' : uncompressedFile or filename, 'output' : outputFile}
         cmd = self.COMMAND % command_args
         print "Executing %r" % cmd
         errcode = os.system(cmd)
@@ -101,6 +117,8 @@ class CommandBasedConverter(BaseConverter):
         finally:
             if os.path.isfile(outputFile):
                 os.remove(outputFile)
+            if os.path.isfile(uncompressedFile):
+                os.remove(uncompressedFile)
             os.rmdir(outputDir)
 
 

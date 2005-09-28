@@ -4,7 +4,7 @@
 import unittest
 from os.path import join, dirname
 
-from maay.texttool import MaayHTMLParser, guessEncoding
+from maay.texttool import MaayHTMLParser, guessEncoding, open
 
 ROW_TEXT = u"foo été bar baz top bim bam boum"
 
@@ -52,22 +52,6 @@ class HTMLParserTC(unittest.TestCase):
         self.assertEquals(text, 'hello ete world this is a link and this is another link')
         self.assertEquals(links, ['something.com', 'somethingelse.com'])
         
-    def testGuessEncoding(self):
-        self.assertEquals(guessEncoding(join(DATADIR, 'utf8.txt')), 'UTF-8')
-        self.assertEquals(guessEncoding(join(DATADIR, 'utf16.txt')), 'UTF-16')
-        # self.assertEquals(guessEncoding(join(DATADIR, 'utf16be.txt')), 'UTF-16')
-        self.assertEquals(guessEncoding(join(DATADIR, 'utf32.txt')), 'UTF-32')
-        # self.assertEquals(guessEncoding(join(DATADIR, 'utf32be.txt')), 'UTF-32')
-        self.assertEquals(guessEncoding(join(DATADIR, 'latin1.xml')), 'ISO-8859-1')
-        self.assertEquals(guessEncoding(join(DATADIR, 'utf8.xml')), 'UTF-8')
-        self.assertEquals(guessEncoding(join(DATADIR, 'latin1.xml')), 'ISO-8859-1')
-        self.assertEquals(guessEncoding(join(DATADIR, 'encoded.html')), 'ISO-8859-1')
-
-    def test_guessEncodingRawUTF8Text(self):
-        filename = join(DATADIR, 'guess_encoding.txt')
-        enc = guessEncoding(filename)
-        self.assertEquals(enc, 'UTF-8')
-
     def test_normalizeHTMLEncoding(self):
         data = [
             'latin1', 'ISO-8859-1',
@@ -86,6 +70,38 @@ class HTMLParserTC(unittest.TestCase):
         self.failUnless(len(text)>10)
         
 
+class GuessEncofingTC(unittest.TestCase):
+    def testGuessEncoding(self):
+        self.assertEquals(guessEncoding(join(DATADIR, 'utf8.txt')), 'UTF-8')
+        self.assertEquals(guessEncoding(join(DATADIR, 'utf16.txt')), 'UTF-16')
+        # self.assertEquals(guessEncoding(join(DATADIR, 'utf16be.txt')), 'UTF-16')
+        self.assertEquals(guessEncoding(join(DATADIR, 'utf32.txt')), 'UTF-32')
+        # self.assertEquals(guessEncoding(join(DATADIR, 'utf32be.txt')), 'UTF-32')
+        self.assertEquals(guessEncoding(join(DATADIR, 'latin1.xml')), 'ISO-8859-1')
+        self.assertEquals(guessEncoding(join(DATADIR, 'utf8.xml')), 'UTF-8')
+        self.assertEquals(guessEncoding(join(DATADIR, 'latin1.xml')), 'ISO-8859-1')
+        self.assertEquals(guessEncoding(join(DATADIR, 'encoded.html')), 'ISO-8859-1')
+
+    def test_guessEncodingRawUTF8Text(self):
+        filename = join(DATADIR, 'guess_encoding.txt')
+        enc = guessEncoding(filename)
+        self.assertEquals(enc, 'UTF-8')
+
+
+class OpenTC(unittest.TestCase):
+    def testGzip(self):
+        f = open(join(DATADIR, 'compressed_gzip.txt.gz'), 'rb', 'utf-8')
+        data = f.read()
+        f.close()
+        self.assertEquals(type(data), unicode)
+        self.failUnless(u'entête' in data)
+        
+    def testBz2(self):
+        f = open(join(DATADIR, 'compressed_bzip2.txt.bz2'), 'rb', 'utf-8')
+        data = f.read()
+        f.close()
+        self.assertEquals(type(data), unicode)
+        self.failUnless(u'entête' in data)
 
 if __name__ == '__main__':
     unittest.main()
