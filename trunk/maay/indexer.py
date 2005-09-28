@@ -137,6 +137,10 @@ class FileIterator:
             if path not in self.skipped:
                 for dirpath, dirnames, filenames in os.walk(path):
                     self._removeSkippedDirnames(dirpath, dirnames)
+                    try:
+                        dirpath = unicode(dirpath, 'utf-8')
+                    except UnicodeError:
+                        dirpath = unicode(dirpath, 'iso-8859-1')
                     for filename in filenames:
                         try:
                             filename = unicode(filename, 'utf-8')
