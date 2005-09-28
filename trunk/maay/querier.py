@@ -70,6 +70,10 @@ class MaayQuerier:
                 connection = dbapiMod.connect(host=host, database=database,
                                               user=user, password=password,
                                               unicode=True)
+                # FIXME: find a better way to perform this operation
+                # the autodetection of the charset guesses latin-1 and
+                # this obviously does not work with unicode
+                connection.charset='utf-8'
             except dpapiMod.OperationalError:
                 raise MaayAuthenticationError("Failed to authenticate user %r"
                                               % user)
