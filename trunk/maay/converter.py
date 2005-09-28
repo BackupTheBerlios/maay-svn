@@ -22,6 +22,9 @@ it will use your converter.
 """
 __revision__ = '$Id$'
 
+# TODO: add support for xls, ppt,  openoffice, mp3, ogg
+# TODO: add support for compressed files (compress, gzip, bzip2)
+
 # XXX: need to handle file encodings
 
 import os
@@ -102,31 +105,10 @@ class CommandBasedConverter(BaseConverter):
 
 
 class PDFConverter(CommandBasedConverter):
-    # XXX: we could generate HTML (and thus obtain a real document
-    #      title) with pdftotext or pdftohtml but :
-    #        - pdftotex only wraps text between <pre> and </pre> tags
-    #          and **doesn't escape** text. So if you have something
-    #          like "<name>" in your document, you'll end up with
-    #          a malformed HTML file
-    #        - pdftohtml handles text correctly **but** doesn't provide
-    #          any way to save the output elsewhere than in the current
-    #          working directory
-    #     So, for now, just use pdftotext without -htmlmeta option.
-    #     Possible ways to circumvent the problem :
-    #      1/ add a "stdout" OUTPUT_TYPE, and when OUTPUT_TYPE is set
-    #        to "stdout", use popen() rather than os.system()
-    #      2/ override extractWordsFromFile() for PDFConverter, but
-    #         this will mainly be duplicated code
-    #      3/ add pre/post parse hooks (and maybe pre/post exec hooks)
-    #         to have a finer control on CommandBasesConverters
-    #      ... and probably lot of other solutions
-
-    # COMMAND = "pdftohtml -i -noframes -enc Latin1 %(input)s %(output)s"
-    # COMMAND = "pdftotext -htmlmeta -enc Latin1 %(input)s %(output)s"
-    COMMAND = "pdftotext -enc Latin1 %(input)s %(output)s"
-    OUTPUT_TYPE = 'text'
+    COMMAND = "pdftohtml -i -q -noframes -stdout -enc UTF-8 %(input)s > %(output)s"
+    OUTPUT_TYPE = 'html'
     MIME_TYPE = 'application/pdf'
-    OUTPUT_ENCODING = 'ISO-8859-1'
+    OUTPUT_ENCODING = 'UTF-8'
 
 class PSConverter(CommandBasedConverter):
     COMMAND = "ps2ascii %(input)s %(output)s"
@@ -153,3 +135,8 @@ def extractWordsFromFile(filename):
             print "indexation failed for %s, trying another converter" % filename
             continue
     raise IndexationFailure("Could not index file %r" % filename)
+
+def isKnownType(filename):
+    mimetype = guess_type(filename)[0]
+    return mimetype in REGISTRY
+    
