@@ -1,0 +1,14 @@
+* Tasks
+
+#B   X gérer les documents compressés (2005.09.28)
+#B   _ permettre le téléchargement d'un document (2005.09.28)
+#B   _ Faire marcher le P2P (2005.09.29)
+#B   _ ajouter d'autres convertisseurs (XML, code source) (2005.09.29)
+#B   X traiter les changements d'état des fichiers indexés (en particulier suppression) (2005.09.27)
+#B   X Regarder la conversion pdf->html (2005.09.28)
+#B   X Faire fonctionner le xmlrpc avec utf-8 (2005.09.27)
+#B   X vérifier qu'on utiliser de l'UTF-8 partout (2005.09.27)
+
+* Notes
+
+
