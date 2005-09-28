@@ -4,3 +4,10 @@ python-nevow (SVN)
 python-zopeinterface (>= 3.0.1)
 logilab-common (not yet release version, for unicode support in dbapi)
 python-mysqldb
+
+Converters:
+pdftohtml
+pdftotext
+xpdf-utils
+antiword
+unrtf
