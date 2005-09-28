@@ -105,22 +105,22 @@ class CommandBasedConverter(BaseConverter):
 
 
 class PDFConverter(CommandBasedConverter):
-    COMMAND = "pdftohtml -i -q -noframes -stdout -enc UTF-8 %(input)s > %(output)s"
+    COMMAND = 'pdftohtml -i -q -noframes -stdout -enc UTF-8 "%(input)s" > "%(output)s"'
     OUTPUT_TYPE = 'html'
     MIME_TYPE = 'application/pdf'
     OUTPUT_ENCODING = 'UTF-8'
 
 class PSConverter(CommandBasedConverter):
-    COMMAND = "ps2ascii %(input)s %(output)s"
+    COMMAND = 'ps2ascii "%(input)s" "%(output)s"'
     MIME_TYPE = 'application/postscript'
 
 class RTFConverter(CommandBasedConverter):
-    COMMAND = "unrtf --html %(input)s > %(output)s"
+    COMMAND = 'unrtf --html "%(input)s" > "%(output)s"'
     OUTPUT_TYPE = 'html'
     MIME_TYPE = 'text/rtf'
 
 class MSWordConverter(CommandBasedConverter):
-    COMMAND = "antiword %(input)s > %(output)s"
+    COMMAND = 'antiword "%(input)s" > "%(output)s"'
     MIME_TYPE = 'application/msword'
 
 
