@@ -12,7 +12,7 @@ import time
 import sys
 import sha
 from sets import Set
-from xmlrpclib import ServerProxy, Binary
+from xmlrpclib import ServerProxy, Binary, Fault
 import mimetypes
 
 from maay import converter
@@ -60,10 +60,15 @@ class Indexer:
         skipped = self.indexerConfig.skip_dir
         return FileIterator(indexed, skipped)
 
+    def isIndexable(self, filename):
+        return converter.isKnownType(filename)
+
     def start(self):
         existingFiles = Set()
         for filename in self.getFileIterator():
             existingFiles.add(filename)
+            if not self.isIndexable(filename):
+                continue
             lastModificationTime = os.path.getmtime(filename)
             lastIndexationTime = self.getLastIndexationTime(filename)
             if lastIndexationTime >= lastModificationTime:
@@ -79,7 +84,6 @@ class Indexer:
                     continue
                 docId = makeDocumentId(filename)
                 mime_type = mimetypes.guess_type(filename)[0]
-                mime_type = mimetypes.guess_type(filename)
 
                 self.indexDocument(filename, title, text, fileSize,
                                    lastModificationTime,
@@ -106,9 +110,17 @@ class Indexer:
                       file_state=FileInfo.CREATED_FILE_STATE):
         if self.verbose:
             print "Requesting indexation of %s" % filename
-        self.serverProxy.indexDocument(self.cnxId, filename, title, text,
-                                       fileSize, lastModTime, content_hash,
-                                       mime_type, state, file_state)
+        try:
+            self.serverProxy.indexDocument(self.cnxId, filename, title, text,
+                                           fileSize, lastModTime, content_hash,
+                                           mime_type, state, file_state)
+        except Fault, exc:
+            if self.verbose:
+                print "An error occured on the server while indexing %s" % filename.encode('iso-8859-1')
+                print exc
+                print "See server log for details"
+            else:
+                print "Error indexing %s: %s" % (filename.encode('iso-8859-1'), exc)
         
     
      
@@ -126,6 +138,10 @@ class FileIterator:
                 for dirpath, dirnames, filenames in os.walk(path):
                     self._removeSkippedDirnames(dirpath, dirnames)
                     for filename in filenames:
+                        try:
+                            filename = unicode(filename, 'utf-8')
+                        except UnicodeError:
+                            filename = unicode(filename, 'iso-8859-1')
                         yield os.path.join(dirpath, filename)
                     
     def _removeSkippedDirnames(self, dirpath, dirnames):
