@@ -27,7 +27,7 @@ class MaayRPCServer(XMLRPC):
             print "Could not get Querier for", username
             return '' # raise UnauthorizedLogin()
         digest = make_uid(username, password)
-        # print "Registering querier for %s (digets=%s)" % (username, digest)
+        print "Registering querier for %s (digets=%s)" % (username, digest)
         self._sessions[digest] = querier
         return digest
 
@@ -41,6 +41,7 @@ class MaayRPCServer(XMLRPC):
 
     def xmlrpc_lastIndexationTime(self, cnxId, filename):
         if self.cnxIsValid(cnxId):
+            filename = unicode(filename)
             querier = self._sessions[cnxId]
             fileInfos = querier.getFileInformations(filename)
             if len(fileInfos):
@@ -61,6 +62,7 @@ class MaayRPCServer(XMLRPC):
         
     def xmlrpc_removeFileInfo(self, cnxId, filename):
         if self.cnxIsValid(cnxId):
+            filename = unicode(filename)
             querier = self._sessions[cnxId]
             return querier.removeFileInfo(filename)
         return 0
@@ -78,9 +80,9 @@ class MaayRPCServer(XMLRPC):
         :type title: xmlrpclib.Binary
         :type text: xmlrpclib.Binary
         """
-        title = unicode(title, 'utf-8')
-        # Uh ? FIXME : encoding should be passed as a parameter
-        text = unicode(text, 'utf-8')
+        filename = unicode(filename)
+        title = unicode(title)
+        text = unicode(text)
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
             querier.indexDocument(filename, title, text, fileSize,
