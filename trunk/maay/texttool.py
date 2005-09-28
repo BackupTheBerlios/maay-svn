@@ -6,6 +6,7 @@ __revision__ = '$Id$'
 from HTMLParser import HTMLParser
 import codecs
 import re
+import mimetypes
 
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
@@ -18,7 +19,7 @@ WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN))
 
 
 CHARSET_RGX = re.compile('charset=([^\s"]*)', re.I | re.S | re.U)
-XML_ENCODING_RGX = re.compile('<\?xml version=[^\s]*\s*encoding=([^\s]*)\s*\?>', re.I | re.S | re.U)
+XML_ENCODING_RGX = re.compile('^<\?xml version=[^\s]*\s*encoding=([^\s]*)\s*\?>', re.I | re.S | re.U)
 
 def normalizeHtmlEncoding(htmlEncoding):
     # XXX FIXME: this function probably already exists somewhere ...
@@ -49,11 +50,10 @@ def guessEncoding(filename):
         elif buffer[:3] == codecs.BOM_UTF8:
             return 'UTF-8'
         buffer += stream.read()
-        # try to get charset declaration
-        # FIXME: should we check it's html before ?
-        m = CHARSET_RGX.search(buffer)
-        if m is not None:
-            return normalizeHtmlEncoding(m.group(1))
+        if mimetypes.guess_type(filename)[0] == 'text/html':
+            m = CHARSET_RGX.search(buffer)
+            if m is not None:
+                return normalizeHtmlEncoding(m.group(1))
         # check for xml encoding declaration
         if buffer.lstrip().startswith('<?xml'):
             m = XML_ENCODING_RGX.match(buffer)
@@ -78,7 +78,7 @@ class AbstractParser:
         :param encoding: if None, then need to be guessed
         """
         encoding = encoding or guessEncoding(filename)
-        stream = codecs.open(filename, 'r', encoding)
+        stream = codecs.open(filename, 'r', encoding, errors='ignore')
         try:
             return self.parseString(stream.read())
         finally:

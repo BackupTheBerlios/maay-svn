@@ -63,6 +63,11 @@ class HTMLParserTC(unittest.TestCase):
         self.assertEquals(guessEncoding(join(DATADIR, 'latin1.xml')), 'ISO-8859-1')
         self.assertEquals(guessEncoding(join(DATADIR, 'encoded.html')), 'ISO-8859-1')
 
+    def test_guessEncodingRawUTF8Text(self):
+        filename = join(DATADIR, 'guess_encoding.txt')
+        enc = guessEncoding(filename)
+        self.assertEquals(enc, 'UTF-8')
+
     def test_normalizeHTMLEncoding(self):
         data = [
             'latin1', 'ISO-8859-1',
@@ -80,5 +85,7 @@ class HTMLParserTC(unittest.TestCase):
         self.assertEquals(title, u'21 Porting to Python 2.3')
         self.failUnless(len(text)>10)
         
+
+
 if __name__ == '__main__':
     unittest.main()
