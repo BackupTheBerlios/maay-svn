@@ -57,7 +57,7 @@ class DBEntity:
             return entities
         else:
             entity = cls(**args)
-            entity.commit(update=False)
+            entity.commit(cursor, update=False)
             return cls.selectOrInsertWhere(cursor, **args)
     selectOrInsertWhere = classmethod(selectOrInsertWhere)
     
