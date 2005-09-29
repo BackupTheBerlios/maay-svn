@@ -20,6 +20,32 @@ from maay.configuration import Configuration
 from maay.dbentity import Document, FileInfo
 from maay.querier import MaayAuthenticationError
 
+# grabbed from nevow
+mimetypes.types_map.update(
+    {
+            '.conf':  'text/plain',
+            '.diff':  'text/plain',
+            '.exe':   'application/x-executable',
+            '.flac':  'audio/x-flac',
+            '.java':  'text/plain',
+            '.ogg':   'application/ogg',
+            '.oz':    'text/x-oz',
+            '.swf':   'application/x-shockwave-flash',
+            '.tgz':   'application/x-gtar',
+            '.wml':   'text/vnd.wap.wml',
+            '.xul':   'application/vnd.mozilla.xul+xml',
+            '.py':    'text/plain',
+            '.patch': 'text/plain',
+            '.c' : 'text/plain',
+            '.h': 'text/plain',
+            '.C': 'text/plain',
+            '.cpp': 'text/plain',
+            '.cc': 'text/plain',
+            '.c++': 'text/plain',
+        }
+    )
+
+
 def makeDocumentId(filename):
     """return the SHA hash value from of the contents of the file"""
     stream = file(filename, 'rb')
