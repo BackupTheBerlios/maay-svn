@@ -45,6 +45,20 @@ class DBEntity:
         results = cursor.fetchall()
         return [cls(**dict(zip(cls.attributes, row))) for row in results]
     selectWhere = classmethod(selectWhere)
+
+    def selectOrInsertWhere(cls, cursor, **args):
+        """If the db contains entities matching the keyword arguments,
+        return the list otherwise, first insert an entity matching the
+        kw arguments, and return it.  The default values for the
+        columns are used.
+        """
+        entities = cls.selectWhere(cursor, **args)
+        if entities:
+            return entities
+        else:
+            entity = cls(**args)
+            entity.commit(update=False)
+            return cls.selectOrInsertWhere(cursor, **args)
     
     def commit(self, cursor, update=False):
         if update:
