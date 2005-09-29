@@ -1,6 +1,7 @@
 # -*- coding: iso-8859-1 -*- 
 """provides the MaayQuerier class"""
 
+from __future__ import division
 
 __revision__ = '$Id$'
 __metaclass__ = type
@@ -8,6 +9,7 @@ __metaclass__ = type
 from mimetypes import guess_type
 import re
 import time
+from math import sqrt, log
 
 from zope.interface import Interface, implements
 
@@ -25,8 +27,8 @@ class MaayAuthenticationError(Exception):
 class IQuerier(Interface):
     """defines the High-Level interface to Maay SQL database"""
 
-    def findDocuments(words):
-        """returns all Documents matching <words>"""
+    def findDocuments(query):
+        """returns all Documents matching <query>"""
 
     def getFileInformations(filename):
         """returns a list of FileInfo's instances according
@@ -50,7 +52,7 @@ class IQuerier(Interface):
         `document_providers` table reference them, as well as the
         corresponding `document_scores` rows"""
         
-    def notifyDownload(self, docId, words):
+    def notifyDownload(self, docId, query):
         """check that a document is downloadable and update the
         download statistics for the document.
 
@@ -106,8 +108,10 @@ class MaayQuerier:
     def close(self):
         self._cnx.close()
     
-    def findDocuments(self, words):
-        """Find all indexed documents containing all the words in the list"""
+    def findDocuments(self, query):
+        """Find all indexed documents matching the query"""
+        words = WORDS_RGX.findall(normalizeText(query))
+        self._updateQueryStatistics(words)
         try:
             cursor = self._cnx.cursor()
             return Document.selectContaining(cursor, words)
@@ -283,11 +287,61 @@ class MaayQuerier:
             db_scores[score.word] = score
         return db_scores
 
-    def notifyDownload(self, db_document_id, words):
-        cursor = self._cnx.cursor()
+    def notifyDownload(self, db_document_id, query):
+        words = WORDS_RGX.findall(normalizeText(query))
         try:
-            doc = Document.selectWhere(cursor, db_document_id=db_document_id)[0]
-            # TODO: update statistics
+            try:
+                cursor = self._cnx.cursor()
+                doc = Document.selectWhere(cursor, db_document_id=db_document_id)[0]
+            finally:
+                cursor.close()
+            self._updateDownloadStatistics(doc, words)
             return doc.url
         except IndexError:
             return ''
+
+    def _updateQueryStatistics(self, words):
+        # FIXME: update node_interests too
+        cursor = self._cnx.cursor()
+        for word in words:
+            winfo = Word.selectOrInsertWhere(cursor, word=word)[0]
+            winfo.claim_count += 1 / len(words)
+            winfo.commit(cursor, update=True)
+        cursor.close
+        self._cnx.commit()
+
+    def _updateDownloadStatistics(self, document, words):
+        cursor = self._cnx.cursor()
+        document.download_count = max(0, document.download_count) + 1
+        document.commit(cursor, update=True)
+        db_document_id = document.db_document_id
+        scores = {}
+        wordInfo = {}
+        for word in words:
+            scores[word] = DocumentScore.selectOrInsertWhere(cursor,
+                                      db_document_id=db_document_id,
+                                      word=word)[0]
+            wordInfo[word] = Word.selectOrInsertWhere(cursor,
+                                                      word=word)[0]
+
+        for winfo in wordInfo.itervalues():
+            winfo.download_count += 1/len(words)
+            winfo.commit(cursor, update=True)
+
+        for word,score in scores.iteritems():
+            score.download_count = max(0, score.download_count) + 1/len(words)
+            winfo_downloads = wordInfo[word].download_count
+            
+            score.popularity = score.download_count / winfo_downloads
+            score.popularity -= hoeffding_deviation(winfo_downloads)
+            
+            score.relevance = score.download_count / document.download_count
+            score.relevance -= hoeffding_deviation(document.download_count)
+            
+            score.commit(cursor, update=True)
+        cursor.close()
+        self._cnx.commit()
+
+
+def hoeffding_deviation(occurence, confidence=0.9):
+     return sqrt(-log(confidence / 2) / (2 * occurence))

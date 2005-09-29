@@ -75,17 +75,16 @@ class SearchForm(MaayPage):
         return None
 
     def child_search(self, context):
-        words = context.arg('words').split()
-        results = self.querier.findDocuments(words)
-        return ResultsPage(results, words)
+        query = unicode(context.arg('words'))
+        results = self.querier.findDocuments(query)
+        return ResultsPage(results, query)
 
     # XXX make sure that the requested document is really in the database
     # XXX don't forget to update the download statistics of the document
     def child_download(self, context):
         docid = context.arg('docid')
-        words = context.arg('words').split()
-        
-        docurl = self.querier.notifyDownload(docid, words)
+        query = unicode(context.arg('words'))
+        docurl = self.querier.notifyDownload(docid, query)
         if docurl:
             return  static.File(docurl)
         else:
@@ -96,16 +95,19 @@ class ResultsPage(MaayPage):
     docFactory = loaders.xmlfile(get_path_of('resultpage.html'))
     addSlash = False
     
-    def __init__(self, results, words):
+    def __init__(self, results, query):
         MaayPage.__init__(self)
         self.results = results
-        self.words = words
+        self.query = unicode(query)
 
     def data_results(self, context, data):
         return self.results
+
+    def render_title(self, context, data):
+        context.fillSlots('words', self.query)
+        return context.tag
     
     def render_row(self, context, data):
-        # FIXME : put words in the download url for stats
         document = data
         context.fillSlots('doctitle',  document.title)
         # XXX abstract attribute should be a unicode string
@@ -117,7 +119,7 @@ class ResultsPage(MaayPage):
         context.fillSlots('abstract', abstract)
         context.fillSlots('docid', document.db_document_id)
         context.fillSlots('docurl', document.url)
-        context.fillSlots('words', u' '.join(self.words))
+        context.fillSlots('words', self.query)
         context.fillSlots('readable_size', document.readable_size())
         return context.tag
 

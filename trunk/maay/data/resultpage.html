@@ -14,7 +14,7 @@
 	<input type="submit" class="searchButton" value="search" />
       </form>      
     </div>
-    <div class="message">results for XXX</div>
+    <div class="message" nevow:render="title">Results for "<nevow:slot name="words" />"</div>
     <table class="results" nevow:render="sequence" nevow:data="results">
       <tr nevow:pattern="item" nevow:render="row">
 	<td>
