@@ -19,7 +19,7 @@
       <tr nevow:pattern="item" nevow:render="row">
 	<td>
 	  <div class="resultItem">
-	    <a class="docTitle"><nevow:attr name="href"><nevow:slot name="docurl" /></nevow:attr><nevow:slot name="doctitle">DOC TITLE</nevow:slot></a>
+	    <a class="docTitle"><nevow:attr name="href">/download?docid=<nevow:slot name="docid" />&amp;words=<nevow:slot name="words" /></nevow:attr><nevow:slot name="doctitle">DOC TITLE</nevow:slot></a>
 	    <pre class="resultDesc">
 	      <nevow:slot name="abstract">doc abstract</nevow:slot>
 	    </pre>

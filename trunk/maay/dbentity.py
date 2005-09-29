@@ -189,7 +189,8 @@ class Document(DBEntity):
         # that we are looking for, group them by their identifier, and
         # only keep those identifier which appeared once for each word
         # we were looking for.
-        query = ("SELECT D.document_id, "
+        query = ("SELECT D.db_document_id, "
+                        "D.document_id, "
                         "D.title, "
                         "D.size, "
                         "D.text, "
@@ -211,7 +212,7 @@ class Document(DBEntity):
         if query:
             cursor.execute(query, params)
             results = cursor.fetchall()
-            return [cls(**dict(zip(['document_id', 'title', 'size', 'text', 'url', 'mime_type'],
+            return [cls(**dict(zip(['db_document_id', 'document_id', 'title', 'size', 'text', 'url', 'mime_type'],
                                    row)))
                     for row in results]
         else:

@@ -28,7 +28,8 @@ from maay.configuration import get_path_of, Configuration
 class MaayPage(rend.Page):
     child_maaycss = static.File(get_path_of('maay.css'))
     child_images = static.File(get_path_of('images/'))
-    
+
+
 
 class LoginForm(MaayPage):
     """a basic login form. This page is rendered until the user
@@ -64,7 +65,7 @@ class SearchForm(MaayPage):
     addSlash = True
 
     def __init__(self, maayId, querier):
-        rend.Page.__init__(self)
+        MaayPage.__init__(self)
         self.maayId = maayId
         self.querier = querier
 
@@ -74,32 +75,49 @@ class SearchForm(MaayPage):
         return None
 
     def child_search(self, context):
-        words = context.arg('words')
-        if isinstance(words, basestring):
-            words = (words,)
+        words = context.arg('words').split()
         results = self.querier.findDocuments(words)
-        return ResultsPage(results)
+        return ResultsPage(results, words)
 
-
+    # XXX make sure that the requested document is really in the database
+    # XXX don't forget to update the download statistics of the document
+    def child_download(self, context):
+        docid = context.arg('docid')
+        words = context.arg('words').split()
+        
+        docurl = self.querier.notifyDownload(docid, words)
+        if docurl:
+            return  static.File(docurl)
+        else:
+            return NotFoundPage()
 
 class ResultsPage(MaayPage):
     """default results page"""
     docFactory = loaders.xmlfile(get_path_of('resultpage.html'))
     addSlash = False
     
-    def __init__(self, results):
+    def __init__(self, results, words):
         MaayPage.__init__(self)
         self.results = results
+        self.words = words
 
     def data_results(self, context, data):
         return self.results
     
     def render_row(self, context, data):
+        # FIXME : put words in the download url for stats
         document = data
         context.fillSlots('doctitle',  document.title)
         # XXX abstract attribute should be a unicode string
-        context.fillSlots('abstract', normalize_text(unicode(document.abstract)))
+        try:
+            abstract = normalize_text(unicode(document.abstract))
+        except Exception, exc:
+            print exc
+            abstract = u'No abstract available for this document [%s]' % exc
+        context.fillSlots('abstract', abstract)
+        context.fillSlots('docid', document.db_document_id)
         context.fillSlots('docurl', document.url)
+        context.fillSlots('words', u' '.join(self.words))
         context.fillSlots('readable_size', document.readable_size())
         return context.tag
 
@@ -114,6 +132,7 @@ class MaayRealm:
 
     def createUserSession(self, avatarId, querier):
         self._sessions[avatarId] = querier
+
 
     def requestAvatar(self, avatarId, mind, *interfaces):
         for iface in interfaces:
@@ -176,6 +195,9 @@ class DBAuthChecker:
         self.realm.createUserSession(creds.username, querier)
         return defer.succeed(creds.username)
 
+
+class NotFoundPage(rend.FourOhFour):
+    pass
 
 class WebappConfiguration(Configuration):
     options = [

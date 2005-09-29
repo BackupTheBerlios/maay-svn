@@ -50,6 +50,13 @@ class IQuerier(Interface):
         `document_providers` table reference them, as well as the
         corresponding `document_scores` rows"""
         
+    def notifyDownload(self, docId, words):
+        """check that a document is downloadable and update the
+        download statistics for the document.
+
+        Return document url if the document is downloadable and and
+        empty string otherwise"""
+        
     def close():
         """closes the DB connection"""
 
@@ -74,7 +81,7 @@ class MaayQuerier:
                 # the autodetection of the charset guesses latin-1 and
                 # this obviously does not work with unicode
                 connection.charset='utf-8'
-            except dpapiMod.OperationalError:
+            except dbapiMod.OperationalError:
                 raise MaayAuthenticationError("Failed to authenticate user %r"
                                               % user)
         self._cnx = connection
@@ -275,3 +282,12 @@ class MaayQuerier:
             score = _scores.pop()
             db_scores[score.word] = score
         return db_scores
+
+    def notifyDownload(self, db_document_id, words):
+        cursor = self._cnx.cursor()
+        try:
+            doc = Document.selectWhere(cursor, db_document_id=db_document_id)[0]
+            # TODO: update statistics
+            return doc.url
+        except IndexError:
+            return ''
