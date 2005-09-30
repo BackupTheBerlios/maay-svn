@@ -1,0 +1,3 @@
+recursive-include maay/test/*
+recursive-include maay/data/*
+recursive-include maay/sql/*.sql

@@ -157,4 +157,3 @@ def extractWordsFromFile(filename):
 def isKnownType(filename):
     mimetype = guess_type(filename)[0]
     return mimetype in REGISTRY
-    

@@ -18,6 +18,11 @@ from twisted.web import static
 from twisted.python import failure
 
 from nevow import inevow, rend, tags, guard, loaders, appserver
+# this is to help py2exe
+import nevow.flat.flatstan
+import nevow.query
+import twisted.web.woven.guard
+import MySQLdb
 
 from logilab.common.textutils import normalize_text
 
