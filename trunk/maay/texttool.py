@@ -23,6 +23,10 @@ WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN))
 CHARSET_RGX = re.compile(r'charset=[\s"]*([^\s"]+)', re.I | re.S | re.U)
 XML_ENCODING_RGX = re.compile(r'^<\?xml version=[^\s]*\s*encoding=([^\s]*)\s*\?>', re.I | re.S | re.U)
 
+class ParsingError(Exception):
+    """raised when an error occures during the indexation of a file"""
+    pass
+
 def normalizeHtmlEncoding(htmlEncoding):
     # XXX FIXME: this function probably already exists somewhere ...
     if htmlEncoding in ('iso8859-1', 'iso-latin1', 'iso-latin-1', 'latin-1',
@@ -59,7 +63,7 @@ def guessEncoding(filename):
         buffer += stream.read()
         if mimetypes.guess_type(filename)[0] == 'text/html':
             m = CHARSET_RGX.search(buffer)
-            if m is not None:
+            if m is not None :
                 return normalizeHtmlEncoding(m.group(1))
         # check for xml encoding declaration
         if buffer.lstrip().startswith('<?xml'):
@@ -103,7 +107,10 @@ class AbstractParser:
         :param encoding: if None, then need to be guessed
         """
         encoding = encoding or guessEncoding(filename)
-        stream = open(filename, 'rb', encoding, errors='ignore')
+        try:
+            stream = open(filename, 'rb', encoding, errors='ignore')
+        except LookupError:
+            raise ParsingError('Unsupported document encoding %s' % encoding)
         try:
             return self.parseString(stream.read())
         finally:

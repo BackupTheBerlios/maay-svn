@@ -32,7 +32,7 @@ from tempfile import mkdtemp
 import gzip
 import bz2
 
-from maay.texttool import TextParser, MaayHTMLParser as HTMLParser
+from maay.texttool import TextParser, MaayHTMLParser as HTMLParser, ParsingError
 
 # REGISTRY is a mimetype / converterList map
 REGISTRY = {}
@@ -70,7 +70,10 @@ class BaseConverter:
         :returns: a word-vector
         """
         parser = self.getParser()
-        return parser.parseFile(filename, self.OUTPUT_ENCODING)
+        try:
+            return parser.parseFile(filename, self.OUTPUT_ENCODING)
+        except ParsingError, exc:
+            raise IndexationFailure("Cannot index document %s (%s)" % (filename, exc))
 
 
 class RawTextConverter(BaseConverter):
