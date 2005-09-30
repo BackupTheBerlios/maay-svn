@@ -88,25 +88,25 @@ class CommandBasedConverter(BaseConverter):
 
     def extractWordsFromFile(self, filename):
         outputDir = mkdtemp()
-        if filename.endswith('.gz') or filename.endswith('.bz2'):
-            print "Decompressing %s" % filename
-            if filename.endswith('.gz'):
-                opener = gzip.open
-            else:
+        if filename.endswith('.gz'):
+            opener = gzip.open
+        elif filename.endswith('.bz2'):
                 opener = bz2.BZ2File
-            compressed = opener(filename, 'rb')
-            uncompressedFile = os.path.join(outputDir, 'uncompressed')
-            uncompressed = file(uncompressedFile, 'wb')
-            uncompressed.write(compressed.read())
-            compressed.close()
-            uncompressed.close()
-            
         else:
-            uncompressedFile = ''
+            opener = file
+            
+        compressed = opener(filename, 'rb')
+        uncompressedFile = os.path.join(outputDir, 'uncompressed')
+        uncompressed = file(uncompressedFile, 'wb')
+        uncompressed.write(compressed.read())
+        compressed.close()
+        uncompressed.close()
+
+            
         outputFile = os.path.join(outputDir, 'outfile')
-        command_args = {'input' : uncompressedFile or filename, 'output' : outputFile}
+        command_args = {'input' : uncompressedFile, 'output' : outputFile}
         cmd = self.COMMAND % command_args
-        print "Executing %r" % cmd
+        #print "Executing %r" % cmd
         errcode = os.system(cmd)
         try:
             if errcode == 0: # OK
