@@ -15,9 +15,9 @@ def __get_data_dir():
     depending on the platform and application setup"""
     __maay_dir = os.path.abspath(os.path.dirname(maay.__file__))
     if sys.platform == "win32":
-        # Assume we are working on an installed version of Maay
-        # XXX FIXME this probably does not work with py2exe
-        return  os.path.join(__maay_dir, 'data') 
+        __maay_dir = os.path.normpath(os.path.join(__maay_dir, '..','..'))
+        return  os.path.join(__maay_dir,'data') 
+        os.environ[PATH] = os.environ[PATH] + u';"%(dir)s\antiword";"%(dir)s\pdftohtml";"%(dir)s\mysql\bin"' % {"dir" : __maay_dir}
     else:
         if __maay_dir.startswith('/home') or __maay_dir.startswith('/Users'):
             # we are in a development directory
