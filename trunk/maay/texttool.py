@@ -20,8 +20,8 @@ WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN))
 
 
 
-CHARSET_RGX = re.compile('charset=([^\s"]*)', re.I | re.S | re.U)
-XML_ENCODING_RGX = re.compile('^<\?xml version=[^\s]*\s*encoding=([^\s]*)\s*\?>', re.I | re.S | re.U)
+CHARSET_RGX = re.compile(r'charset=[\s"]*([^\s"]+)', re.I | re.S | re.U)
+XML_ENCODING_RGX = re.compile(r'^<\?xml version=[^\s]*\s*encoding=([^\s]*)\s*\?>', re.I | re.S | re.U)
 
 def normalizeHtmlEncoding(htmlEncoding):
     # XXX FIXME: this function probably already exists somewhere ...
