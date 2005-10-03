@@ -1,0 +1,4 @@
+#!/usr/bin/python
+__revision__ = '$Id$'
+from maay.main import run
+run()
