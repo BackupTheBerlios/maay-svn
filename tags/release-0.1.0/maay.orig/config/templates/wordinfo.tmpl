@@ -1,0 +1,47 @@
+#set global $title="Information sur le mot $wordInfo.word"
+#include "config/templates/includes/header.tmpl"
+
+#set global $selected_top_menu_id=$constants.WORDS_MENU_ID
+#include "config/templates/includes/top_menus.tmpl"
+
+<h1>Information sur le mot '$wordInfo.word'</h1>
+<table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+  <tr bgcolor="#efefef">
+    <td colspan=2><b>Informations générales</b></td>
+  </tr>
+  <tr bgcolor=#ffffff>
+    <td><b>Mot</b></td><td>$wordInfo.word</td>
+      </tr>
+  <tr bgcolor=#ffffff>
+    <td><b>Nombre de manifestation du mot</b></td><td>$wordInfo.claim_count</td>
+  </tr>
+  <tr bgcolor=#ffffff>
+    <td><b>Nombre de téléchargement pour le mot</b></td><td>$wordInfo.download_count</td>
+  </tr>
+</table>
+<br><br>
+
+## Nodes interested by the word
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+  <tr bgcolor="#efefef">
+    <td colspan=4><b>Noeuds ayant manifesté leur intérêt pour le mot $wordInfo.word</b></td>
+  </tr>
+
+    <tr bgcolor="#ffffff">
+      <td><b>Identifiant du noeud</b></td>
+      <td><b>Nombre de manifestations pour le mot</b></td>
+      <td><b>Specialisation</b></td>
+      <td><b>Expertise</b></td>
+    </tr>
+#for $nodeInterest in $nodeInterests
+    <tr bgcolor="#ffffff">
+      <td><a href="/maay/nodeinfo?nid=$nodeInterest.node_id">$nodeInterest.node_id</a></td>
+	  <td align=right>$nodeInterest.claim_count</td>
+	  <td align=right>$nodeInterest.specialisation</td>
+	  <td align=right>$nodeInterest.expertise</td>
+    </tr>
+#end for
+  </table>
+  <br><br>
+
+#include "config/templates/includes/footer.tmpl"

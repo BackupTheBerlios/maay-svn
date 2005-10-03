@@ -1,0 +1,338 @@
+#set global $title="Résultats"
+#include "config/templates/includes/header.tmpl"
+
+#set global $selected_top_menu_id=$constants.SEARCH_MENU_ID
+#include "config/templates/includes/top_menus.tmpl"
+
+#set $icons = [ ["text/html", "/images/html.png"], ["application/pdf", "/images/pdf.png"], ["application/msword", "/images/doc.png"], ["text/plain", "/images/txt.png"]]
+
+<script language="javascript">
+<!--
+function mailpage(title, did)
+{
+ 	body = 'Je te recommande cette page : ' + title + '.\r\n'
+ 	+ 'Tu peux le télécharger à l\'URL suivante :\r\nhttp://$ip:$port/maay/remotedownload?did=' + did + '\r\n';
+
+ location.href =
+ 	'mailto:?subject=page recommandée:' + escape(title)
+ 	+ '&body=' + escape(body)
+}
+
+function maayify(document_id)
+{
+javascript:window.open('http://127.0.0.1:$port/maay/maayify?did='+document_id, 'Maayify this page', 'toolbar=no,width=600,height=250');w.raise();w.focus();
+}
+
+//-->
+<!--
+ 	+ 'Tu peux le telecharger en <a href="http://$ip:$port/maay/document?did=' + did
+ 	-->
+
+
+</script>
+
+#if $search_mode == $constants.NORMAL_SEARCH_MODE
+##display normal search form
+  <form action="search">
+  <center>
+  <table>
+  	<tr>
+  	<td align=right>
+  	<a href="/maay/resultspool?sm=1"><font class="verysmall" align=right>Recherche avancée &gt;&gt;</font></a>
+  	</td>
+  	</tr>
+
+    <tr>
+      <td align=center>Rechercher
+	  <input type="text" name="q" size=30 value="$queryStr">
+      pour
+    <select name="r">
+      <option value=10>10</option>
+      <option value=20>20</option>
+      <option value=50>50</option>
+      <option value=100>100</option>
+    </select>
+    résultats
+	</td>
+	</tr>
+	<tr>
+	<td align=center>
+    <input type="submit" name="desktopsearch" value="Recherche Locale" style="background-color: $templatetools.DESKTOP_SEARCH_COLOR;color:white">
+    <input type="submit" name="maaysearch" value="Recherche Réseau Maay" style="background-color: $templatetools.MAAY_SEARCH_COLOR;color:white">
+    <input type="submit" name="intranetsearch" value="Recherche Intranet" style="background-color: $templatetools.INTRANET_SEARCH_COLOR;color:white">
+    <input type="submit" name="googlesearch" value="Recherche Web" style="background-color: $templatetools.INTERNET_SEARCH_COLOR;color:white">
+	</td>
+	</tr>
+
+	</table>
+	</center>
+	<br>
+  </form>
+#else
+##display advanced search mode
+  <form action="search">
+  <center>
+  <table>
+  	<tr>
+  	<td align=right colspan=4>
+  	<a href="/maay/resultspool?sm=0"><font class="verysmall" align=right>Recherche normale &lt;&lt;</font></a>
+  	</td>
+  	</tr>
+
+    <tr>
+      <td rowspan=3 valign=top>Rechercher</td>
+      <td valign=top>par mots</td><td><input type="text" name="q" size=40 value="$wordsQuery"></td>
+      <td rowspan=3 valign=top>pour
+    	<select name="r">
+      	  <option value=10>10</option>
+	      <option value=20>20</option>
+          <option value=50>50</option>
+	      <option value=100>100</option>
+	    </select>
+	  résultats
+      </td>
+    </tr>
+    <tr>
+      <td valign=top>par identifiant du document</td><td><input type="text" name="did"  value="$documentIDQuery" size=40><br><font class="verysmall"><i>e.g. 7694a66420cf9fe06ee049570885c27fe961b926</i><br>Cette recherche par identifiant ne marche que pour la recherche locale et sur le réseau Maay.</font></td>
+    </tr>
+    <tr>
+      <td valign=top>par URL</td><td><input type="text" name="url"  value="$urlQuery" size=40><br><font class="verysmall"><i>e.g. http://maay.rd.francetelecom.fr/maay/</i></font></td>
+	</tr>
+
+	<tr>
+	<td colspan=4 align=center>
+    <input type="submit" name="desktopsearch" value="Recherche Locale" style="background-color: $templatetools.DESKTOP_SEARCH_COLOR;color:white">
+    <input type="submit" name="maaysearch" value="Recherche Réseau Maay" style="background-color: $templatetools.MAAY_SEARCH_COLOR;color:white">
+    <input type="submit" name="intranetsearch" value="Recherche Intranet" style="background-color: $templatetools.INTRANET_SEARCH_COLOR;color:white">
+    <input type="submit" name="googlesearch" value="Recherche Web" style="background-color: $templatetools.INTERNET_SEARCH_COLOR;color:white">
+	</td>
+	</tr>
+	</table>
+	</center>
+	<br>
+  </form>
+#end if
+
+#if len($resultSpools) > 0
+    <table cellspacing=0 cellpadding=0 border=0 width=100%>
+      <tr height=19>
+        <td width=100>Résultats:&nbsp;</td>
+
+##display search tab
+#set $current_search_color = ""
+#set $current_light_search_color = ""
+#set $current_rs = None
+
+#for $rs in $resultSpools
+#if $rs.getQueryID() == $query_id
+	#set $tab_color=$templatetools.getSearchRangeColor($rs.getRange())
+	#set $text_color="#ffffff"
+	#set $current_search_color = $tab_color
+	#set $current_light_search_color = $templatetools.getSearchRangeLightColor($rs.getRange())
+	#set $current_rs = $rs
+
+#else
+	#set $tab_color=$templatetools.getSearchRangeLightColor($rs.getRange())
+	#set $text_color="#000000"
+#end if
+
+        <td bgcolor="$tab_color" valign=center nowrap onClick="document.location='/maay/closeresultspool?qid=$rs.getQueryID()';return false;" style=cursor:pointer;cursor:hand;>
+          &nbsp;<a href='/maay/closeresultspool?qid=$rs.getQueryID()'><img src='/images/x.png' border=0 align=absbottom"></a>
+        </td>
+        <td bgcolor="$tab_color" valign=center nowrap onClick="document.location='/maay/resultspool?qid=$rs.getQueryID()';return false;" style=cursor:pointer;cursor:hand;>
+          &nbsp;<a class=q href="/maay/resultspool?qid=$rs.getQueryID()">
+            <font color="$text_color"><b>$rs.getLabel()&nbsp;</b>($rs.getResultCount())</font>
+          </a>&nbsp;
+        </td>
+        <td width=15>&nbsp;</td>
+
+#end for
+
+<td width=100%>&nbsp;</td>
+      </tr>
+      <tr>
+#set colspan=len($resultSpools) * 3 + 2
+        <td colspan="$colspan" height="1" bgcolor="$current_search_color"></td>
+      </tr>
+	  <tr>
+	    <td colspan="$colspan">
+  	      <table width=100% bgcolor="$current_light_search_color">
+		    <tr bgcolor="$current_light_search_color">
+				<td>
+				<table>
+				<tr><td><font size="+1">$templatetools.getSearchRangeName($current_rs.getRange())</font></td>
+
+## display filters
+#if $current_rs.getRange() != $constants.INTRANET_SEARCH_RANGE and $current_rs.getRange() != $constants.INTERNET_SEARCH_RANGE
+#set $rs_filters = [ [$constants.ALL_SEARCH_RANGE, "Tout"], [$constants.PRIVATE_SEARCH_RANGE, "Privées"], [$constants.PUBLISHED_SEARCH_RANGE, "Publiés"], [$constants.CACHED_SEARCH_RANGE, "Mis en cache"], [$constants.KNOWN_SEARCH_RANGE, "Connus"] ]
+
+#for $rs_filter in $rs_filters
+#set $rs_filter_color = $templatetools.getDocumentStateColor($rs_filter[0])
+#if $search_range == $rs_filter[0]
+<td><table><tr><td bgcolor="$rs_filter_color"><img height=10 width=10 border=0></td></tr></table></td><td><font class="bigblack">$current_rs.getFilteredResultCount($rs_filter[0]) $rs_filter[1]</font></td>
+#else
+<td><table><tr><td bgcolor="$rs_filter_color"><img height=10 width=10 border=0></td></tr></table></td><td><a href="/maay/resultspool?qid=$query_id&r=$rs_filter[0]" class="biggray">$current_rs.getFilteredResultCount($rs_filter[0]) $rs_filter[1]</a></td>
+#end if
+
+#end for
+
+#end if
+
+				</tr></table>
+</td>
+              <td align="right" valign="top">Résultats <b>$start_result</b> - <b>$end_result</b> de <b>$result_count</b>.</td>
+	       </tr>
+		   <tr>
+		     <td colspan=2 align="left">
+			   <table width=100%>
+			   <tr>
+			   <td>
+Recherche effectuée le <b>$templatetools.long_date_str($current_rs.getQueryTime)</b> pour <b>$current_rs.getLabel()</b>
+		       <br>
+		       <a href="/maay/search?qid=$query_id" class=s>Relancer la recherche</a>
+			   </td>
+			   <td align=right align=bottom>
+			                 Résultats triés par : <a href="/maay/resultspool?qid=$current_rs.getQueryID()&s=0&r=$search_range" class=s>pertinence</a>
+							                 &nbsp;<a href="/maay/resultspool?qid=$current_rs.getQueryID()&s=1&r=$search_range" class=s>date</a>
+			   </td>
+			 </td>
+		   </tr>
+		  </table>
+	    </td>
+	  </tr>
+    </table>
+
+<br>
+
+#if len($results) == 0
+Aucun résultats trouvés pour le moment...
+#else
+
+#if $current_rs.getRange() != $constants.INTRANET_SEARCH_RANGE and $current_rs.getRange() != $constants.INTERNET_SEARCH_RANGE
+##display results
+#for $result in $results
+#set $documentInfo = $database.getDocumentInfo($document_id=$result.document_id)
+#set $documentScores = $database.getDocumentScores(db_document_id = $documentInfo.db_document_id, $words = $current_rs.getQuery(), order = 'popularity', document_score_count = 3)
+#set $relevantDocumentScores = $database.getBestRelevantDocumentScores(documentInfo.db_document_id, 5) 
+#set $excerpt = $templatetools.mergeExcerpts($documentInfo, $documentScores, $current_rs.getQuery())
+#set $fileInfos = $database.getFileInfos(db_document_id = $documentInfo.db_document_id)
+
+  <table border=0 cellspacing=0 cellpadding = 0>
+    <tr>
+	  <td rowspan=2 bgcolor="$templatetools.getDocumentStateColor($documentInfo.state)" width=4>&nbsp;</td>
+	  <td rowspan=2 width=10>&nbsp;</td>
+	  <td>
+#for $icon in $icons:
+#if $documentInfo.mime_type == $icon[0]
+<img src="$icon[1]">
+#end if
+#end for
+  		<a href="/maay/document?did=$result.document_id&qid=$current_rs.getQueryID()">$templatetools.putInBold($documentInfo.title, $current_rs.getQuery())</a><br>
+	  </td>
+    </tr>
+    <tr>
+	  <td>$templatetools.putInBold($excerpt, $current_rs.getQuery())
+	  <br>
+<b>Scores :</b>
+#for $ds in $documentScores:
+$ds.word ($ds.relevance / $ds.popularity)
+#end for
+<br>
+<b>Mots pertinents :</b>
+#for $ds in $relevantDocumentScores:
+$ds.word ($ds.relevance / $ds.popularity)
+#end for
+<br>
+<b>Convenance :</b> $documentInfo.matching
+<br>
+#if $documentInfo.url
+<font class=green><a class=green href="/maay/url?url=$templatetools.quote_url($documentInfo.url)&qid=$current_rs.getQueryID()">$templatetools.putInBold($documentInfo.url, $current_rs.getQuery())</a> - $templatetools.date_str($documentInfo.publication_time)</font>
+- <a href="/maay/versions?url=$templatetools.quote_url($documentInfo.url)&qid=$current_rs.getQueryID()" class=gray>Autres versions</a></font><br>
+#end if
+#for $fileInfo in $fileInfos
+<font class=green><a class=green href="/maay/redir?url=$templatetools.quote_url($fileInfo.file_name)">$templatetools.putInBold($fileInfo.file_name, $current_rs.getQuery())</a> - $templatetools.date_str($fileInfo.file_time)</font></br>
+#end for
+
+	  <font class=green>$templatetools.size_str($documentInfo.size) - $templatetools.date_str($documentInfo.publication_time) - $documentInfo.mime_type</font>
+	  - <a href="javascript:maayify('$result.document_id')"><img src="/images/annotate.png" alt="annotate this page" border=0></a> - <a href="javascript:mailpage('$documentInfo.title', '$result.document_id')"><img src="/images/email.png" alt="mail this page" border=0></a>
+	  - <a href="/maay/documentinfo?did=$result.document_id"><img src="/images/info.png" alt="info" border=0></a>
+
+      </td>
+	</tr>
+  </table>
+  <br>
+#end for
+
+#else
+
+#for $result in $results
+  <table border=0 cellspacing=0 cellpadding = 0>
+    <tr>
+	  <td rowspan=2 bgcolor="" width=4>&nbsp;</td>
+	  <td rowspan=2 width=10>&nbsp;</td>
+	  <td>
+	<a href="/maay/url?url=$templatetools.quote_url($result.url)&qid=$current_rs.getQueryID()">$templatetools.putInBold($result.title, $current_rs.getQuery())</a><br>
+	  </td>
+    </tr>
+    <tr>
+	  <td>$templatetools.putInBold($result.excerpt, $current_rs.getQuery())
+	  <br>
+
+<font class=green><a class=green href="/maay/url?url=$templatetools.quote_url($result.url)&qid=$current_rs.getQueryID()">$templatetools.putInBold($result.url, $current_rs.getQuery())</a>
+#if $result.size > 0
+ - $templatetools.size_str($result.size)</font>
+#end if
+#if $result.date > 0
+ - $templatetools.date_str($result.date)</font>
+#end if
+- <a href="/maay/versions?url=$templatetools.quote_url($result.url)&qid=$current_rs.getQueryID()" class=gray>Autres versions</a></font><br>
+
+</td>
+</tr>
+</table>
+
+#end for
+
+#end if
+
+#if $page_count > 1
+<center>
+<table>
+  <tr>
+    <td valign=bottom>Pages de résultats</td>
+
+#if $page == 1:
+    <td valign=top align=right><img src="/images/m___.png"></td>
+#else
+#set $previous_page=$page - 1 
+    <td valign=top align=right><a href="/maay/resultspool?qid=$query_id&p=$previous_page&r=$search_range"><img src="/images/previous.png" border=0><img src="/images/m___.png" border=0><br><b>Précédent</b></a></td>
+#end if
+
+#for $i in xrange(1, $page_count + 1)
+
+#if $i == $page
+    <td valign=top align=center><img src="/images/_a__.png"><br><font color=red><b>$i</b></font></td>
+#else
+    <td valign=top align=center><a href="/maay/resultspool?qid=$query_id&p=$i&r=$search_range"><img src="/images/__a_.png" border=0><br>$i</a></td>
+#end if
+
+#end for
+
+#if $page == $page_count 
+    <td valign=top align=left><img src="/images/___y.png"></td>
+#else
+#set $next_page=$page + 1 
+    <td valign=top align=left><a href="/maay/resultspool?qid=$query_id&p=$next_page&r=$search_range"><img src="/images/___y.png" border=0><img src="/images/next.png" border=0><br><b>Suivant</b></a></td>
+#end if
+  </tr>
+</table>
+</center>
+
+
+#end if
+
+#end if
+
+#end if
+
+#include "config/templates/includes/footer.tmpl"

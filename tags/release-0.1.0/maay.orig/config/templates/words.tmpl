@@ -1,0 +1,23 @@
+#set global $title="Mots"
+#include "config/templates/includes/header.tmpl"
+
+#set global $selected_top_menu_id=$constants.WORDS_MENU_ID
+#include "config/templates/includes/top_menus.tmpl"
+
+<table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=1>
+  <tr bgcolor="#efefef">
+    <td align=center><b>Mot</b></td>
+    <td align=center><b>Manifestation</b></td>
+    <td align=center><b>Nombre de téléchargements</b></td>
+  </tr>
+#for $wordInfo in $wordInfos
+    <tr bgcolor=#ffffff>
+	  <td><a href="/maay/wordinfo?w=$wordInfo.word">$wordInfo.word</a></td>
+	  <td>$wordInfo.claim_count</td>
+	  <td>$wordInfo.download_count</td>
+	</tr>
+#end for
+
+</table>
+
+#include "config/templates/includes/footer.tmpl"

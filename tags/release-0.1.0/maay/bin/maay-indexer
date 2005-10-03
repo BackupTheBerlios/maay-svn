@@ -1,0 +1,5 @@
+#!/usr/bin/python
+__revision__ = '$Id$'
+from maay.indexer import run
+run()
+

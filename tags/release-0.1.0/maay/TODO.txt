@@ -1,0 +1,15 @@
+* Tasks
+
+#B   _ trouver d'où viennent les string index out of range côté serveur (2005.09.30)
+#B   X permettre le téléchargement d'un document (2005.09.29)
+#B   _ Faire marcher le P2P (2005.09.30)
+#B   _ ajouter d'autres convertisseurs (XML, code source) (2005.09.30)
+#B   X traiter les changements d'état des fichiers indexés (en particulier suppression) (2005.09.27)
+#B   X Faire fonctionner le xmlrpc avec utf-8 (2005.09.27)
+#B   X vérifier qu'on utiliser de l'UTF-8 partout (2005.09.27)
+#B   X gérer les documents compressés (2005.09.28)
+#B   X Regarder la conversion pdf->html (2005.09.28)
+
+* Notes
+
+
