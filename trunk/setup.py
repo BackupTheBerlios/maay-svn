@@ -61,6 +61,6 @@ else:
 		description = description,
 		url = url,
 		data_files = data_files,
-		packages = packages
+		packages = packages,
                 scripts = scripts
                 )
