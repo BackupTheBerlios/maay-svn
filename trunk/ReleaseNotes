@@ -1,0 +1,11 @@
+See README.txt for installation and quick start instructions. 
+
+This release is alpha-level software. We support local indexation and
+search, and no P2P features are yet available.
+
+The windows installer will install and set up all the required
+dependencies (including mysql and twisted). It uses Inno Setup and
+Py2exe.
+
+
+

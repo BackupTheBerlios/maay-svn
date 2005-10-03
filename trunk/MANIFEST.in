@@ -3,3 +3,5 @@ recursive-include maay/data/ *.html *.css *.gif *.png *.jpg *.ico
 recursive-include maay/sql *.sql
 include maay/bin/maay-server
 include maay/bin/maay-indexer
+include ReleaseNotes
+include ChangeLog
