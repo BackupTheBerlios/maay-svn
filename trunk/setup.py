@@ -14,6 +14,7 @@ url = "http://maay.netofpeers.net/"
 packages = ['maay']
 data_files = [('maay/data', glob('maay/data/*')+glob('maay/data/images/*')),
                   ('maay/sql', glob('maay/sql/*.sql')),]
+scripts = ['maay/bin/maay-server', 'maay/bin/maay-indexer']
 
 
 class Target:
@@ -61,4 +62,5 @@ else:
 		url = url,
 		data_files = data_files,
 		packages = packages
+                scripts = scripts
                 )
