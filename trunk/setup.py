@@ -6,6 +6,7 @@ from glob import glob
 
 version = '0.1.0'
 author = "France Telecom R&D and Logilab"
+author_email = "maay-svncheckins@lists.berlios.de"
 copyright = "Copyright (c)2005 France Telecom R&D and Logilab"
 description = "a network of peers for document search"
 name = "Maay"
@@ -44,6 +45,7 @@ if sys.platform == 'win32':
 		version = version,
 		description = description,
 		author = author,
+                author_email = author_email,
 		copyright = copyright,
 		url = url
                 )
@@ -53,6 +55,7 @@ else:
 		name = name,
 		version = version,
 		author = author,
+                author_email = author_email,
 		copyright = copyright,
 		description = description,
 		url = url,
