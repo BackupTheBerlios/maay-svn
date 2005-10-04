@@ -16,7 +16,12 @@ def __get_data_dir():
     __maay_dir = os.path.abspath(os.path.dirname(maay.__file__))
     if sys.platform == "win32":
         __maay_dir = os.path.normpath(os.path.join(__maay_dir, '..','..'))
-        os.environ[PATH] = os.environ[PATH] + u';"%(dir)s\antiword";"%(dir)s\pdftohtml";"%(dir)s\mysql\bin"' % {"dir" : __maay_dir}
+        envpath = os.environ.get('PATH', '')
+        if envpath:
+            envpath += ';'
+        envpath += u'"%(dir)s\antiword";"%(dir)s\pdftohtml";"%(dir)s\mysql\bin"' % \
+                   {"dir" : __maay_dir}
+        os.environ['PATH'] =  envpath
         return  os.path.join(__maay_dir,'data')
     else:
         if __maay_dir.startswith('/home') or __maay_dir.startswith('/Users'):
