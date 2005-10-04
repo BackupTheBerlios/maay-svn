@@ -4,6 +4,8 @@ __revision__ = '$Id$'
 __all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore',
            'Word', 'Node', 'NodeInterest']
 
+import re
+
 from maay.texttool import normalizeText, WORD_MIN_LEN, WORD_MAX_LEN
 
 class DBEntity:
@@ -101,7 +103,7 @@ class DBEntity:
     def __str__(self):
         return '%s: %s' % (self.__class__.__name__,
                            ', '.join(['%s=%s' % (attr, getattr(self, attr))
-                                      for attr in self.attributes]))
+                                      for attr in self.boundAttributes()]))
     def __repr__(self):
         return str(self)
     
@@ -185,8 +187,7 @@ class Document(DBEntity):
             return u'%s MB' % (bytes / 10**6)
         else:
             return u'%s GB' % (bytes / 10**9)
-
-
+            
     def get_abstract(self):
         return self.text[:200]
     abstract = property(get_abstract)
@@ -210,7 +211,8 @@ class Document(DBEntity):
                         "D.size, "
                         "D.text, "
                         "D.url, "
-                        "D.mime_type "
+                        "D.mime_type, "
+                        "D.publication_time "
                  "FROM documents D, document_scores DS "
                  "WHERE DS.db_document_id=D.db_document_id "
                      "AND DS.word IN (%s) "
@@ -227,7 +229,7 @@ class Document(DBEntity):
         if query:
             cursor.execute(query, params)
             results = cursor.fetchall()
-            return [cls(**dict(zip(['db_document_id', 'document_id', 'title', 'size', 'text', 'url', 'mime_type'],
+            return [cls(**dict(zip(['db_document_id', 'document_id', 'title', 'size', 'text', 'url', 'mime_type', 'publication_time'],
                                    row)))
                     for row in results]
         else:

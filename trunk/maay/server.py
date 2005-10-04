@@ -2,6 +2,7 @@
 
 __revision__ = '$Id$'
 
+from datetime import datetime
 import warnings
 warnings.filterwarnings("ignore", ".*", DeprecationWarning, "nevow.static")
 warnings.filterwarnings("ignore", ".*", DeprecationWarning, "twisted.python.reflect")
@@ -30,6 +31,7 @@ from logilab.common.textutils import normalize_text
 from maay.querier import MaayQuerier, IQuerier, MaayAuthenticationError
 from maay.rpc import MaayRPCServer
 from maay.configuration import get_path_of, Configuration
+from maay.texttool import makeAbstract
 
 class MaayPage(rend.Page):
     child_maaycss = static.File(get_path_of('maay.css'))
@@ -106,7 +108,7 @@ class ResultsPage(MaayPage):
         self.results = results
         self.query = unicode(query)
 
-    def data_results(self, context, data):
+    def data_results(self, context, data):        
         return self.results
 
     def render_title(self, context, data):
@@ -118,17 +120,19 @@ class ResultsPage(MaayPage):
         context.fillSlots('doctitle',  document.title)
         # XXX abstract attribute should be a unicode string
         try:
-            abstract = normalize_text(unicode(document.abstract))
+            abstract = makeAbstract(document.text, self.query.split())
+            abstract = normalize_text(unicode(abstract))
         except Exception, exc:
             print exc
             abstract = u'No abstract available for this document [%s]' % exc
-        context.fillSlots('abstract', abstract)
+        context.fillSlots('abstract', tags.xml(abstract))
         context.fillSlots('docid', document.db_document_id)
         context.fillSlots('docurl', document.url)
         context.fillSlots('words', self.query)
         context.fillSlots('readable_size', document.readable_size())
+        date = datetime.fromtimestamp(document.publication_time)
+        context.fillSlots('publication_date', date.strftime('%d/%m/%Y'))
         return context.tag
-
 
 ## nevow app/server setup ############################################
 class MaayRealm:

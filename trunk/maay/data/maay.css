@@ -20,8 +20,13 @@ div.resultItem {
   margin-bottom: 5px;
 }
 
-pre.resultDesc {
-  font-size: 80%;
+div.resultDesc {
+  /* display: block; */
+  font-size: 90%;
+  font-family: "New Century Schoolbook", serif;
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 40%;
 }
 
 a.docTitle {
@@ -29,6 +34,9 @@ a.docTitle {
 }
 
 span.resultUrl {
+  font-size: 90%;
+  font-family: "New Century Schoolbook", serif;
+  font-weight: bold;
   color: green;
   text-decoration: none;
 }

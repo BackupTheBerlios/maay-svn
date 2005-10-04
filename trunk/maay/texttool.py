@@ -1,4 +1,4 @@
-# -*- coding: ISO-8859-1 -*-
+# -*- coding: iso-8859-1 -*-
 """this module provide text / parsing tools"""
 
 __revision__ = '$Id$'
@@ -224,3 +224,36 @@ def normalizeText(text, table=_table):
     return ' '.join(text.split())
 
 del _table
+
+
+def untagText(text):
+    """remove every tag in <text>
+    >>> text = <a href="...">hello <b>world</b></a>
+    >>> untagText(text)
+    hello world
+    """
+    rgx = re.compile('<.*?>')
+    return rgx.sub('', text)
+    
+def makeAbstract(text, words):
+    """return the original text with HTML emphasis tags
+    around <words> occurences
+    XXX: this is a quick and dirty implementation
+    """
+    rgx = re.compile('|'.join(words), re.I)
+    text = untagText(text)
+    buf = []
+    size = 0
+    for occurence in rgx.finditer(text):
+        wordFound = occurence.group(0)
+        start, end = occurence.start(), occurence.end()
+        before = text[start-30:start-1]
+        after = text[end+1:end+30]
+        size += len(wordFound) + 60
+        buf.append('%s <b>%s</b> %s' % (before, wordFound, after))
+        if size >= 200:
+            break
+    else:
+        # case where we have less than 200 characters to display
+        print "should do something sensible here"
+    return ' <b>[...]</b> '.join(buf)

@@ -1,10 +1,10 @@
-# -*- coding: ISO-8859-1 -*-
+# -*- coding: iso-8859-1 -*-
 """unit tests for Text and HTML parsers"""
 
 import unittest
 from os.path import join, dirname
 
-from maay.texttool import MaayHTMLParser, guessEncoding, open
+from maay.texttool import MaayHTMLParser, guessEncoding, open, untagText
 
 ROW_TEXT = u"foo été bar baz top bim bam boum"
 
@@ -102,6 +102,11 @@ class OpenTC(unittest.TestCase):
         f.close()
         self.assertEquals(type(data), unicode)
         self.failUnless(u'entête' in data)
+
+class UtilitiesTC(unittest.TestCase):
+    def testUntag(self):
+        text = 'Hello <a href="foo.bar.com">world <b>!</b></a><img alt="" />'
+        self.assertEquals(untagText(text), 'Hello world !')
 
 if __name__ == '__main__':
     unittest.main()

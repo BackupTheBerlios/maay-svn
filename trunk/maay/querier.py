@@ -75,7 +75,6 @@ class MaayQuerier:
         print "hello ?"
         if connection is None:
             dbapiMod = get_dbapi_compliant_module('mysql')
-            print "Got", dbapiMod
             try:
                 connection = dbapiMod.connect(host=host, database=database,
                                               user=user, password=password,
