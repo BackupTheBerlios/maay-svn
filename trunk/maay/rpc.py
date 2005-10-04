@@ -21,6 +21,7 @@ class MaayRPCServer(XMLRPC):
         XMLRPC.__init__(self)
         self._sessions = {}
         self.portal = portal
+        self.node_id = portal.config.get_node_id()
         
     def _attachUser(self, (interface, querier, logout), username, password):
         if interface is not IQuerier or querier is None:
@@ -86,7 +87,7 @@ class MaayRPCServer(XMLRPC):
         text = unicode(text)
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
-            querier.indexDocument(filename, title, text, fileSize,
+            querier.indexDocument(self.node_id, filename, title, text, fileSize,
                                   lastModifiedOn, content_hash, mime_type, state,
                                   file_state)
         return 0

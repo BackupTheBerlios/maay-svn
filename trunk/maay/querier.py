@@ -16,7 +16,7 @@ from zope.interface import Interface, implements
 from logilab.common.db import get_dbapi_compliant_module
 
 from maay.dbentity import Document, FileInfo, DocumentProvider, DocumentScore, \
-     Word
+     Word, Node
 from maay.texttool import normalizeText, WORDS_RGX
 
 class MaayAuthenticationError(Exception):
@@ -38,7 +38,7 @@ class IQuerier(Interface):
         """returns a list of indexed file names as strings
         """
 
-    def indexDocument(filename, title, text, fileSize, lastModifiedOn,
+    def indexDocument(nodeId, filename, title, text, fileSize, lastModifiedOn,
                       content_hash, mime_type, state, file_state):
         """Inserts or update information in table documents,
         file_info, document_score and word"""
@@ -51,12 +51,15 @@ class IQuerier(Interface):
         `document_providers` table reference them, as well as the
         corresponding `document_scores` rows"""
         
-    def notifyDownload(self, docId, query):
+    def notifyDownload(docId, query):
         """check that a document is downloadable and update the
         download statistics for the document.
 
         Return document url if the document is downloadable and and
         empty string otherwise"""
+        
+    def registerNode(nodeId):
+        """register the current running node in the database"""
         
     def close():
         """closes the DB connection"""
@@ -163,7 +166,7 @@ class MaayQuerier:
         print "removed %d rows related to unreferenced documents" % rows
         return rows
 
-    def indexDocument(self, filename, title, text, fileSize, lastModifiedOn,
+    def indexDocument(self, nodeId, filename, title, text, fileSize, lastModifiedOn,
                       content_hash, mime_type, state, file_state):
         """Inserts or update information in table documents,
         file_info, document_score and word"""
@@ -228,6 +231,14 @@ class MaayQuerier:
             fileinfo.commit(cursor, update=False)
 
         self._updateScores(cursor, doc.db_document_id, text)
+        provider = DocumentProvider.selectOrInsertWhere(cursor,
+                                          db_document_id=doc.db_document_id,
+                                          node_id=nodeId)[0]
+        provider.last_providing_time = int(time.time())
+        provider.commit(cursor, update=True)
+        node = Node.selectWhere(cursor, node_id=nodeId)[0]
+        node.last_seen_time = int(time.time())
+        node.commit(cursor, update=True)
         cursor.close()
         self._cnx.commit()        
         
@@ -345,6 +356,16 @@ class MaayQuerier:
             score.commit(cursor, update=True)
         cursor.close()
         self._cnx.commit()
+
+
+    def registerNode(self, nodeId, ip, port, bandwidth):
+        cursor = self._cnx.cursor()
+        node = Node.selectOrInsertWhere(cursor, node_id=nodeId)[0]
+        node.ip = ip
+        node.port = port
+        node.bandwidth = bandwidth
+        node.last_seen_time = int(time.time())
+        node.commit(cursor, update=True)
 
 
 def hoeffding_deviation(occurence, confidence=0.9):

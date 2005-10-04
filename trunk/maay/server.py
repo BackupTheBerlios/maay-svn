@@ -13,6 +13,7 @@ import sha
 import time
 import os
 import re
+import socket
 
 from zope.interface import implements
 
@@ -149,6 +150,8 @@ class MaayRealm:
         self._sessions = {}
 
     def createUserSession(self, avatarId, querier):
+        """associate a querier to an avatarId.
+        Use avatarId=None for the internal private database connection"""
         self._sessions[avatarId] = querier
 
 
@@ -189,8 +192,20 @@ class MaayPortal(portal.Portal):
                                 webappConfig.db_name)
         portal.Portal.__init__(self, realm, (checker,))
         self.registerChecker(AllowAnonymousAccess(), IAnonymous)
-    
-
+        self.config = webappConfig
+        realm.createUserSession(None,
+                                MaayQuerier(host=webappConfig.db_host,
+                                            database=webappConfig.db_name,
+                                            user=webappConfig.user,
+                                            password=webappConfig.password))
+        querier = realm._getQuerier(None)
+        # FIXME: put these values in a configuration file somewhere
+        querier.registerNode(webappConfig.get_node_id(),
+                             ip=socket.gethostbyname(socket.gethostname()),
+                             port=6789,
+                             bandwidth=10)
+        
+        
 class DBAuthChecker:
     """user authentication checker
     cf. twisted's CRED system for more details
@@ -228,6 +243,19 @@ class WebappConfiguration(Configuration):
          {'type' : "string", 'metavar' : "<dbhost>", 'short' : "H",
           'help' : "which server hosts the database",
           'default' : "localhost",
+          }),
+        ('user',
+         {'type': 'string',
+          'metavar': '<userid>', 'short': 'u',
+          'help': 'identifier to use to connect to the database',
+          'default' : "maay",
+          }),
+
+        ('password',
+         {'type': 'string',
+          'metavar': '<password>', 'short' : "p",
+          'help': 'password to use to connect to the database',
+          'default' : "maay",
           }),
         ]
 
