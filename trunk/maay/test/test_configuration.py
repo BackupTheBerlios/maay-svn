@@ -4,7 +4,7 @@ import unittest
 import sys
 import os.path as osp
 
-from maay.main import WebappConfiguration
+from maay.server import WebappConfiguration
 
 class WebappConfigTC(unittest.TestCase):
 

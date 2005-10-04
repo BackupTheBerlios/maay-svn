@@ -17,7 +17,7 @@ from twisted.cred.credentials import IUsernamePassword
 
 from maay import rpc
 from maay.querier import MaayQuerier
-from maay.main import MaayPortal, WebappConfiguration
+from maay.server import MaayPortal, WebappConfiguration
 
 class FakeConnection:
     def cursor(self):
