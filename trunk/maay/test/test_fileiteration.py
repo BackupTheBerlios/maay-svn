@@ -6,7 +6,7 @@ import unittest
 import os
 from os.path import join, abspath, dirname, exists
 
-from maay.indexer import FileIterator as BaseFileIterator
+from maay.indexer import FileIterator
 
 HERE = dirname(__file__)
 DATADIR = join(HERE, 'data')
@@ -16,18 +16,6 @@ def touch(filename):
     # not a real *touch*, but oh well ...
     fp = file(filename, 'w')
     fp.close()
-
-
-class FileIterator(BaseFileIterator):
-    """just transforms relative paths to absolute paths"""
-    def __init__(self, indexed, skipped=None):
-        indexed = [abspath(path) for path in indexed]
-        if skipped:
-            skipped = [abspath(path) for path in skipped]
-        else:
-            skipped = []
-        BaseFileIterator.__init__(self, indexed, skipped)
-            
 
 class FileIterationTC(unittest.TestCase):
     def setUp(self):
@@ -84,12 +72,16 @@ class FileIterationTC(unittest.TestCase):
                     ]
         self.assertEquals(list(it), expected)
 
-
-    def testFailOnRelativePath(self):
-        """make sure FileIterator forbids relative paths"""
-        self.assertRaises(AssertionError, BaseFileIterator, ['data/a'], ['data/b'])
-        self.assertRaises(AssertionError, BaseFileIterator, ['/data/a'], ['/data/b', 'data/c'])
-        
+    def testRelativePathConversion(self):
+        """FileIterator should automatically convert relative paths"""
+        paths = [(['data/a'], ['data/b']),
+                 (['/data/a'], ['/data/b', 'data/c'])]
+        for indexed, skipped in paths:
+            onRelatives = list(FileIterator(indexed, skipped))
+            absIndexed = [abspath(path) for path in indexed]
+            absSkipped = [abspath(path) for path in skipped]
+            onAbspaths = list(FileIterator(absIndexed, absSkipped))
+            self.assertEquals(onRelatives, onAbspaths)
 
 if __name__ == '__main__':
     unittest.main()

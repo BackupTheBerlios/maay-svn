@@ -24,7 +24,7 @@ CHARSET_RGX = re.compile(r'charset=[\s"]*([^\s"]+)', re.I | re.S | re.U)
 XML_ENCODING_RGX = re.compile(r'^<\?xml version=[^\s]*\s*encoding=([^\s]*)\s*\?>', re.I | re.S | re.U)
 
 class ParsingError(Exception):
-    """raised when an error occures during the indexation of a file"""
+    """raised when an error occurs during the indexation of a file"""
     pass
 
 def normalizeHtmlEncoding(htmlEncoding):
