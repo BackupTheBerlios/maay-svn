@@ -51,7 +51,8 @@ class Win32ConfigTC(unittest.TestCase):
         try:
             configuration._update_env_path("tmp")
             envpath = os.environ['PATH']
-            self.failUnless(re.match(r'.*;tmp[/\\]antiword;tmp[/\\]pdftohtml;tmp[/\\]mysql[/\\]bin$', envpath)), envpath
+            regexp = r'.*;tmp[/\\]antiword;tmp[/\\]pdftohtml;tmp[/\\]mysql[/\\]bin$'
+            self.failUnless(re.match(regexp, envpath)), envpath
         finally:
             sys.platform = platform
             
