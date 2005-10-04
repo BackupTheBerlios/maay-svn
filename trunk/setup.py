@@ -23,7 +23,7 @@ class Target:
         
 maay_server = Target(description = "The maay server application",
 			    icon_resources=[(1,  "maay/data/images/maay.ico"),],
-			    script = 'maay/main.py',
+			    script = 'maay/server.py',
                             includes = ["MySQLdb"],
 			    dest_base = "maay_server")
 maay_indexer = Target(description = "The maay indexer application (CLI)",
