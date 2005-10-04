@@ -73,7 +73,8 @@ class RPCServerTC(unittest.TestCase):
         for user, passwd in [('adim', 'adim'), ('foo', 'bar')]:
             digest = self._callRemote('authenticate', user, passwd)
             expected = rpc.make_uid(user, passwd)
-            self.assertEquals(unittest.deferredResult(digest), expected)
+            got, _ = unittest.deferredResult(digest)
+            self.assertEquals(got, expected)
 
     def testUncertifiedRemoteCall(self):
         """only authentified people should be able to call remote methods"""
@@ -82,7 +83,7 @@ class RPCServerTC(unittest.TestCase):
 
     def testCertifiedRemoteCall(self):
         d = self._callRemote('authenticate', 'adim', 'adim')
-        cnxId = unittest.deferredResult(d)
+        cnxId, _ = unittest.deferredResult(d)
         retValue = self._callRemote('lastIndexationTime', cnxId, 'foo.pdf')
         self.assertEquals(unittest.deferredResult(retValue), 0)
 

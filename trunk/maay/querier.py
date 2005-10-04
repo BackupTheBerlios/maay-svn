@@ -19,7 +19,6 @@ from maay.dbentity import Document, FileInfo, DocumentProvider, DocumentScore, \
      Word
 from maay.texttool import normalizeText, WORDS_RGX
 
-
 class MaayAuthenticationError(Exception):
     """raised on db authentication failure"""
 
@@ -73,8 +72,10 @@ class MaayQuerier:
     implements(IQuerier)
     
     def __init__(self, host='', database='', user='', password='', connection=None):
+        print "hello ?"
         if connection is None:
             dbapiMod = get_dbapi_compliant_module('mysql')
+            print "Got", dbapiMod
             try:
                 connection = dbapiMod.connect(host=host, database=database,
                                               user=user, password=password,
@@ -82,10 +83,14 @@ class MaayQuerier:
                 # FIXME: find a better way to perform this operation
                 # the autodetection of the charset guesses latin-1 and
                 # this obviously does not work with unicode
-                connection.charset='utf-8'
+                connection.charset = 'utf-8'
             except dbapiMod.OperationalError:
                 raise MaayAuthenticationError("Failed to authenticate user %r"
                                               % user)
+            except Exception:
+                import traceback
+                traceback.print_exc()
+                raise
         self._cnx = connection
 
     def _execute(self, query, args=None):

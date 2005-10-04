@@ -76,9 +76,11 @@ class Indexer:
         host = self.indexerConfig.host
         port = self.indexerConfig.port
         self.serverProxy = ServerProxy('http://%s:%s' % (host, port), allow_none=True)
-        self.cnxId = self.serverProxy.authenticate(username, password)
+        self.cnxId, errmsg = self.serverProxy.authenticate(username, password)
         self.verbose = indexerConfig.verbose
         if not self.cnxId:
+            if self.verbose:
+                print "Got failure from server:", errmsg
             raise MaayAuthenticationError("Failed to connect as '%s'" % username)
         
     def getFileIterator(self):

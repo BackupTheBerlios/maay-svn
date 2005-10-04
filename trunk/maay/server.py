@@ -5,6 +5,7 @@ __revision__ = '$Id$'
 import warnings
 warnings.filterwarnings("ignore", ".*", DeprecationWarning, "nevow.static")
 warnings.filterwarnings("ignore", ".*", DeprecationWarning, "twisted.python.reflect")
+warnings.filterwarnings("ignore", ".*", DeprecationWarning, "twisted.web.woven")
 
 from zope.interface import implements
 

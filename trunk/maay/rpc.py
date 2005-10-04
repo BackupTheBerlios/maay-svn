@@ -24,19 +24,20 @@ class MaayRPCServer(XMLRPC):
         
     def _attachUser(self, (interface, querier, logout), username, password):
         if interface is not IQuerier or querier is None:
-            print "Could not get Querier for", username
-            return '' # raise UnauthorizedLogin()
+            errmsg = "Could not get Querier for", username
+            print errmsg
+            return '',  errmsg # raise UnauthorizedLogin()
         digest = make_uid(username, password)
         print "Registering querier for %s (digets=%s)" % (username, digest)
         self._sessions[digest] = querier
-        return digest
+        return digest, ''
 
     def xmlrpc_authenticate(self, username, password):
         """server authentication method"""
         creds = UsernamePassword(username, password)
         d = self.portal.login(creds, None, IQuerier)
         d.addCallback(self._attachUser, username, password)
-        d.addErrback(lambda deferred: '')
+        d.addErrback(lambda failure: ('', str(failure)))
         return d
 
     def xmlrpc_lastIndexationTime(self, cnxId, filename):
