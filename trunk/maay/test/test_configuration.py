@@ -47,6 +47,7 @@ class Win32ConfigTC(unittest.TestCase):
 
     def test_update_env_path(self):
         platform = sys.platform
+        oldpath = os.environ['PATH']
         sys.platform = 'win32'
         try:
             configuration._update_env_path("tmp")
@@ -55,6 +56,7 @@ class Win32ConfigTC(unittest.TestCase):
             self.failUnless(re.match(regexp, envpath)), envpath
         finally:
             sys.platform = platform
+            os.environ['PATH'] = oldpath 
             
 if __name__ == '__main__':
     unittest.main()
