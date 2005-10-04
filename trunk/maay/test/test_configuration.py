@@ -2,8 +2,11 @@
 
 import unittest
 import sys
+import os
 import os.path as osp
+import re
 
+from maay import configuration
 from maay.server import WebappConfiguration
 
 class WebappConfigTC(unittest.TestCase):
@@ -40,5 +43,17 @@ class WebappConfigTC(unittest.TestCase):
         self.assertEquals(config.db_name, 'muche')
 
 
+class Win32ConfigTC(unittest.TestCase):
+
+    def test_update_env_path(self):
+        platform = sys.platform
+        sys.platform = 'win32'
+        try:
+            configuration._update_env_path("tmp")
+            envpath = os.environ['PATH']
+            self.failUnless(re.match(r'.*;tmp[/\\]antiword;tmp[/\\]pdftohtml;tmp[/\\]mysql[/\\]bin$', envpath)), envpath
+        finally:
+            sys.platform = platform
+            
 if __name__ == '__main__':
     unittest.main()

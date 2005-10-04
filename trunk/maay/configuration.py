@@ -13,27 +13,32 @@ import maay
 def __get_data_dir():
     """Return the name of the directory where data files are stored,
     depending on the platform and application setup"""
-    __maay_dir = os.path.abspath(os.path.dirname(maay.__file__))
+    maay_dir = os.path.abspath(os.path.dirname(maay.__file__))
     if sys.platform == "win32":
-        __maay_dir = os.path.normpath(os.path.join(__maay_dir, '..','..'))
-        envpath = os.environ.get('PATH', '')
-        if envpath:
-            envpath += ';'
-        envpath += u'"%(dir)s\antiword";"%(dir)s\pdftohtml";"%(dir)s\mysql\bin"' % \
-                   {"dir" : __maay_dir}
-        os.environ['PATH'] =  envpath
-        return  os.path.join(__maay_dir,'data')
+        maay_dir = os.path.normpath(os.path.join(maay_dir, '..','..'))
+        _update_env_path(maay_dir)
+        return  os.path.join(maay_dir,'data')
     else:
-        if __maay_dir.startswith('/home') or __maay_dir.startswith('/Users'):
+        if maay_dir.startswith('/home') or maay_dir.startswith('/Users'):
             # we are in a development directory
-            return os.path.join(__maay_dir, 'data')
+            return os.path.join(maay_dir, 'data')
         else:
             # the application has been installed
-            base, last = os.path.split(__maay_dir)
+            base, last = os.path.split(maay_dir)
             while last and last != 'lib': 
                 base, last = os.path.split(base)
             return os.path.join(base,'share', 'maay')
     raise AssertionError("Unknown platform setup")
+
+def _update_env_path(maay_dir):
+    assert sys.platform == 'win32', 'This method must not be called on non windows platforms'
+    path = []
+    if os.environ.get('PATH'):
+        path.append(os.environ.get('PATH'))
+    for directory in (u'antiword', u'pdftohtml', os.path.join(u'mysql', u'bin')):
+        path.append(os.path.join(maay_dir, directory))
+    os.environ['PATH'] =  u';'.join(path)
+
         
 def get_path_of(datafile):
     """return the path of a data file, depending on the platform
