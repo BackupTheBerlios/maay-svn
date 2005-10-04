@@ -12,7 +12,7 @@ from maay.querier import MaayQuerier, IQuerier
 def make_uid(username, password):
     """forge a unique identifier"""
     # FIXME: need a better implementation
-    return long(hash(username+password) + hash(time()) + randint(-1000, 1000))
+    return int(hash(username+password) + hash(time()) + randint(-1000, 1000))
 
 
 class MaayRPCServer(XMLRPC):
@@ -29,7 +29,7 @@ class MaayRPCServer(XMLRPC):
             print errmsg
             return '',  errmsg # raise UnauthorizedLogin()
         digest = make_uid(username, password)
-        print "Registering querier for %s (digets=%s)" % (username, digest)
+        print "Registering querier for %s (digest=%s)" % (username, digest)
         self._sessions[digest] = querier
         return digest, ''
 
