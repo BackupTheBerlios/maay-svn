@@ -8,6 +8,12 @@ warnings.filterwarnings("ignore", ".*", DeprecationWarning, "nevow.static")
 warnings.filterwarnings("ignore", ".*", DeprecationWarning, "twisted.python.reflect")
 warnings.filterwarnings("ignore", ".*", DeprecationWarning, "twisted.web.woven")
 
+import platform
+import sha
+import time
+import os
+import re
+
 from zope.interface import implements
 
 from twisted.cred import portal, checkers, error
@@ -96,7 +102,7 @@ class SearchForm(MaayPage):
         if docurl:
             return  static.File(docurl)
         else:
-            return NotFoundPage()
+            return PageNotFound()
 
 class ResultsPage(MaayPage):
     """default results page"""
@@ -208,7 +214,7 @@ class DBAuthChecker:
         return defer.succeed(creds.username)
 
 
-class NotFoundPage(rend.FourOhFour):
+class PageNotFound(rend.FourOhFour):
     pass
 
 class WebappConfiguration(Configuration):
@@ -226,6 +232,61 @@ class WebappConfiguration(Configuration):
         ]
 
     config_file = 'webapp.ini'
+
+    def __init__(self):
+        Configuration.__init__(self)
+        self.node_id = None
+
+    def get_node_id(self):
+        if not self.node_id:
+            self.node_id = self._read_node_id()
+        return self.node_id
+
+    def _read_node_id(self):
+        for directory in self.get_config_dirs():
+            try:
+                filename = os.path.join(directory,'node_id')
+                f = open(filename,'r')
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    node_id = line.strip()
+                    assert re.match('^[0-9a-fA-F]{40}$', node_id)
+                    f.close()
+                    return node_id    
+            except IOError:
+                continue
+        self._write_node_id()
+        return self._read_node_id()
+
+    def _generate_node_id(self):
+        hasher = sha.sha()
+        hasher.update(''.join(platform.uname()))
+        hasher.update('%s' % id(self))
+        hasher.update('%s' % time.time())
+        return hasher.hexdigest()
+
+    def _write_node_id(self):
+        node_id = self._generate_node_id()
+        for directory in self.get_config_dirs():
+            try:
+                filename = os.path.join(directory, 'node_id')
+                f = open(filename, 'w')
+                lines = ['# This file contains the Node Identifier for your computer\n',
+                         '# Do not edit it or erase it, or this will corrupt the database\n',
+                         '# of your Maay instance.\n',
+                         '# This id was generated on %s\n' % time.asctime(),
+                         '%s\n' % node_id
+                         ]
+                f.writelines(lines)
+                f.close()
+                return
+            except IOError:
+                continue
+        raise ValueError('Unable to find a writable directory to store the node id')
+                
+    
 
     
 def run():
