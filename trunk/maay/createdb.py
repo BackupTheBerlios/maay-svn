@@ -2,7 +2,7 @@
 import os
 
 def do_create():
-	pipe = os.popen('mysql/bin/mysql.exe -u root mysql', 'w')
+	pipe = os.popen(r'mysql\bin\mysql.exe -u root mysql', 'w')
 	print pipe
 	data = file('mysql.sql','rb').read()
 	print data
