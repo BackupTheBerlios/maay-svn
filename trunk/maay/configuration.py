@@ -16,8 +16,8 @@ def __get_data_dir():
     __maay_dir = os.path.abspath(os.path.dirname(maay.__file__))
     if sys.platform == "win32":
         __maay_dir = os.path.normpath(os.path.join(__maay_dir, '..','..'))
-        return  os.path.join(__maay_dir,'data') 
         os.environ[PATH] = os.environ[PATH] + u';"%(dir)s\antiword";"%(dir)s\pdftohtml";"%(dir)s\mysql\bin"' % {"dir" : __maay_dir}
+        return  os.path.join(__maay_dir,'data')
     else:
         if __maay_dir.startswith('/home') or __maay_dir.startswith('/Users'):
             # we are in a development directory
@@ -37,6 +37,13 @@ def get_path_of(datafile):
     assert os.path.exists(path), "cannot find %s"%path
     return path
 
+def get_config_dirs():
+    if sys.platform == "win32":
+        return [os.path.normpath(os.path.join(__get_data_dir(), '..'))]
+    else:
+        return ['/etc/maay', os.path.expanduser('~/.maay'), '.']                            
+    
+
 class Configuration(BaseConfiguration):
     options = []
     config_file = None
@@ -46,9 +53,11 @@ class Configuration(BaseConfiguration):
                                    config_file=self.config_file)
 
     def load(self):
-        # first, load config from file
-        if self.config_file and os.path.exists(self.config_file):
-            self.load_file_configuration(self.config_file)
+        if self.config_file:
+            for directory in get_config_dirs():
+                path = os.path.join(directory, self.config_file)
+                if os.path.exists(path):
+                    self.load_file_configuration(path)
         # then override with command-line options
         self.load_command_line_configuration()
     
