@@ -94,7 +94,7 @@ Where can I get help?
 For now the best place to ask for help is on the development mailing
 list of Maay. You can subscribe from
 
-https://lists.berlios.de/mailman/listinfo/maay-svncheckins
+http://lists.berlios.de/mailman/listinfo/maay-dev
 
 You may also use the bug tracker on the Berlios project page at 
 http://developer.berlios.de/projects/maay/
