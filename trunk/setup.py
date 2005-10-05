@@ -6,7 +6,7 @@ from glob import glob
 
 version = '0.1.0'
 author = "France Telecom R&D and Logilab"
-author_email = "maay-svncheckins@lists.berlios.de"
+author_email = "maay-dev@lists.berlios.de"
 copyright = "Copyright (c)2005 France Telecom R&D and Logilab"
 description = "a network of peers for document search"
 name = "Maay"
