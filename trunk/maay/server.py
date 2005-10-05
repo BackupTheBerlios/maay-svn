@@ -313,7 +313,7 @@ class WebappConfiguration(Configuration):
     config_file = 'webapp.ini'
 
     def __init__(self):
-        Configuration.__init__(self)
+        Configuration.__init__(self, name="Server")
         self.node_id = None
 
     def get_node_id(self):

@@ -155,9 +155,9 @@ class Indexer:
 class FileIterator:
     """provide a simple way to walk through indexed dirs"""
     def __init__(self, indexed, skipped=None):
-        self.indexed = [os.path.abspath(p) for p in indexed]
+        self.indexed = [os.path.abspath(os.path.expanduser(p)) for p in indexed]
         skipped = skipped or []
-        self.skipped = [os.path.abspath(p) for p in skipped]
+        self.skipped = [os.path.abspath(os.path.expanduser(p)) for p in skipped]
 
     def __iter__(self):
         for path in self.indexed:
@@ -236,6 +236,8 @@ class IndexerConfiguration(Configuration):
 
     config_file = 'indexer.ini'
 
+    def __init__(self):
+        Configuration.__init__(self, name="Indexer")
 
 def run():
     indexerConfig = IndexerConfiguration()

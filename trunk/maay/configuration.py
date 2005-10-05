@@ -52,16 +52,16 @@ class Configuration(BaseConfiguration):
     options = []
     config_file = None
 
-    def __init__(self):
+    def __init__(self, name=None):
         BaseConfiguration.__init__(self, options=self.options,
-                                   config_file=self.config_file)
+                                   config_file=self.config_file,
+                                   name=name)
 
     def load(self):
         if self.config_file:
             for directory in self.get_config_dirs():
                 path = os.path.join(directory, self.config_file)
-                if os.path.exists(path):
-                    self.load_file_configuration(path)
+                self.load_file_configuration(path)
         # then override with command-line options
         self.load_command_line_configuration()
     
