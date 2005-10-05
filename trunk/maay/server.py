@@ -40,10 +40,10 @@ from maay.rpc import MaayRPCServer
 from maay.configuration import get_path_of, Configuration
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText
 
+
 class MaayPage(rend.Page):
     child_maaycss = static.File(get_path_of('maay.css'))
     child_images = static.File(get_path_of('images/'))
-
 
 
 class LoginForm(MaayPage):
@@ -72,7 +72,13 @@ class LoginForm(MaayPage):
                 ]
             ]
         )
-    
+
+    def locateChild(self, context, segments):
+        """prevent 404 by consuming all segments"""
+        return self, ()
+
+        
+
 def normalizeMimetype(fileExtension):
     import mimetypes
     return mimetypes.types_map.get('.%s' % fileExtension)
