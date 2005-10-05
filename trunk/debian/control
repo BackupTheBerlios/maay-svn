@@ -1,0 +1,26 @@
+Source: maay
+Section: unknown
+Priority: optional
+Maintainer: Alexandre Fayolle <afayolle@debian.org>
+Build-Depends: debhelper (>= 4.0.0), python-dev, python
+Standards-Version: 3.6.2
+
+Package: maay
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, mysql-server-4.1, python, python-mysql, python-nevow, python-twisted
+Recommends: antiword, unrtf, pdftohtml, 
+Description: peer to peer indexation and search engine
+ Maay can index files on your computer, and export them to other
+ members of the Maay P2P network. You can also issue searches which
+ will look for documents on your computer as well as on other nodes of
+ the P2P network.
+ .
+ Maay can index raw text, html, pdf, ms word and rtf documents. Other
+ formats are planned for a future release.
+ .
+ Queries are issued using a web interface. In the current version
+ queries are ontly dispatched on the current node, i.e. the P2P
+ functionnality is not available for now.
+ . 
+ Homepage: http://maay.netofpeers.net/
+
