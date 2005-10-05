@@ -193,18 +193,26 @@ class Document(DBEntity):
     abstract = property(get_abstract)
 
 
-    def _selectContainingQuery(cls, words):
+    def _selectContainingQuery(cls, words, mimetype=None, offset=0):
         words = [normalizeText(unicode(w))
                  for w in words
                  if WORD_MIN_LEN <= len(w) <= WORD_MAX_LEN]
         if not words:
             return ''
-
+        # XXX mimetype handling is a HACK. It needs to be integrated
+        #     nicely in order to handle any kind of restrictions easily
+        if mimetype is not None:
+            restriction = " AND D.mime_type=%s "
+            restrictionParams = [mimetype]
+        else:
+            restriction = ""
+            restrictionParams = []
         # Question: what is the HAVING clause supposed to do ?
         # Answer: we select all documents containing one of the words
         # that we are looking for, group them by their identifier, and
         # only keep those identifier which appeared once for each word
         # we were looking for.
+        # XXX: LIMIT clause should be optional
         query = ("SELECT D.db_document_id, "
                         "D.document_id, "
                         "D.title, "
@@ -215,18 +223,21 @@ class Document(DBEntity):
                         "D.publication_time "
                  "FROM documents D, document_scores DS "
                  "WHERE DS.db_document_id=D.db_document_id "
-                     "AND DS.word IN (%s) "
-                   "GROUP BY DS.db_document_id "
-                   "HAVING count(DS.db_document_id) = %%s" % \
-                   (', '.join(['%s'] * len(words))))
+                 "AND DS.word IN (%s) "
+                 " %s "
+                 "GROUP BY DS.db_document_id "
+                 "HAVING count(DS.db_document_id) = %%s "
+                 "LIMIT 15 OFFSET %s" % \
+                 (', '.join(['%s'] * len(words)), restriction, offset))
 
-        return query, words + [len(words)]
+        return query, words + restrictionParams + [len(words)]
 
     _selectContainingQuery = classmethod(_selectContainingQuery)
 
-    def selectContaining(cls, cursor, words):
-        query, params= cls._selectContainingQuery(words)
+    def selectContaining(cls, cursor, words, mimetype=None, offset=0):
+        query, params= cls._selectContainingQuery(words, mimetype, offset=offset)
         if query:
+            print "QUERY =", query, "params =", params
             cursor.execute(query, params)
             results = cursor.fetchall()
             return [cls(**dict(zip(['db_document_id', 'document_id', 'title', 'size', 'text', 'url', 'mime_type', 'publication_time'],

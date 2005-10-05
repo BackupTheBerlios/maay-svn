@@ -117,11 +117,11 @@ class MaayQuerier:
     
     def findDocuments(self, query):
         """Find all indexed documents matching the query"""
-        words = WORDS_RGX.findall(normalizeText(query))
+        words = WORDS_RGX.findall(normalizeText(query.words))
         self._updateQueryStatistics(words)
         try:
             cursor = self._cnx.cursor()
-            return Document.selectContaining(cursor, words)
+            return Document.selectContaining(cursor, words, query.filetype)
         finally:
             cursor.close()
 
@@ -195,6 +195,7 @@ class MaayQuerier:
                                            fileSize,
                                            lastModifiedOn,
                                            filename,
+                                           mime_type,
                                            state)
                 fileinfo.db_document_id = doc.db_document_id
             else:
@@ -220,6 +221,7 @@ class MaayQuerier:
                                            fileSize,
                                            lastModifiedOn,
                                            filename,
+                                           mime_type,
                                            state)
                 doc = Document.selectWhere(cursor, document_id=content_hash)[0]
 
@@ -243,7 +245,7 @@ class MaayQuerier:
         self._cnx.commit()        
         
     def _createDocument(self, cursor, content_hash, title, text, fileSize,
-                        lastModifiedOn, filename, state):
+                        lastModifiedOn, filename, mime_type, state):
         doc = Document(document_id=content_hash,
                        title=title,
                        text=text,
@@ -251,6 +253,7 @@ class MaayQuerier:
                        publication_time=lastModifiedOn,
                        download_count=0.,
                        url=filename,
+                       mime_type=mime_type,
                        matching=0.,
                        indexed='1',
                        state=state)

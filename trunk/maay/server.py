@@ -38,7 +38,7 @@ from logilab.common.textutils import normalize_text
 from maay.querier import MaayQuerier, IQuerier, MaayAuthenticationError
 from maay.rpc import MaayRPCServer
 from maay.configuration import get_path_of, Configuration
-from maay.texttool import makeAbstract
+from maay.texttool import makeAbstract, WORDS_RGX, normalizeText
 
 class MaayPage(rend.Page):
     child_maaycss = static.File(get_path_of('maay.css'))
@@ -73,6 +73,41 @@ class LoginForm(MaayPage):
             ]
         )
     
+def normalizeMimetype(fileExtension):
+    import mimetypes
+    return mimetypes.types_map.get('.%s' % fileExtension)
+
+class Query(object):
+    restrictions = ('filetype', 'filename')
+
+    def __init__(self, words, offset=0, filetype=None, filename=None):
+        self.words = words # unicode string 
+        self.offset = offset
+        self.filetype = normalizeMimetype(filetype)
+        self.filename = filename
+
+    def fromRawQuery(rawQuery, offset=0):
+        rawWords = rawQuery.split()
+        words = []
+        restrictions = {}
+        for word in rawWords:
+            try:
+                restType, restValue = [s.strip() for s in word.split(':')]
+            except ValueError:
+                words.append(word)
+            else:
+                if restType in Query.restrictions:
+                    # Python does not support unicode keywords !
+                    # (note: restType is pure ASCII, so no pb with str())
+                    restrictions[str(restType)] = restValue
+                else:
+                    words.append(word)
+        return Query(u' '.join(words), offset, **restrictions)
+    fromRawQuery = staticmethod(fromRawQuery)
+
+    def __repr__(self):
+        return 'Query Object (%s, %s, %s)' % (self.words, self.filetype,
+                                              self.filename)
 
 class SearchForm(MaayPage):
     """default search form"""
@@ -90,7 +125,9 @@ class SearchForm(MaayPage):
         return None
 
     def child_search(self, context):
-        query = unicode(context.arg('words'))
+        # query = unicode(context.arg('words'))
+        offset = int(context.arg('offset', 0))
+        query = Query.fromRawQuery(unicode(context.arg('words')), offset)
         results = self.querier.findDocuments(query)
         return ResultsPage(results, query)
 
@@ -98,10 +135,11 @@ class SearchForm(MaayPage):
     # XXX don't forget to update the download statistics of the document
     def child_download(self, context):
         docid = context.arg('docid')
-        query = unicode(context.arg('words'))
-        docurl = self.querier.notifyDownload(docid, query)
+        # query = unicode(context.arg('words'))
+        query = Query.fromRawQuery(unicode(context.arg('words')))
+        docurl = self.querier.notifyDownload(docid, query.words)
         if docurl:
-            return  static.File(docurl)
+            return static.File(docurl)
         else:
             return PageNotFound()
 
@@ -113,14 +151,27 @@ class ResultsPage(MaayPage):
     def __init__(self, results, query):
         MaayPage.__init__(self)
         self.results = results
-        self.query = unicode(query)
+        self.query = query.words # unicode(query)
 
-    def data_results(self, context, data):        
+    def data_results(self, context, data):
         return self.results
 
     def render_title(self, context, data):
         context.fillSlots('words', self.query)
         return context.tag
+
+    def render_prevset_url(self, context, data):
+        words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'))))
+        offset = int(context.arg('offset', 0))
+        if offset:
+            offset -= 15
+        return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
+
+    def render_nextset_url(self, context, data):
+        words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'))))
+        offset = int(context.arg('offset', 0)) + 15
+        return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
+
     
     def render_row(self, context, data):
         document = data

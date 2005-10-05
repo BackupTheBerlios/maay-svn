@@ -219,7 +219,7 @@ def normalizeText(text, table=_table):
 
     :param text: **unicode** string to normalize
     """
-    assert type(text) is unicode
+    assert type(text) is unicode, "got %s instead of unicode !" % type(text)
     text = text.lower().translate(table)
     return ' '.join(text.split())
 
