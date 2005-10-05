@@ -17,5 +17,6 @@ connection = dbapiMod.connect(host=config.host, database='maay',
 
 cursor = connection.cursor()
 for table in ('nodes', 'document_providers', 'documents', 'document_scores', 'words', 'files', 'node_interests'):
-    cursor.execute('DELETE FROM %s;' % table)
+    nrows = cursor.execute('DELETE FROM %s;' % table)
+    print "Deleted %d rows from table %s" % (nrows, table)
 connection.commit()
