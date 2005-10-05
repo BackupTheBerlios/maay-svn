@@ -40,3 +40,13 @@ span.resultUrl {
   color: green;
   text-decoration: none;
 }
+
+div.prevnext {
+  width: 100%;
+}
+
+div.prevnext a {
+  font-size: 110%;
+  font-weight: bold;
+  color: blue;
+}
