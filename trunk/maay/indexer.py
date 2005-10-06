@@ -139,7 +139,7 @@ class Indexer:
                       lastModTime, content_hash, mime_type, state,
                       file_state=FileInfo.CREATED_FILE_STATE):
         if self.verbose:
-            print "Requesting indexation of %s" % filename, type(text)
+            print "Requesting indexation of %s" % filename
         try:
             self.serverProxy.indexDocument(self.cnxId, filename, title, text,
                                            fileSize, lastModTime, content_hash,

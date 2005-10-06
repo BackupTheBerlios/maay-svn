@@ -53,7 +53,11 @@ class LoginForm(MaayPage):
     addSlash = True
     docFactory = loaders.stan(
         tags.html[
-            tags.head[tags.title["Maay Login Page"]],
+            tags.head[tags.title["Maay Login Page",],
+                      tags.link(rel='stylesheet', type='text/css', href='maaycss'),
+                      tags.link(rel='shortcut icon', href='images/maay.ico'),
+                      ],
+            
             tags.body[
                 tags.form(action=guard.LOGIN_AVATAR, method='post')[
                     tags.table(_class="loginTable")[
