@@ -14,34 +14,36 @@
 #     along with this program; if not, write to the Free Software
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-from twisted.internet.protocol import Protocol
+from twisted.internet.protocol import Protocol, ClientCreator
 from time import mktime
 
 class RegistrationClient(Protocol):
-    def __init__(self, nodeRegisterCallback):
-        self._callback = nodeRegisterCallback
-    def login(self, nodeId, ip, port, bandwidth):
-        self.transport.write('login:%s:%d:%d\r\n' % (nodeId, ip, port, bandwidth))
-        self.disconnect()
-
-    def disconnect(self):
-        self.transport.looseConnection()
+    def __init__(self, nodeRegistrationCallback):
+        self.__callback = nodeRegistrationCallback
+        
+    def login(self, nodeId, ip, port, bandwidth) :
+        print "login to registration server"
+        self.transport.write('login:%s:%s:%s:%s\r\n' % (nodeId, ip,
+                                                     port, bandwidth))
+        return self
 
     def logout(self, nodeId):
         self.transport.write('logout:%s\r\n' % nodeId)
-        self.diconnect()
+        self.transport.looseConnection()
 
     def who(self):
+        print "querying registration server"
         self.transport.write('who:\r\n')
 
     def lineReceived(self, data):
         data = data.strip()
+        print "registration server said", data
         if data.startswith('EOT'):
-            self.disconnect()
+            self.transport.looseConnection()
             return
         time, nodeId, nodeIP, nodePort, nodeBandwidth = data.split('\t')
         lastSeenTime = parseTime(time)
-        self._callback(nodeId, nodeIP, nodePort, nodeBandwidth, lastSeenTime)
+        self.__callback(nodeId, nodeIP, nodePort, nodeBandwidth, lastSeenTime)
         
 
 def parseTime(isodatetime):
@@ -49,3 +51,16 @@ def parseTime(isodatetime):
     date = [int(s) for s in date.split('-')]
     time = [int(float(s)) for s in time.split(':')]
     return mktime(tuple(date+time+[0,0,0]))
+
+
+def login(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidth):
+    c = ClientCreator(reactor, RegistrationClient, querier.registerNode)
+    d = c.connectTCP(regIP, regPort)
+    d.addCallback(RegistrationClient.login, nodeId, nodeIP, xmlrpcPort, bandwidth)
+    d.addCallback(RegistrationClient.who)
+
+def logout(reactor, nodeId):
+    c = ClientCreator(reactor, RegistrationClient, None)
+    d = c.connectTCP(regIP, regPort)
+    d.addCallback(RegistrationClient.logout)
+    

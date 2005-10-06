@@ -61,7 +61,7 @@ from maay.querier import MaayQuerier, IQuerier, AnonymousQuerier, \
 from maay.rpc import MaayRPCServer
 from maay.configuration import get_path_of, Configuration
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText
-
+from maay import registrationclient 
 
 class MaayPage(rend.Page):
     child_maaycss = static.File(get_path_of('maay.css'))
@@ -392,6 +392,17 @@ class WebappConfiguration(Configuration):
           'help': 'password of anonymous user to use to connect to the database',
           'default' : "maay",
           }),
+        ('registration-host',
+         {'type' : "string", 'metavar' : "<registration_host>", 
+          'help' : "Host name or IP address of the registration server",
+          'default' : "localhost",
+          }),
+        ('registration-port',
+         {'type' : "int", 'metavar' : "<registration_port>", 
+          'help' : "Internet port on which the registration server is listening",
+          'default' : "2345",
+          }),
+        
         ]
 
     config_file = 'webapp.ini'
@@ -450,7 +461,7 @@ class WebappConfiguration(Configuration):
         raise ValueError('Unable to find a writable directory to store the node id')
                 
     
-
+    
     
 def run():
     webappConfig = WebappConfiguration()
@@ -459,6 +470,15 @@ def run():
     website = appserver.NevowSite(guard.SessionWrapper(maayPortal,
                                                        mindFactory=MaayMindFactory))
     website.remember(Maay404(), inevow.ICanHandleNotFound)
+    registrationclient.login(reactor,
+                             webappConfig.registration_host, webappConfig.registration_port,
+                             maayPortal.anonymousQuerier,
+                             webappConfig.get_node_id(),
+                             socket.gethostbyname(socket.gethostname()),
+                             6789,
+                             10)
+                                                  
+                             
     rpcserver = server.Site(MaayRPCServer(maayPortal))
     reactor.listenTCP(8080, website)
     reactor.listenTCP(6789, rpcserver)

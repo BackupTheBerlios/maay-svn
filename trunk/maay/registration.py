@@ -27,10 +27,9 @@ from datetime import datetime
 from twisted.protocols.basic import LineReceiver
 
 class RegistrationServer(LineReceiver):
-
-    def __init__(self):
-        # TODO: auto logout after a given time to save memory
-        self._registeredUsers = {}
+    _registeredUsers = {}
+    # TODO: auto logout after a given time to save memory
+        
         
     def lineReceived(self, line):
         """received lines should match the following format :
@@ -76,4 +75,6 @@ class RegistrationServer(LineReceiver):
         nodes.reverse()
         for nodeinfo in nodes:
             self.sendLine("\t".join(nodeinfo))
+            print nodeinfo
         self.sendLine('EOT')
+        print 'EOT'

@@ -77,7 +77,7 @@ class IQuerier(Interface):
         empty string otherwise"""
         
     def registerNode(nodeId, ip, port, bandwidth):
-        """register the current running node in the database"""
+        """register a node in the database"""
         
     def close():
         """closes the DB connection"""
