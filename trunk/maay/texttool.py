@@ -12,9 +12,7 @@ import bz2
 
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
-MAX_STORED_SIZE = 65535 # not actually used in the code for now,
-                        # because the db engine does the truncation
-                        # for us
+MAX_STORED_SIZE = 65535
 
 WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN)) 
 
@@ -123,8 +121,9 @@ class AbstractParser:
 class TextParser(AbstractParser):
 
     def parseString(self, source):
-        result = normalizeText(source)
-        title = result[:60]
+        result = source
+        first_line = min(80, result.find('\n'))
+        title = result[:first_line]
         return title, result, [], 0
         
 
@@ -151,6 +150,7 @@ class MaayHTMLParser(AbstractParser, HTMLParser):
     def handle_endtag(self, tag):
         if tag == 'title':
             self.parsingTitle = False
+        self.textbuf.append(u' ') # handle cases such as <b>titi</b><i>tutu</i>
 
     def handle_data(self, data):
         if self.parsingTitle:
@@ -163,15 +163,21 @@ class MaayHTMLParser(AbstractParser, HTMLParser):
             self.feed(source)
         except HTMLParseError, exc:
             print "Error parsing document: %s" % exc
-        result = normalizeText(u''.join(self.textbuf))
+        result = u'\n'.join(self.textbuf)
+        if not self.title:
+            first_line = min(80, result.find('\n'))
+            self.title = result[:first_line]
         return self.title, result, self.links, 0
 
 
         
-from string import maketrans
-_table = maketrans(
-    ''.join([chr(i) for i in xrange(32)]) + 
-    '\xc0\xc1\xc2\xc3\xc4\xc5'
+_table = {}
+for i in xrange(32):
+    _table[i] = ord(' ')
+
+
+
+for s, d in zip(    list('\xc0\xc1\xc2\xc3\xc4\xc5'
     '\xc7'
     '\xc8\xc9\xca\xcb'
     '\xcc\xcd\xce\xcf'
@@ -188,10 +194,9 @@ _table = maketrans(
     '\xf1'
     '\xf2\xf3\xf4\xf5\xf6\xf8'
     '\xf9\xfa\xfb\xfc'
-    '\xff'
+    '\xff')
     ,
-    ' ' * 32 +
-    'aaaaaa'
+    list('aaaaaa'
     'c'
     'eeee'
     'iiii'
@@ -209,9 +214,8 @@ _table = maketrans(
     'oooooo'
     'uuuu'
     'y'
-    )
-_table = [ord(c) for c in _table]
-del maketrans
+    )):
+    _table[ord(s)] = ord(d)
 
 def normalizeText(text, table=_table):
     """turns everything to lowercase, and converts accentuated
@@ -220,7 +224,7 @@ def normalizeText(text, table=_table):
     :param text: **unicode** string to normalize
     """
     assert type(text) is unicode, "got %s instead of unicode !" % type(text)
-    text = text.lower().translate(table)
+    text = text.translate(table).lower()
     return ' '.join(text.split())
 
 del _table
@@ -255,5 +259,5 @@ def makeAbstract(text, words):
             break
     else:
         # case where we have less than 200 characters to display
-        print "should do something sensible here"
-    return ' <b>[...]</b> '.join(buf)
+        return text[:200]
+    return u' <b>[...]</b> '.join(buf)

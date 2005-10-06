@@ -4,9 +4,9 @@
 import unittest
 from os.path import join, dirname
 
-from maay.texttool import MaayHTMLParser, guessEncoding, open, untagText
+from maay.texttool import MaayHTMLParser, guessEncoding, open, untagText, normalizeText
 
-ROW_TEXT = u"foo été bar baz top bim bam boum"
+RAW_TEXT = u"foo été bar baz top bim bam boum"
 
 SIMPLE_HTML = u"""<html>
 <head><title>maille Maay</title></head>
@@ -19,22 +19,26 @@ and this is <a href="somethingelse.com">another link</a>
 
 DATADIR = join(dirname(__file__), 'data')
 
+    
+
 class HTMLParserTC(unittest.TestCase):
 
     def setUp(self):
         self.parser = MaayHTMLParser()
 
     def testParseRaw(self):
-        html = '<body>%s</body>' % ROW_TEXT
+        html = '<body>%s</body>' % RAW_TEXT
         title, text, links, offset = self.parser.parseString(html)
-        self.assertEquals(title, '')
-        self.assertEquals(text, ROW_TEXT.replace(u'é', 'e'))
+        self.assertEquals(title, RAW_TEXT)
+        self.assertEquals(normalizeText(text),
+                          RAW_TEXT.replace(u'é', 'e'))
         self.assertEquals(links, [])
 
     def testParseSimpleHtml(self):
         title, text, links, offset = self.parser.parseString(SIMPLE_HTML)
         self.assertEquals(title, 'maille Maay')
-        self.assertEquals(text, 'hello ete world this is a link and this is another link')
+        self.assertEquals(normalizeText(text),
+                          'hello ete world this is a link and this is another link')
         self.assertEquals(links, ['something.com', 'somethingelse.com'])
     
 
@@ -42,14 +46,16 @@ class HTMLParserTC(unittest.TestCase):
         filename = join(DATADIR, 'encoded.html')
         title, text, links, offset = self.parser.parseFile(filename, 'iso-8859-1')
         self.assertEquals(title, 'maille Maay')
-        self.assertEquals(text, 'hello ete world this is a link and this is another link')
+        self.assertEquals(normalizeText(text),
+                          'hello ete world this is a link and this is another link')
         self.assertEquals(links, ['something.com', 'somethingelse.com'])
         
     def testParseHtmlFileAndGuessEncoding(self):
         filename = join(DATADIR, 'encoded.html')
         title, text, links, offset = self.parser.parseFile(filename)
         self.assertEquals(title, 'maille Maay')
-        self.assertEquals(text, 'hello ete world this is a link and this is another link')
+        self.assertEquals(normalizeText(text),
+                          'hello ete world this is a link and this is another link')
         self.assertEquals(links, ['something.com', 'somethingelse.com'])
         
     def test_normalizeHTMLEncoding(self):
@@ -60,6 +66,7 @@ class HTMLParserTC(unittest.TestCase):
             ]
 
     def test_parseDifficultFile(self):
+        """test_parseDifficultFile: This test fails for now"""
         # This file has got some weird, non HTML compliant content
         # and is not handled properly by HTMLParser 
         stream = file(join(DATADIR, 'node22.html'))
