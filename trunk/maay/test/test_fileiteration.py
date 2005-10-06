@@ -5,6 +5,7 @@ __revision__ = '$Id$'
 import unittest
 import os
 from os.path import join, abspath, dirname, exists
+from sets import Set
 
 from maay.indexer import FileIterator
 
@@ -48,14 +49,14 @@ class FileIterationTC(unittest.TestCase):
         it = FileIterator(['a', 'b', 'c'])
         self.assertEquals(list(it), [])
         it = FileIterator(['data/a', 'data/b', 'data/c'])
-        expected = [abspath(join('data', 'a', 'b', 'c', 'bar')),
-                    abspath(join('data', 'a', 'b', 'c', 'foo')),
-                    abspath(join('data', 'b', 'c', 'd', 'baz')),
-                    abspath(join('data', 'b', 'c', 'd', 'spam')),
-                    abspath(join('data', 'b', 'c', 'e', 'bazbar')),
-                    abspath(join('data', 'b', 'c', 'e', 'foobar')),
-                    ]
-        self.assertEquals(list(it), expected)
+        expected = Set([abspath(join(u'data', 'a', 'b', 'c', 'bar')),
+                        abspath(join(u'data', 'a', 'b', 'c', 'foo')),
+                        abspath(join(u'data', 'b', 'c', 'd', 'baz')),
+                        abspath(join(u'data', 'b', 'c', 'd', 'spam')),
+                        abspath(join(u'data', 'b', 'c', 'e', 'bazbar')),
+                        abspath(join(u'data', 'b', 'c', 'e', 'foobar')),
+                        ])
+        self.assertEquals(Set(it), expected)
 
     def testEverythingSkipped(self):
         everything = ['data/a', 'data/b', 'data/c']
@@ -67,10 +68,10 @@ class FileIterationTC(unittest.TestCase):
         everything = ['data/a', 'data/b', 'data/c']
         skipped = ['data/a', 'data/b/c/e']
         it = FileIterator(everything, skipped)
-        expected = [abspath(join('data', 'b', 'c', 'd', 'baz')),
-                    abspath(join('data', 'b', 'c', 'd', 'spam')),
-                    ]
-        self.assertEquals(list(it), expected)
+        expected = Set([abspath(join(u'data', 'b', 'c', 'd', 'baz')),
+                    abspath(join(u'data', 'b', 'c', 'd', 'spam')),
+                    ])
+        self.assertEquals(expected, Set(it))
 
     def testRelativePathConversion(self):
         """FileIterator should automatically convert relative paths"""

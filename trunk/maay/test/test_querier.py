@@ -16,6 +16,8 @@ class QuerierTC(unittest.TestCase):
                                   database='maay_test', user='adim',
                                   password='adim')
         self.querier = MaayQuerier(connection=self.cnx)
+        self.nodeId = '0'*40
+        self.querier.registerNode(self.nodeId, "127.0.0.1", 6789, 10)
 
     def tearDown(self):
         cursor = self.cnx.cursor()
@@ -41,7 +43,8 @@ Le petit chat est mort."""
         # should match <digest>
         matchingDocs = Document.selectWhere(cursor, document_id=digest)
         self.assertEquals(len(matchingDocs), 0)
-        self.querier.indexDocument('/tmp/Tartuffe.txt',
+        self.querier.indexDocument('0'*40,
+                                   '/tmp/Tartuffe.txt',
                                    'Le Tartuffe',
                                    text,
                                    len(text),
