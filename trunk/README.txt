@@ -1,3 +1,10 @@
+Warning
+======
+
+This is alpha quality software. Before launching anything be sure to read 
+this document and the release notes for the program. On Windows systems, 
+the release notes are available through the start menu shortcut of Maay.
+
 What is Maay?
 =============
 
@@ -18,7 +25,7 @@ The current Maay implementation features:
  * a web interface which can be used to issue queries (currently
    queries are ontly dispatched on the current node, i.e. the P2P
    functionnality is not available for now, though we are working on
-   it. 
+   it). 
 
 How do I install Maay from source?
 ==================================
@@ -74,7 +81,13 @@ available.
 How do I start using Maay?
 ==========================
 
-First, start the Maay service. On Windows, use the start menu to
+First, edit the configuration files. On Windows, they are in 
+C:\Program Files\Maay\webapp.ini and C:\Program Files\Maay\indexer.ini.
+On Unix systems, they are in /etc/maay, and you can copy them to 
+~/.maay/ if you want to have some personnalized settings. Pay attention 
+to the index-dir and skip-dir settings in indexer.ini.
+
+Then, start the Maay service. On Windows, use the start menu to
 launch "Maay Server". On unix systems, use /usr/bin/maay-server
 
 You can now visit http://localhost:8080/ which will display the Maay
@@ -100,4 +113,4 @@ You may also use the bug tracker on the Berlios project page at
 http://developer.berlios.de/projects/maay/
 
 
- Alexandre Fayolle <alexandre.fayolle>, Mon,  3 Oct 2005 10:09:28 +0200
+ Alexandre Fayolle <alexandre.fayolle@logilab.fr>, Thu,  6 Oct 2005 15:50:15 +0200

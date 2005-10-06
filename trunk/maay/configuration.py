@@ -34,8 +34,9 @@ def _update_env_path(maay_dir):
     path = []
     if os.environ.get('PATH'):
         path.append(os.environ.get('PATH'))
-    for directory in (u'antiword', u'pdftohtml', os.path.join(u'mysql', u'bin')):
+    for directory in (u'pdftohtml', os.path.join(u'mysql', u'bin')):
         path.append(os.path.join(maay_dir, directory))
+    path.append(u'c:\antiword')
     os.environ['PATH'] =  os.pathsep.join(path)
 
         

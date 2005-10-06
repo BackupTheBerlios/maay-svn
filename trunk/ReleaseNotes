@@ -1,3 +1,14 @@
+Release Notes for snapshot 2005-10-06
+
+This release is a development snapshot, it is not as tested as an 
+official release, and is only provided as a convenience to our users. 
+Expect the application to crash.
+
+Refer to previous release notes below.
+
+-----------------------------------------------------------
+Release Notes for version 0.1.0
+
 See README.txt for installation and quick start instructions. 
 
 This release is alpha-level software. We support local indexation and

@@ -163,7 +163,15 @@ class FileIterator:
         self.indexed = [os.path.abspath(os.path.expanduser(p)) for p in indexed]
         skipped = skipped or []
         self.skipped = [os.path.abspath(os.path.expanduser(p)) for p in skipped]
-
+        self.skipped = [self.normalizeCase(p) for p in self.skipped]
+        
+    if sys.platform == 'win32':
+        def normalizeCase(self, path):
+            return path.lower()
+    else:    
+        def normalizeCase(self, path):
+            return path
+        
     def __iter__(self):
         for path in self.indexed:
             # test path not in self.skipped (dummy config files)
@@ -184,7 +192,7 @@ class FileIterator:
     def _removeSkippedDirnames(self, dirpath, dirnames):
         """removed skipped directories from dirnames (inplace !)"""
         for dirname in dirnames[:]:
-            abspath = os.path.join(dirpath, dirname)
+            abspath = self.normalizeCase(os.path.join(dirpath, dirname))
             if abspath in self.skipped:
                 dirnames.remove(dirname)
 
