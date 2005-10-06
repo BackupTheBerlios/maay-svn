@@ -174,6 +174,7 @@ class MaayHTMLParser(AbstractParser, HTMLParser):
 _table = {}
 for i in xrange(32):
     _table[i] = ord(' ')
+del i
 
 
 
@@ -238,7 +239,23 @@ def untagText(text):
     """
     rgx = re.compile('<.*?>')
     return rgx.sub('', text)
+
+_table2 = {}
+for i in range(0x20) + range(0xD800,0xE000) + [0xFFFE, 0xFFFF]:
+    _table2[i] = None
+for i in (0x9, 0xA, 0xD):
+    del _table2[i]
+del i
+
     
+def removeControlChar(text, table= _table2):
+    """remove control characters which are not allowed in XML 1.0"""
+    # This is required to prevent internal errors in the xmlrpc server
+    assert type(text) is unicode, "got %s instead of unicode !" % type(text)
+    return text.translate(table)
+del _table2
+    
+
 def makeAbstract(text, words):
     """return the original text with HTML emphasis tags
     around <words> occurences

@@ -19,6 +19,7 @@ from maay import converter
 from maay.configuration import Configuration
 from maay.dbentity import Document, FileInfo
 from maay.querier import MaayAuthenticationError
+from maay.texttool import removeControlChar
 
 # grabbed from nevow
 mimetypes.types_map.update(
@@ -141,6 +142,8 @@ class Indexer:
         if self.verbose:
             print "Requesting indexation of %s" % filename
         try:
+            title = removeControlChar(title)
+            text = removeControlChar(text)
             self.serverProxy.indexDocument(self.cnxId, filename, title, text,
                                            fileSize, lastModTime, content_hash,
                                            mime_type, state, file_state)

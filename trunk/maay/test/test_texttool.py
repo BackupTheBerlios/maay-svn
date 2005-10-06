@@ -4,7 +4,7 @@
 import unittest
 from os.path import join, dirname
 
-from maay.texttool import MaayHTMLParser, guessEncoding, open, untagText, normalizeText
+from maay.texttool import MaayHTMLParser, guessEncoding, open, untagText, normalizeText, removeControlChar
 
 RAW_TEXT = u"foo été bar baz top bim bam boum"
 
@@ -121,6 +121,13 @@ class UtilitiesTC(unittest.TestCase):
         self.assertEquals(u"a paris, l'ete sera chaud", norm)
         self.assertEquals(unicode, type(norm))
         
+    def testRemoveControlChar(self):
+        text = u''.join([chr(i) for i in range(32)])
+        text += u'\uFFEF\uFFFE\uFFFF'
+        text += u'\uDA00toto\U00011234'
+        norm = removeControlChar(text)
+        self.assertEquals(u"\t\n\r\uFFEFtoto\U00011234", norm)
+        self.assertEquals(unicode, type(norm))
 
 if __name__ == '__main__':
     unittest.main()
