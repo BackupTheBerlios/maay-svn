@@ -203,7 +203,7 @@ class Document(DBEntity):
         #     nicely in order to handle any kind of restrictions easily
         if mimetype is not None:
             restriction = " AND D.mime_type=%s "
-            restrictionParams = [mimetype]
+            restrictionParams = [unicode(mimetype)]
         else:
             restriction = ""
             restrictionParams = []
