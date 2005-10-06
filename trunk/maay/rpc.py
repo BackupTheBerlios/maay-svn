@@ -1,5 +1,6 @@
 from time import time
 from random import randint
+import sys
 
 from twisted.web.xmlrpc import XMLRPC
 from twisted.cred.credentials import UsernamePassword
@@ -84,7 +85,12 @@ class MaayRPCServer(XMLRPC):
         """
         filename = unicode(filename)
         title = unicode(title)
-        text = unicode(text)
+        try:
+            text = unicode(text)
+        except UnicodeError, exc:
+            print exc
+            print `text`
+            return 1
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
             querier.indexDocument(self.node_id, filename, title, text, fileSize,

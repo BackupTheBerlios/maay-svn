@@ -17,7 +17,7 @@ from logilab.common.db import get_dbapi_compliant_module
 
 from maay.dbentity import Document, FileInfo, DocumentProvider, DocumentScore, \
      Word, Node
-from maay.texttool import normalizeText, WORDS_RGX
+from maay.texttool import normalizeText, WORDS_RGX, MAX_STORED_SIZE
 
 class MaayAuthenticationError(Exception):
     """raised on db authentication failure"""
@@ -58,7 +58,7 @@ class IQuerier(Interface):
         Return document url if the document is downloadable and and
         empty string otherwise"""
         
-    def registerNode(nodeId):
+    def registerNode(nodeId, ip, port, bandwidth):
         """register the current running node in the database"""
         
     def close():
@@ -75,7 +75,6 @@ class MaayQuerier:
     implements(IQuerier)
     
     def __init__(self, host='', database='', user='', password='', connection=None):
-        print "hello ?"
         if connection is None:
             dbapiMod = get_dbapi_compliant_module('mysql')
             try:
@@ -248,7 +247,7 @@ class MaayQuerier:
                         lastModifiedOn, filename, mime_type, state):
         doc = Document(document_id=content_hash,
                        title=title,
-                       text=text,
+                       text=text[:MAX_STORED_SIZE],
                        size=fileSize,
                        publication_time=lastModifiedOn,
                        download_count=0.,

@@ -12,7 +12,7 @@ import time
 import sys
 import sha
 from sets import Set
-from xmlrpclib import ServerProxy, Binary, Fault
+from xmlrpclib import ServerProxy, Binary, Fault, ProtocolError
 import mimetypes
 
 from maay import converter
@@ -75,7 +75,9 @@ class Indexer:
         password = self.indexerConfig.password
         host = self.indexerConfig.host
         port = self.indexerConfig.port
-        self.serverProxy = ServerProxy('http://%s:%s' % (host, port), allow_none=True)
+        self.serverProxy = ServerProxy('http://%s:%s' % (host, port),
+                                       allow_none=True,
+                                       encoding='utf-8')
         self.cnxId, errmsg = self.serverProxy.authenticate(username, password)
         self.verbose = indexerConfig.verbose
         if not self.cnxId:
@@ -137,12 +139,12 @@ class Indexer:
                       lastModTime, content_hash, mime_type, state,
                       file_state=FileInfo.CREATED_FILE_STATE):
         if self.verbose:
-            print "Requesting indexation of %s" % filename
+            print "Requesting indexation of %s" % filename, type(text)
         try:
             self.serverProxy.indexDocument(self.cnxId, filename, title, text,
                                            fileSize, lastModTime, content_hash,
                                            mime_type, state, file_state)
-        except Fault, exc:
+        except (Fault, ProtocolError), exc:
             if self.verbose:
                 print "An error occured on the server while indexing %s" % filename.encode('iso-8859-1')
                 print exc

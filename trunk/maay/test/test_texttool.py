@@ -115,5 +115,12 @@ class UtilitiesTC(unittest.TestCase):
         text = 'Hello <a href="foo.bar.com">world <b>!</b></a><img alt="" />'
         self.assertEquals(untagText(text), 'Hello world !')
 
+    def testNormalizeText(self):
+        text = u"À Paris,\t\x02l'été \nsera   chaud"
+        norm = normalizeText(text)
+        self.assertEquals(u"a paris, l'ete sera chaud", norm)
+        self.assertEquals(unicode, type(norm))
+        
+
 if __name__ == '__main__':
     unittest.main()
