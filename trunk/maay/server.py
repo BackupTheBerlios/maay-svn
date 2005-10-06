@@ -59,7 +59,7 @@ class LoginForm(MaayPage):
                       ],
             
             tags.body[
-                tags.form(action=guard.LOGIN_AVATAR, method='post')[
+                tags.form(action='/'+guard.LOGIN_AVATAR, method='post')[
                     tags.table(_class="loginTable")[
                         tags.tr[
                             tags.td[ "Username:" ],
