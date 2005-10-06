@@ -1,3 +1,5 @@
+#!/usr/bin/twistd2.3 -noy 
+
 from twisted.application import service, internet
 from twisted.internet.protocol import ServerFactory
 
