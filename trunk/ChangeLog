@@ -1,3 +1,10 @@
+Maay-snapshot20051006 2005-10-06
+	* Some bug fixes on Windows
+	* Anonymous login supported
+	* Nicer web interface (several pages of 15 results)
+	* Node management in the indexer
+	* Fixed some communication issues between indexer and server
+	
 Maay-0.1.0 2005-10-03
 	* First release of the new code base
 

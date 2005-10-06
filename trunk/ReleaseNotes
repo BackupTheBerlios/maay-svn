@@ -4,6 +4,8 @@ This release is a development snapshot, it is not as tested as an
 official release, and is only provided as a convenience to our users. 
 Expect the application to crash.
 
+Known problems: the Microsoft Word document converter does not work on Windows.
+
 Refer to previous release notes below.
 
 -----------------------------------------------------------
