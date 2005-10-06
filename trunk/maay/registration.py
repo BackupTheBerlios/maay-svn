@@ -40,7 +40,7 @@ class RegistrationServer(LineReceiver):
         print "%s accepts %s" % (id(self), nodeId)
         if nodeId in self._registeredUsers:
             print "%s was already registered" % (nodeId,)
-        lastseen = datetime.now().isoformat()
+        lastseen = datetime.utcnow().isoformat()
         self._registeredUsers[nodeId] = (lastseen,
                                          nodeId,
                                          ip,
@@ -60,4 +60,4 @@ class RegistrationServer(LineReceiver):
         nodes.reverse()
         for nodeinfo in nodes:
             self.sendLine("\t".join(nodeinfo))
-    
+        self.sendLine('EOT')
