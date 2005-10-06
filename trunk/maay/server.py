@@ -169,7 +169,7 @@ class SearchForm(MaayPage):
         if docurl:
             return static.File(docurl)
         else:
-            return PageNotFound()
+            return Maay404()
 
 
 class ResultsPage(MaayPage):
@@ -337,8 +337,15 @@ class DBAuthChecker:
         return defer.succeed(creds.username)
 
 
-class PageNotFound(rend.FourOhFour):
-    pass
+class Maay404(rend.FourOhFour):
+    """Maay specific resource for 404 errors"""
+    loader = loaders.xmlfile(get_path_of('notfound.html'))
+
+    def renderHTTP_notFound(self, context):
+        """Render a not found message to the given request.
+        """
+        return self.loader.load(context)[0]
+
 
 class WebappConfiguration(Configuration):
     options = [
@@ -431,6 +438,7 @@ def run():
     maayPortal = MaayPortal(webappConfig)
     website = appserver.NevowSite(guard.SessionWrapper(maayPortal,
                                                        mindFactory=MaayMindFactory))
+    website.remember(Maay404(), inevow.ICanHandleNotFound)
     rpcserver = server.Site(MaayRPCServer(maayPortal))
     reactor.listenTCP(8080, website)
     reactor.listenTCP(6789, rpcserver)
