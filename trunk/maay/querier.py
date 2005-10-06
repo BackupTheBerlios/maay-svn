@@ -22,6 +22,8 @@ from maay.texttool import normalizeText, WORDS_RGX, MAX_STORED_SIZE
 class MaayAuthenticationError(Exception):
     """raised on db authentication failure"""
 
+ANONYMOUS_AVATARID = '__anonymous__'
+
     
 class IQuerier(Interface):
     """defines the High-Level interface to Maay SQL database"""
@@ -64,15 +66,14 @@ class IQuerier(Interface):
     def close():
         """closes the DB connection"""
 
-        
-class MaayQuerier:
-    """High-Level interface to Maay SQL database.
 
-    The Querier receives requests from other components to insert or
-    read data in the SQL database and dutifully executes these
-    requests"""
-    
+class AnonymousQuerier:
+    """High-Level interface to Maay SQL database for anonymous
+    (typically peers) users
+    """
     implements(IQuerier)
+
+    searchInPrivate = False
     
     def __init__(self, host='', database='', user='', password='', connection=None):
         if connection is None:
@@ -113,16 +114,141 @@ class MaayQuerier:
 
     def close(self):
         self._cnx.close()
-    
+
     def findDocuments(self, query):
         """Find all indexed documents matching the query"""
         words = WORDS_RGX.findall(normalizeText(query.words))
         self._updateQueryStatistics(words)
         try:
             cursor = self._cnx.cursor()
-            return Document.selectContaining(cursor, words, query.filetype)
+            return Document.selectContaining(cursor, words, query.filetype, query.offset,
+                                             self.searchInPrivate)
         finally:
             cursor.close()
+
+    def _updateScores(self, cursor, db_document_id, text):
+        # insert or update in table document_score
+        db_scores = self._getScoresDict(cursor, db_document_id)
+        doc_scores = {}
+        # We update the document_score table only for the first
+        # occurence of the word in the document
+        for match in WORDS_RGX.finditer(normalizeText(text)):
+            word = match.group(0)
+            if word in doc_scores:
+                continue
+            doc_scores[word] = 0
+            position = match.start()
+            if word in db_scores :
+                if db_scores[word].position != position:
+                    db_scores[word].position = position
+                    db_scores[word].commit(cursor, update=True)
+            else:
+                # insert a row in the Word table if required
+                self._ensureWordInDatabase(cursor, word)
+                db_score = DocumentScore(db_document_id=db_document_id,
+                                         word=word,
+                                         position=position,
+                                         download_count=0.,
+                                         relevance=0.,
+                                         popularity=0.)
+                db_score.commit(cursor, update = False)
+                    
+
+    def _ensureWordInDatabase(self, cursor, word):
+        db_words = Word.selectWhere(cursor, word=word)
+        if not db_words:
+            db_word = Word(word=word,
+                           claim_count=0.,
+                           download_count=0.)
+            db_word.commit(cursor, update=False)
+        
+    def _getScoresDict(self, cursor, db_document_id):
+        _scores = DocumentScore.selectWhere(cursor, db_document_id=db_document_id)
+        db_scores = {}
+        while _scores:
+            score = _scores.pop()
+            db_scores[score.word] = score
+        return db_scores
+
+
+    def _updateQueryStatistics(self, words):
+        # FIXME: update node_interests too
+        cursor = self._cnx.cursor()
+        for word in words:
+            winfo = Word.selectOrInsertWhere(cursor, word=word)[0]
+            winfo.claim_count += 1 / len(words)
+            winfo.commit(cursor, update=True)
+        cursor.close
+        self._cnx.commit()
+
+
+    def notifyDownload(self, db_document_id, query):
+        words = WORDS_RGX.findall(normalizeText(query))
+        try:
+            try:
+                cursor = self._cnx.cursor()
+                doc = Document.selectWhere(cursor, db_document_id=db_document_id)[0]
+            finally:
+                cursor.close()
+            self._updateDownloadStatistics(doc, words)
+            return doc.url
+        except IndexError:
+            return ''
+
+    def _updateDownloadStatistics(self, document, words):
+        cursor = self._cnx.cursor()
+        document.download_count = max(0, document.download_count) + 1
+        document.commit(cursor, update=True)
+        db_document_id = document.db_document_id
+        scores = {}
+        wordInfo = {}
+        for word in words:
+            scores[word] = DocumentScore.selectOrInsertWhere(cursor,
+                                      db_document_id=db_document_id,
+                                      word=word)[0]
+            wordInfo[word] = Word.selectOrInsertWhere(cursor,
+                                                      word=word)[0]
+
+        for winfo in wordInfo.itervalues():
+            winfo.download_count += 1/len(words)
+            winfo.commit(cursor, update=True)
+
+        for word,score in scores.iteritems():
+            score.download_count = max(0, score.download_count) + 1/len(words)
+            winfo_downloads = wordInfo[word].download_count
+            
+            score.popularity = score.download_count / winfo_downloads
+            score.popularity -= hoeffding_deviation(winfo_downloads)
+            
+            score.relevance = score.download_count / document.download_count
+            score.relevance -= hoeffding_deviation(document.download_count)
+            
+            score.commit(cursor, update=True)
+        cursor.close()
+        self._cnx.commit()
+
+
+    def registerNode(self, nodeId, ip, port, bandwidth):
+        cursor = self._cnx.cursor()
+        node = Node.selectOrInsertWhere(cursor, node_id=nodeId)[0]
+        node.ip = ip
+        node.port = port
+        node.bandwidth = bandwidth
+        node.last_seen_time = int(time.time())
+        node.commit(cursor, update=True)
+
+
+    
+class MaayQuerier(AnonymousQuerier):
+    """High-Level interface to Maay SQL database.
+
+    The Querier receives requests from other components to insert or
+    read data in the SQL database and dutifully executes these
+    requests"""
+    
+    implements(IQuerier)
+
+    searchInPrivate = True
 
     def getFileInformations(self, filename):
         cursor = self._cnx.cursor()
@@ -259,116 +385,6 @@ class MaayQuerier:
         doc.commit(cursor, update=False)
         doc = Document.selectWhere(cursor, document_id=content_hash)[0]
         return doc
-
-    def _updateScores(self, cursor, db_document_id, text):
-        # insert or update in table document_score
-        db_scores = self._getScoresDict(cursor, db_document_id)
-        doc_scores = {}
-        # We update the document_score table only for the first
-        # occurence of the word in the document
-        for match in WORDS_RGX.finditer(normalizeText(text)):
-            word = match.group(0)
-            if word in doc_scores:
-                continue
-            doc_scores[word] = 0
-            position = match.start()
-            if word in db_scores :
-                if db_scores[word].position != position:
-                    db_scores[word].position = position
-                    db_scores[word].commit(cursor, update=True)
-            else:
-                # insert a row in the Word table if required
-                self._ensureWordInDatabase(cursor, word)
-                db_score = DocumentScore(db_document_id=db_document_id,
-                                         word=word,
-                                         position=position,
-                                         download_count=0.,
-                                         relevance=0.,
-                                         popularity=0.)
-                db_score.commit(cursor, update = False)
-                    
-
-    def _ensureWordInDatabase(self, cursor, word):
-        db_words = Word.selectWhere(cursor, word=word)
-        if not db_words:
-            db_word = Word(word=word,
-                           claim_count=0.,
-                           download_count=0.)
-            db_word.commit(cursor, update=False)
-        
-    def _getScoresDict(self, cursor, db_document_id):
-        _scores = DocumentScore.selectWhere(cursor, db_document_id=db_document_id)
-        db_scores = {}
-        while _scores:
-            score = _scores.pop()
-            db_scores[score.word] = score
-        return db_scores
-
-    def notifyDownload(self, db_document_id, query):
-        words = WORDS_RGX.findall(normalizeText(query))
-        try:
-            try:
-                cursor = self._cnx.cursor()
-                doc = Document.selectWhere(cursor, db_document_id=db_document_id)[0]
-            finally:
-                cursor.close()
-            self._updateDownloadStatistics(doc, words)
-            return doc.url
-        except IndexError:
-            return ''
-
-    def _updateQueryStatistics(self, words):
-        # FIXME: update node_interests too
-        cursor = self._cnx.cursor()
-        for word in words:
-            winfo = Word.selectOrInsertWhere(cursor, word=word)[0]
-            winfo.claim_count += 1 / len(words)
-            winfo.commit(cursor, update=True)
-        cursor.close
-        self._cnx.commit()
-
-    def _updateDownloadStatistics(self, document, words):
-        cursor = self._cnx.cursor()
-        document.download_count = max(0, document.download_count) + 1
-        document.commit(cursor, update=True)
-        db_document_id = document.db_document_id
-        scores = {}
-        wordInfo = {}
-        for word in words:
-            scores[word] = DocumentScore.selectOrInsertWhere(cursor,
-                                      db_document_id=db_document_id,
-                                      word=word)[0]
-            wordInfo[word] = Word.selectOrInsertWhere(cursor,
-                                                      word=word)[0]
-
-        for winfo in wordInfo.itervalues():
-            winfo.download_count += 1/len(words)
-            winfo.commit(cursor, update=True)
-
-        for word,score in scores.iteritems():
-            score.download_count = max(0, score.download_count) + 1/len(words)
-            winfo_downloads = wordInfo[word].download_count
-            
-            score.popularity = score.download_count / winfo_downloads
-            score.popularity -= hoeffding_deviation(winfo_downloads)
-            
-            score.relevance = score.download_count / document.download_count
-            score.relevance -= hoeffding_deviation(document.download_count)
-            
-            score.commit(cursor, update=True)
-        cursor.close()
-        self._cnx.commit()
-
-
-    def registerNode(self, nodeId, ip, port, bandwidth):
-        cursor = self._cnx.cursor()
-        node = Node.selectOrInsertWhere(cursor, node_id=nodeId)[0]
-        node.ip = ip
-        node.port = port
-        node.bandwidth = bandwidth
-        node.last_seen_time = int(time.time())
-        node.commit(cursor, update=True)
-
 
 def hoeffding_deviation(occurence, confidence=0.9):
      return sqrt(-log(confidence / 2) / (2 * occurence))

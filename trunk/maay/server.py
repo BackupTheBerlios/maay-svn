@@ -27,6 +27,7 @@ from twisted.web import static
 from twisted.python import failure
 
 from nevow import inevow, rend, tags, guard, loaders, appserver
+from nevow.url import URL
 # this is to help py2exe
 import nevow.flat.flatstan
 import nevow.query
@@ -35,7 +36,8 @@ import MySQLdb
 
 from logilab.common.textutils import normalize_text
 
-from maay.querier import MaayQuerier, IQuerier, MaayAuthenticationError
+from maay.querier import MaayQuerier, IQuerier, AnonymousQuerier, \
+     MaayAuthenticationError, ANONYMOUS_AVATARID
 from maay.rpc import MaayRPCServer
 from maay.configuration import get_path_of, Configuration
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText
@@ -44,6 +46,28 @@ from maay.texttool import makeAbstract, WORDS_RGX, normalizeText
 class MaayPage(rend.Page):
     child_maaycss = static.File(get_path_of('maay.css'))
     child_images = static.File(get_path_of('images/'))
+
+    def __init__(self, maayId):
+        rend.Page.__init__(self)
+        self.maayId = maayId
+
+    def render_loginurl(self, context, data):
+        if self.maayId != ANONYMOUS_AVATARID:
+            context.fillSlots('actionlabel', 'Logout')
+            context.fillSlots('loginurl', '/logout')
+        else:
+            context.fillSlots('actionlabel', 'Login')            
+            context.fillSlots('loginurl', '/login')
+        return context.tag
+
+    def child_login(self, context):
+        return LoginForm(self.maayId)
+
+    def child_logout(self, context):
+        print "sure we're not here ?"
+        req = inevow.IRequest(context)
+        req.getSession().expire()
+        req.redirect('/' + guard.LOGOUT_AVATAR)
 
 
 class LoginForm(MaayPage):
@@ -77,11 +101,6 @@ class LoginForm(MaayPage):
             ]
         )
 
-    def locateChild(self, context, segments):
-        """prevent 404 by consuming all segments"""
-        return self, ()
-
-        
 
 def normalizeMimetype(fileExtension):
     import mimetypes
@@ -125,12 +144,11 @@ class SearchForm(MaayPage):
     addSlash = True
 
     def __init__(self, maayId, querier):
-        MaayPage.__init__(self)
-        self.maayId = maayId
+        MaayPage.__init__(self, maayId)
         self.querier = querier
 
     def logout(self):
-        print "Bye"
+        print "Bye %s !" % (self.maayId,)
         # XXX: logout message should be forwarded to registration server
         return None
 
@@ -139,7 +157,7 @@ class SearchForm(MaayPage):
         offset = int(context.arg('offset', 0))
         query = Query.fromRawQuery(unicode(context.arg('words')), offset)
         results = self.querier.findDocuments(query)
-        return ResultsPage(results, query)
+        return ResultsPage(self.maayId, results, query)
 
     # XXX make sure that the requested document is really in the database
     # XXX don't forget to update the download statistics of the document
@@ -153,13 +171,14 @@ class SearchForm(MaayPage):
         else:
             return PageNotFound()
 
+
 class ResultsPage(MaayPage):
     """default results page"""
     docFactory = loaders.xmlfile(get_path_of('resultpage.html'))
     addSlash = False
     
-    def __init__(self, results, query):
-        MaayPage.__init__(self)
+    def __init__(self, maayId, results, query):
+        MaayPage.__init__(self, maayId)
         self.results = results
         self.query = query.words # unicode(query)
 
@@ -203,6 +222,13 @@ class ResultsPage(MaayPage):
         return context.tag
 
 ## nevow app/server setup ############################################
+
+# MaayMindFactory might be helpful to access request informations
+# in portal. (not sure it's really aimed to be used this way :-)
+class MaayMindFactory:
+    def __init__(self, request, credentials):
+        pass
+
 class MaayRealm:
     """simple realm for Maay application"""
     implements(portal.IRealm)
@@ -217,25 +243,30 @@ class MaayRealm:
 
 
     def requestAvatar(self, avatarId, mind, *interfaces):
+        """Our realm provides 2 different kinds of avatars :
+          - HTML resources (for web applications)
+          - queriers (for XMLRPC queries)
+
+        Both kind of avatars rely on a querier instance
+        """
         for iface in interfaces:
+            # if we were asked for a web resource
             if iface is inevow.IResource:
-                if avatarId is ANONYMOUS:
-                    resc = LoginForm()
-                    return inevow.IResource, resc, lambda: None
+                querier = self._getQuerier(avatarId)
+                if querier is None:
+                    return inevow.IResource, LoginForm(), lambda: None
                 else:
-                    querier = self._getQuerier(avatarId)
-                    if querier is None:
-                        return inevow.IResource, LoginForm(), lambda: None
-                    else:
-                        resc = SearchForm(avatarId, querier)
-                        return inevow.IResource, resc, resc.logout
+                    print "Building search form with", avatarId
+                    resc = SearchForm(avatarId, querier)
+                return inevow.IResource, resc, resc.logout
+            # if we wera asked for a querier
             elif iface is IQuerier:
                 querier = self._getQuerier(avatarId)
                 if querier is None:
                     return IQuerier, None, lambda: None
                 else:
                     return IQuerier, querier, querier.close
-
+                
     def _getQuerier(self, avatarId):
         try:
             querier = self._sessions[avatarId]
@@ -245,6 +276,7 @@ class MaayRealm:
             querier = None
         return querier
 
+
 class MaayPortal(portal.Portal):
     """Portal for Maay authentication system"""
     def __init__(self, webappConfig):
@@ -252,21 +284,36 @@ class MaayPortal(portal.Portal):
         checker = DBAuthChecker(realm, webappConfig.db_host,
                                 webappConfig.db_name)
         portal.Portal.__init__(self, realm, (checker,))
-        self.registerChecker(AllowAnonymousAccess(), IAnonymous)
+        self.registerChecker(MaayAnonymousChecker(), IAnonymous)
         self.config = webappConfig
-        realm.createUserSession(None,
-                                MaayQuerier(host=webappConfig.db_host,
-                                            database=webappConfig.db_name,
-                                            user=webappConfig.user,
-                                            password=webappConfig.password))
-        querier = realm._getQuerier(None)
-        # FIXME: put these values in a configuration file somewhere
-        querier.registerNode(webappConfig.get_node_id(),
-                             ip=socket.gethostbyname(socket.gethostname()),
-                             port=6789,
-                             bandwidth=10)
-        
-        
+        # Create default anonymous querier, based on local configuration
+        try:
+            anonymousQuerier = AnonymousQuerier(host=webappConfig.db_host,
+                                                database=webappConfig.db_name,
+                                                user=webappConfig.user,
+                                                password=webappConfig.password)
+        except Exception, exc:
+            # unable to create an anonymous querier
+            print "***"
+            print "*** Could not create anonymous querier"
+            print "*** Got exception", exc
+            print "*** This will disable the P2P functionalities"
+            print "*** and force the user to login for local search"
+            print "***"
+            anonymousQuerier = None
+        else:
+            realm.createUserSession(ANONYMOUS_AVATARID, anonymousQuerier)
+            anonymousQuerier.registerNode(self.config.get_node_id(),
+                                          ip=socket.gethostbyname(socket.gethostname()),
+                                          port=6789, bandwidth=10)
+        self.anonymousQuerier = anonymousQuerier
+
+class MaayAnonymousChecker(AllowAnonymousAccess):
+    """don't use default twisted.cred anonymous avatarId"""
+    def requestAvatarId(self, credentials):
+        return ANONYMOUS_AVATARID
+
+
 class DBAuthChecker:
     """user authentication checker
     cf. twisted's CRED system for more details
@@ -308,14 +355,14 @@ class WebappConfiguration(Configuration):
         ('user',
          {'type': 'string',
           'metavar': '<userid>', 'short': 'u',
-          'help': 'identifier to use to connect to the database',
+          'help': 'login of anonymous user to use to connect to the database',
           'default' : "maay",
           }),
 
         ('password',
          {'type': 'string',
           'metavar': '<password>', 'short' : "p",
-          'help': 'password to use to connect to the database',
+          'help': 'password of anonymous user to use to connect to the database',
           'default' : "maay",
           }),
         ]
@@ -343,7 +390,7 @@ class WebappConfiguration(Configuration):
                     node_id = line.strip()
                     assert re.match('^[0-9a-fA-F]{40}$', node_id)
                     f.close()
-                    return node_id    
+                    return node_id
             except IOError:
                 continue
         self._write_node_id()
@@ -382,7 +429,8 @@ def run():
     webappConfig = WebappConfiguration()
     webappConfig.load()
     maayPortal = MaayPortal(webappConfig)
-    website = appserver.NevowSite(guard.SessionWrapper(maayPortal))
+    website = appserver.NevowSite(guard.SessionWrapper(maayPortal,
+                                                       mindFactory=MaayMindFactory))
     rpcserver = server.Site(MaayRPCServer(maayPortal))
     reactor.listenTCP(8080, website)
     reactor.listenTCP(6789, rpcserver)

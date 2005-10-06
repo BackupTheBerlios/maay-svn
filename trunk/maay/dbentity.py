@@ -193,7 +193,7 @@ class Document(DBEntity):
     abstract = property(get_abstract)
 
 
-    def _selectContainingQuery(cls, words, mimetype=None, offset=0):
+    def _selectContainingQuery(cls, words, mimetype=None, offset=0, allowPrivate=False):
         words = [normalizeText(unicode(w))
                  for w in words
                  if WORD_MIN_LEN <= len(w) <= WORD_MAX_LEN]
@@ -207,6 +207,9 @@ class Document(DBEntity):
         else:
             restriction = ""
             restrictionParams = []
+        if not allowPrivate:
+            restriction += " AND D.state=%s "
+            restrictionParams.append(cls.PUBLISHED_STATE)
         # Question: what is the HAVING clause supposed to do ?
         # Answer: we select all documents containing one of the words
         # that we are looking for, group them by their identifier, and
@@ -234,10 +237,11 @@ class Document(DBEntity):
 
     _selectContainingQuery = classmethod(_selectContainingQuery)
 
-    def selectContaining(cls, cursor, words, mimetype=None, offset=0):
-        query, params= cls._selectContainingQuery(words, mimetype, offset=offset)
+    def selectContaining(cls, cursor, words, mimetype=None, offset=0, allowPrivate=False):
+        query, params= cls._selectContainingQuery(words, mimetype,
+                                                  offset=offset,
+                                                  allowPrivate=allowPrivate)
         if query:
-            print "QUERY =", query, "params =", params
             cursor.execute(query, params)
             results = cursor.fetchall()
             return [cls(**dict(zip(['db_document_id', 'document_id', 'title', 'size', 'text', 'url', 'mime_type', 'publication_time'],
@@ -247,8 +251,6 @@ class Document(DBEntity):
             return []
     selectContaining = classmethod(selectContaining)
     
-    
-
 
 
 class FileInfo(DBEntity):

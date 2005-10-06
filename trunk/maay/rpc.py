@@ -3,12 +3,12 @@ from random import randint
 import sys
 
 from twisted.web.xmlrpc import XMLRPC
-from twisted.cred.credentials import UsernamePassword
+from twisted.cred.credentials import UsernamePassword, Anonymous
 from twisted.cred.error import UnauthorizedLogin
 from twisted.internet import defer
 ## from twisted.python.failure import Failure
 
-from maay.querier import MaayQuerier, IQuerier
+from maay.querier import MaayQuerier, IQuerier, ANONYMOUS_AVATARID
 
 def make_uid(username, password):
     """forge a unique identifier"""
@@ -23,6 +23,7 @@ class MaayRPCServer(XMLRPC):
         self._sessions = {}
         self.portal = portal
         self.node_id = portal.config.get_node_id()
+        self._sessions[ANONYMOUS_AVATARID] = portal.anonymousQuerier
         
     def _attachUser(self, (interface, querier, logout), username, password):
         if interface is not IQuerier or querier is None:
@@ -36,9 +37,15 @@ class MaayRPCServer(XMLRPC):
 
     def xmlrpc_authenticate(self, username, password):
         """server authentication method"""
-        creds = UsernamePassword(username, password)
+        # anonymous login
+        if (username, password) == ('', ''):
+            creds = Anonymous()
+            onSuccess = lambda d,u,p: (ANONYMOUS_AVATARID, '')
+        else:
+            creds = UsernamePassword(username, password)
+            onSuccess = self._attachUser
         d = self.portal.login(creds, None, IQuerier)
-        d.addCallback(self._attachUser, username, password)
+        d.addCallback(onSuccess, username, password) # self._attachUser, username, password)
         d.addErrback(lambda failure: ('', str(failure)))
         return d
 

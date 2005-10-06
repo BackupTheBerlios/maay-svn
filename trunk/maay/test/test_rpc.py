@@ -16,7 +16,7 @@ from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import IUsernamePassword
 
 from maay import rpc
-from maay.querier import MaayQuerier
+from maay.querier import MaayQuerier, AnonymousQuerier, ANONYMOUS_AVATARID
 from maay.server import MaayPortal, WebappConfiguration
 
 class FakeConnection:
@@ -69,13 +69,20 @@ class RPCServerTC(unittest.TestCase):
         proxy = xmlrpc.Proxy('http://localhost:%s' % self.port)
         return proxy.callRemote(methName, *args)        
     
+    def testAnonymousAuthentication(self):
+        digest = self._callRemote('authenticate', '', '')
+        got, _ = unittest.deferredResult(digest)
+        self.assertEquals(_, '')
+        self.assertEquals(got, ANONYMOUS_AVATARID)
+
     def testRawAuthentication(self):
         for user, passwd in [('adim', 'adim'), ('foo', 'bar')]:
             digest = self._callRemote('authenticate', user, passwd)
             expected = rpc.make_uid(user, passwd)
             got, _ = unittest.deferredResult(digest)
-            self.assertEquals(got, expected)
-
+            self.assertEquals(got, expected, ('%s != %s (%s)' % (got, expected, _)))
+            self.assertEquals(_, '')
+    
     def testUncertifiedRemoteCall(self):
         """only authentified people should be able to call remote methods"""
         retValue = self._callRemote('lastIndexationTime', 'evil', 'foo.pdf')
