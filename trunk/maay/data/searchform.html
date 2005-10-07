@@ -7,8 +7,8 @@
     <link rel="shortcut icon" href="images/maay.ico" />
   </head>
  
-  <body>
-    <a href="login">Login</a>    
+  <body> 
+    <a nevow:render="loginurl"><nevow:attr name="href"><nevow:slot name="loginurl" /></nevow:attr><nevow:slot name="actionlabel" /></a>
     <table class="searchHome">
       <tr>
 	<td><img src="images/maay.png" /></td>
