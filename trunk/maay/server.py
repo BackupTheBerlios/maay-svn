@@ -127,13 +127,18 @@ def normalizeMimetype(fileExtension):
     return mimetypes.types_map.get('.%s' % fileExtension)
 
 class Query(object):
-    restrictions = ('filetype', 'filename')
-
-    def __init__(self, words, offset=0, filetype=None, filename=None):
+    restrictions = ('filetype', 'filename', 'searchtype')
+    def __init__(self, words, offset=0, filetype=None, filename=None, searchtype='local'):
         self.words = words # unicode string 
         self.offset = offset
         self.filetype = normalizeMimetype(filetype)
         self.filename = filename
+        if searchtype.lower() not in ('local', 'p2p'):
+            searchtype = 'local'
+        self.searchtype = searchtype.lower()
+
+    def isDistributed(self):
+        return self.searchtype == 'p2p'
 
     def fromRawQuery(rawQuery, offset=0):
         rawWords = rawQuery.split()
@@ -173,9 +178,9 @@ class SearchForm(MaayPage):
         return None
 
     def child_search(self, context):
-        # query = unicode(context.arg('words'))
+        # query = unicode(context.arg('words'))        
         offset = int(context.arg('offset', 0))
-        query = Query.fromRawQuery(unicode(context.arg('words')), offset)
+        query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'), offset)
         results = self.querier.findDocuments(query)
         return ResultsPage(self.maayId, results, query)
 
@@ -184,7 +189,7 @@ class SearchForm(MaayPage):
     def child_download(self, context):
         docid = context.arg('docid')
         # query = unicode(context.arg('words'))
-        query = Query.fromRawQuery(unicode(context.arg('words')))
+        query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'))
         docurl = self.querier.notifyDownload(docid, query.words)
         if docurl:
             return static.File(docurl)
@@ -209,15 +214,19 @@ class ResultsPage(MaayPage):
         context.fillSlots('words', self.query)
         return context.tag
 
+    def render_searchfield(self, context, data):
+        context.fillSlots('words', self.query)
+        return context.tag
+
     def render_prevset_url(self, context, data):
-        words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'))))
+        words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'), 'utf-8')))
         offset = int(context.arg('offset', 0))
         if offset:
             offset -= 15
         return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
 
     def render_nextset_url(self, context, data):
-        words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'))))
+        words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'), 'utf-8')))
         offset = int(context.arg('offset', 0)) + 15
         return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
 
