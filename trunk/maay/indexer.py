@@ -118,8 +118,18 @@ class Indexer:
         return converter.isKnownType(filename)
 
     def start(self):
+        raise "FIXME Error. See comment below"
         # we index private dirs first because public overrides private
         existingFiles = self.runIndexer(isPrivate=True)
+        # XXX FIXME: last run gave
+        #   File "bin/maay-indexer", line 20, in ?
+        #     run()
+        #   File "/home/alf/lib/python/maay/indexer.py", line 314, in run
+        #     indexer.start()
+        #   File "/home/alf/lib/python/maay/indexer.py", line 123, in start
+        #     existingFiles += self.runIndexer(isPrivate=False)
+        # TypeError: unsupported operand type(s) for +=: 'Set' and 'Set'
+
         existingFiles += self.runIndexer(isPrivate=False)
         indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
         oldFiles = indexedFiles - existingFiles
