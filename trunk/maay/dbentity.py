@@ -223,9 +223,10 @@ class Document(DBEntity):
         else:
             restriction = ""
             restrictionParams = []
+        print "select containing", allowPrivate
         if not allowPrivate:
-            restriction += " AND D.state=%s "
-            restrictionParams.append(cls.PUBLISHED_STATE)
+            restriction += " AND D.state!=%s "
+            restrictionParams.append(cls.PRIVATE_STATE)
         # Question: what is the HAVING clause supposed to do ?
         # Answer: we select all documents containing one of the words
         # that we are looking for, group them by their identifier, and
@@ -248,7 +249,7 @@ class Document(DBEntity):
                  "HAVING count(DS.db_document_id) = %%s "
                  "LIMIT 15 OFFSET %s" % \
                  (', '.join(['%s'] * len(words)), restriction, offset))
-
+        print query, words + restrictionParams + [len(words)]
         return query, words + restrictionParams + [len(words)]
 
     _selectContainingQuery = classmethod(_selectContainingQuery)

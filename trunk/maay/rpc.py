@@ -25,6 +25,7 @@ from twisted.internet import defer
 ## from twisted.python.failure import Failure
 
 from maay.querier import MaayQuerier, IQuerier, ANONYMOUS_AVATARID
+from maay.dbentity import Document
 
 def make_uid(username, password):
     """forge a unique identifier"""
@@ -65,20 +66,23 @@ class MaayRPCServer(XMLRPC):
         d.addErrback(lambda failure: ('', str(failure)))
         return d
 
-    def xmlrpc_lastIndexationTime(self, cnxId, filename):
+    def xmlrpc_lastIndexationTimeAndState(self, cnxId, filename):
         if self.cnxIsValid(cnxId):
             filename = unicode(filename)
             querier = self._sessions[cnxId]
             fileInfos = querier.getFileInformations(filename)
             if len(fileInfos):
                 time = fileInfos[0].file_time
+                state = fileInfos[0].state
             else:
                 time = 0
+                state = Document.UNKNOWN_STATE
         else:
             # XXX : could we return twisted.python.failure.Failure instance here ?
             ## return Failure(ValueError("invalid connexion")
             time = -1 # XXX: need to differenciate bad cnxId and no last mod time
-        return time
+            state = Document.UNKNOWN_STATE
+        return time, state
 
     def xmlrpc_getIndexedFiles(self, cnxId):
         if self.cnxIsValid(cnxId):

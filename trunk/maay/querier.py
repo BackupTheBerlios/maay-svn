@@ -132,6 +132,7 @@ class AnonymousQuerier:
 
     def findDocuments(self, query):
         """Find all indexed documents matching the query"""
+        print "Find Documents", self.searchInPrivate
         words = WORDS_RGX.findall(normalizeText(query.words))
         self._updateQueryStatistics(words)
         try:
@@ -342,6 +343,9 @@ class MaayQuerier(AnonymousQuerier):
             else:
                 # document has not changed
                 doc = doc[0]
+                if doc.state != state:
+                    doc.state = state
+                    doc.commit(cursor, update=True)
                 
             fileinfo.commit(cursor, update=True)
                 

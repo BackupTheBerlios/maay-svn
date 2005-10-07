@@ -30,6 +30,7 @@ import sha
 from sets import Set
 from xmlrpclib import ServerProxy, Binary, Fault, ProtocolError
 import mimetypes
+import socket
 
 from maay import converter
 from maay.configuration import Configuration
@@ -102,25 +103,52 @@ class Indexer:
                 print "Got failure from server:", errmsg
             raise MaayAuthenticationError("Failed to connect as '%s'" % username)
         
-    def getFileIterator(self):
-        indexed = self.indexerConfig.index_dir
-        skipped = self.indexerConfig.skip_dir
+    def getFileIterator(self, isPrivate=True):
+        if isPrivate:
+            indexed = self.indexerConfig.private_index_dir
+            skipped = self.indexerConfig.private_skip_dir
+            print "private indexation of", indexed, "omitting", skipped
+        else:
+            indexed = self.indexerConfig.public_index_dir
+            skipped = self.indexerConfig.public_skip_dir
+            print "public indexation of", indexed, "omitting", skipped
         return FileIterator(indexed, skipped)
 
     def isIndexable(self, filename):
         return converter.isKnownType(filename)
 
     def start(self):
+        # we index private dirs first because public overrides private
+        existingFiles = self.runIndexer(isPrivate=True)
+        existingFiles += self.runIndexer(isPrivate=False)
+        indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
+        oldFiles = indexedFiles - existingFiles
+        for filename in oldFiles:
+            if self.verbose:
+                print "Requesting unindexation of %s" % filename
+            self.serverProxy.removeFileInfo(self.cnxId, filename)
+        if self.verbose:
+            print "Requesting cleanup of unreferenced documents"
+        self.serverProxy.removeUnreferencedDocuments(self.cnxId)
+
+    def runIndexer(self, isPrivate=True):
         existingFiles = Set()
-        for filename in self.getFileIterator():
+        
+        if isPrivate:
+            state = Document.PRIVATE_STATE
+        else:
+            state = Document.PUBLISHED_STATE
+            
+        for filename in self.getFileIterator(isPrivate):
             existingFiles.add(filename)
             if not self.isIndexable(filename):
                 continue
             lastModificationTime = os.path.getmtime(filename)
-            lastIndexationTime = self.getLastIndexationTime(filename)
-            if lastIndexationTime >= lastModificationTime:
+            lastIdxTime, lastIdxState = self.getLastIndexationTimeAndState(filename)
+            if lastIdxState == state and lastIdxTime >= lastModificationTime:
                 if self.verbose:
                     print "%s didn't change since last indexation" % filename
+                continue
             else:
                 fileSize = os.path.getsize(filename)
                 try:
@@ -134,23 +162,15 @@ class Indexer:
 
                 self.indexDocument(filename, title, text, fileSize,
                                    lastModificationTime,
-                                   docId, mime_type, Document.PUBLISHED_STATE)
-
-        indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
-        oldFiles = indexedFiles - existingFiles
-        for filename in oldFiles:
-            if self.verbose:
-                print "Requesting unindexation of %s" % filename
-            self.serverProxy.removeFileInfo(self.cnxId, filename)
-        if self.verbose:
-            print "Requesting cleanup of unreferenced documents"
-        self.serverProxy.removeUnreferencedDocuments(self.cnxId)
+                                   docId, mime_type, state)
+        return existingFiles
         
-    def getLastIndexationTime(self, filename):
-        lastIndexationTime = self.serverProxy.lastIndexationTime(self.cnxId, filename)
-        if lastIndexationTime is None:
+    def getLastIndexationTimeAndState(self, filename):
+        answer = self.serverProxy.lastIndexationTimeAndState(self.cnxId, filename)
+        if answer is None:
             raise MaayAuthenticationError("Bad cnxId sent to the server")
-        return lastIndexationTime
+        lastTime, lastState = answer
+        return lastTime, lastState
 
     def indexDocument(self, filename, title, text, fileSize,
                       lastModTime, content_hash, mime_type, state,
@@ -193,6 +213,7 @@ class FileIterator:
             # test path not in self.skipped (dummy config files)
             if path not in self.skipped:
                 for dirpath, dirnames, filenames in os.walk(path):
+                    print "looking in", dirpath
                     self._removeSkippedDirnames(dirpath, dirnames)
                     try:
                         dirpath = unicode(dirpath, 'utf-8')
@@ -210,6 +231,7 @@ class FileIterator:
         for dirname in dirnames[:]:
             abspath = self.normalizeCase(os.path.join(dirpath, dirname))
             if abspath in self.skipped:
+                print "skipping", dirname
                 dirnames.remove(dirname)
 
 
@@ -244,17 +266,29 @@ class IndexerConfiguration(Configuration):
           'default' : "maay",
           }),
 
-        ('index-dir',
+        ('private-index-dir',
          {'type': 'csv',
           'metavar': '<csv>', 'short': 'i',
-          'help': 'index this directory'
+          'help': 'index this directory with the private indexer'
           }),
          
-        ('skip-dir',
+        ('private-skip-dir',
          {'type': 'csv',
           'metavar': '<csv>', 'short': 's',
-          'help': 'skip this directory'
+          'help': 'the private indexer will skip this directory'
           }),
+        ('public-index-dir',
+         {'type': 'csv',
+          'metavar': '<csv>', 'short': 'I',
+          'help': 'index this directory with the public indexer'
+          }),
+         
+        ('public-skip-dir',
+         {'type': 'csv',
+          'metavar': '<csv>', 'short': 'S',
+          'help': 'the public indexer will skip this directory'
+          }),
+
         ('verbose',
          {'type': 'yn',
           'metavar': '<y or n>', 'short': 'v',
@@ -272,11 +306,17 @@ def run():
     indexerConfig = IndexerConfiguration()
     indexerConfig.load()
     try:
-        indexer = Indexer(indexerConfig)
-    except MaayAuthenticationError, exc:
-        print "AuthenticationError:", exc
+        try:
+            indexer = Indexer(indexerConfig)
+        except MaayAuthenticationError, exc:
+            print "AuthenticationError:", exc
+            sys.exit(1)
+        indexer.start()
+    except socket.error, exc:
+        print "Cannot contact server:", exc
+        print "Check that the server is running on %s:%s" % \
+              (indexerConfig.host, indexerConfig.port)
         sys.exit(1)
-    indexer.start()
 
 if __name__ == '__main__':
     run()
