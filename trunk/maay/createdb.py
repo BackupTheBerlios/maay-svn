@@ -17,16 +17,20 @@
 """ helper to create the maay mysql instance on windows platform"""
 import os
 
+def do_delete():
+    pipe = os.popen(r'mysql\bin\mysql.exe -u root mysql', 'w')
+    pipe.write('DROP DATABASE maay;\n')
+    pipe.close()
+    
+
 def do_create():
-	pipe = os.popen(r'mysql\bin\mysql.exe -u root mysql', 'w')
-	print pipe
-	data = file('mysql.sql','rb').read()
-	print data
-	pipe.write(data)
-	pipe.close()
-	print 'done'
-	
+    pipe = os.popen(r'mysql\bin\mysql.exe -u root mysql', 'w')
+    data = file('mysql.sql','rb').read()
+    pipe.write(data)
+    pipe.close()
+    
 if __name__ == '__main__':
-	do_create()
+    do_deleted()
+    do_create()
 	
 	
