@@ -39,7 +39,6 @@ class MaayAuthenticationError(Exception):
     """raised on db authentication failure"""
 
 ANONYMOUS_AVATARID = '__anonymous__'
-
     
 class IQuerier(Interface):
     """defines the High-Level interface to Maay SQL database"""

@@ -55,10 +55,14 @@ def parseTime(isodatetime):
 
 
 def login(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidth):
-    c = ClientCreator(reactor, RegistrationClient, querier.registerNode)
-    d = c.connectTCP(regIP, regPort)
-    d.addCallback(RegistrationClient.login, nodeId, nodeIP, xmlrpcPort, bandwidth)
-    d.addCallback(RegistrationClient.who)
+    if querier is not None:
+        c = ClientCreator(reactor, RegistrationClient, querier.registerNode)
+        d = c.connectTCP(regIP, regPort)
+        d.addCallback(RegistrationClient.login, nodeId, nodeIP, xmlrpcPort, bandwidth)
+        d.addCallback(RegistrationClient.who)
+    else:
+        print "No querier found => no registration / no P2P"
+
 
 def logout(reactor, nodeId):
     c = ClientCreator(reactor, RegistrationClient, None)

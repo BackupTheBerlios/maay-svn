@@ -30,6 +30,7 @@ from twisted.internet import reactor, defer
 from twisted.trial import unittest
 from twisted.cred.checkers import ICredentialsChecker
 from twisted.cred.credentials import IUsernamePassword
+from twisted.python.failure import Failure
 
 from maay import rpc
 from maay.querier import MaayQuerier, AnonymousQuerier, ANONYMOUS_AVATARID
@@ -72,6 +73,7 @@ class RPCServerTC(unittest.TestCase):
     def setUp(self):
         portal = MaayPortal(WebappConfiguration())
         portal.registerChecker(FakeChecker(portal.realm))
+        self.portal = portal
         rpcserver = server.Site(rpc.MaayRPCServer(portal))
         self.p = reactor.listenTCP(0, rpcserver, interface="127.0.0.1")
         self.port = self.p.getHost().port
@@ -86,10 +88,21 @@ class RPCServerTC(unittest.TestCase):
         return proxy.callRemote(methName, *args)        
     
     def testAnonymousAuthentication(self):
+        self.portal.anonymousQuerier = object() # could be anything but None
         digest = self._callRemote('authenticate', '', '')
         got, _ = unittest.deferredResult(digest)
         self.assertEquals(_, '')
         self.assertEquals(got, ANONYMOUS_AVATARID)
+
+    def testAnonymousAuthenticationFailure(self):
+        """when portal.anonymousQuerier is None, anonymous login is not allowed"""
+        self.portal.anonymousQuerier = None
+        digest = self._callRemote('authenticate', '', '')
+        got, err = unittest.deferredResult(digest)
+        self.assertEquals(got, '')
+        # XXX: need a better check
+        self.assertNotEquals(err, '')
+        
 
     def testRawAuthentication(self):
         for user, passwd in [('adim', 'adim'), ('foo', 'bar')]:

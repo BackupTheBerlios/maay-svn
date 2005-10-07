@@ -67,7 +67,7 @@ class MaayPage(rend.Page):
     child_maaycss = static.File(get_path_of('maay.css'))
     child_images = static.File(get_path_of('images/'))
 
-    def __init__(self, maayId):
+    def __init__(self, maayId=ANONYMOUS_AVATARID):
         rend.Page.__init__(self)
         self.maayId = maayId
 
@@ -297,14 +297,15 @@ class MaayRealm:
         return querier
 
 
-class MaayPortal(portal.Portal):
+class MaayPortal(object, portal.Portal):
     """Portal for Maay authentication system"""
     def __init__(self, webappConfig):
         realm = MaayRealm()
         checker = DBAuthChecker(realm, webappConfig.db_host,
                                 webappConfig.db_name)
         portal.Portal.__init__(self, realm, (checker,))
-        self.registerChecker(MaayAnonymousChecker(), IAnonymous)
+        self.anonymousChecker = MaayAnonymousChecker()
+        self.registerChecker(self.anonymousChecker, IAnonymous)
         self.config = webappConfig
         # Create default anonymous querier, based on local configuration
         try:
@@ -328,10 +329,30 @@ class MaayPortal(portal.Portal):
                                           port=6789, bandwidth=10)
         self.anonymousQuerier = anonymousQuerier
 
+    def getAnonymousQuerier(self):
+        return getattr(self, '_anonymousQuerier', None)
+
+    def setAnonymousQuerier(self, value):
+        """used to set 'anonymousAllowed' flag in anonymous checker"""
+        if value is not None:
+            self.anonymousChecker.anonymousAllowed = True
+        self._anonymousQuerier = value
+
+    anonymousQuerier = property(getAnonymousQuerier, setAnonymousQuerier,
+                                doc="anonymous querier")
+
+
 class MaayAnonymousChecker(AllowAnonymousAccess):
     """don't use default twisted.cred anonymous avatarId"""
+    def __init__(self):
+        self.anonymousAllowed = False
+        
     def requestAvatarId(self, credentials):
-        return ANONYMOUS_AVATARID
+        if self.anonymousAllowed:
+            return ANONYMOUS_AVATARID
+        else:
+            return failure.Failure(error.UnauthorizedLogin(
+                "No anonymous querier available !"))
 
 
 class DBAuthChecker:
@@ -459,16 +480,32 @@ class WebappConfiguration(Configuration):
             except IOError:
                 continue
         raise ValueError('Unable to find a writable directory to store the node id')
-                
-    
+
+
+class MaaySessionWrapper(guard.SessionWrapper):
+    """override guard.SessionWrapper to add an explicit errBack on
+    portal.login()
+
+    XXX: TODO check if we could not use SessionWrapper.incorrectLoginError()
+    """
+    def login(self, request, session, credentials, segments):
+        mind = self.mindFactory(request, credentials)
+        session.mind = mind
+        d = self.portal.login(credentials, mind, self.credInterface)
+        d.addCallback(self._cbLoginSuccess, session, segments)
+        d.addErrback(self._forceLoginPage)
+        return d
+
+    def _forceLoginPage(self, *args):
+        return LoginForm(), ''
     
     
 def run():
     webappConfig = WebappConfiguration()
     webappConfig.load()
     maayPortal = MaayPortal(webappConfig)
-    website = appserver.NevowSite(guard.SessionWrapper(maayPortal,
-                                                       mindFactory=MaayMindFactory))
+    website = appserver.NevowSite(MaaySessionWrapper(maayPortal,
+                                                     mindFactory=MaayMindFactory))
     website.remember(Maay404(), inevow.ICanHandleNotFound)
     registrationclient.login(reactor,
                              webappConfig.registration_host, webappConfig.registration_port,
