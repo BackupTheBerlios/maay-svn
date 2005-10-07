@@ -14,10 +14,11 @@
 #     along with this program; if not, write to the Free Software
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-from twisted.internet.protocol import Protocol, ClientCreator
+from twisted.internet.protocol import ClientCreator
+from twisted.protocols.basic import LineReceiver
 from time import mktime
 
-class RegistrationClient(Protocol):
+class RegistrationClient(LineReceiver):
     def __init__(self, nodeRegistrationCallback):
         self.__callback = nodeRegistrationCallback
         
@@ -29,7 +30,7 @@ class RegistrationClient(Protocol):
 
     def logout(self, nodeId):
         self.transport.write('logout:%s\r\n' % nodeId)
-        self.transport.looseConnection()
+        self.transport.loseConnection()
 
     def who(self):
         print "querying registration server"
@@ -39,7 +40,7 @@ class RegistrationClient(Protocol):
         data = data.strip()
         print "registration server said", data
         if data.startswith('EOT'):
-            self.transport.looseConnection()
+            self.transport.loseConnection()
             return
         time, nodeId, nodeIP, nodePort, nodeBandwidth = data.split('\t')
         lastSeenTime = parseTime(time)

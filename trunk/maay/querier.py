@@ -76,7 +76,7 @@ class IQuerier(Interface):
         Return document url if the document is downloadable and and
         empty string otherwise"""
         
-    def registerNode(nodeId, ip, port, bandwidth):
+    def registerNode(nodeId, ip, port, bandwidth, lastSeenTime=None):
         """register a node in the database"""
         
     def close():
@@ -244,13 +244,14 @@ class AnonymousQuerier:
         self._cnx.commit()
 
 
-    def registerNode(self, nodeId, ip, port, bandwidth):
+    def registerNode(self, nodeId, ip, port, bandwidth, lastSeenTime=None):
+        lastSeenTime = lastSeenTime or int(time.time())
         cursor = self._cnx.cursor()
         node = Node.selectOrInsertWhere(cursor, node_id=nodeId)[0]
         node.ip = ip
         node.port = port
         node.bandwidth = bandwidth
-        node.last_seen_time = int(time.time())
+        node.last_seen_time = lastSeenTime
         node.commit(cursor, update=True)
 
 
