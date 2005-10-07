@@ -46,6 +46,7 @@ FIXME: update node_interests too
 XXX Decide if we can compute the content_hash and mime_type ourselves
     or if the indexer should do it and pass the values as an argument
 
+TODO: order results using document_scores information
 
 registration.py:
 ----------------
