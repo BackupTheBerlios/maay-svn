@@ -30,7 +30,7 @@ def do_create():
     pipe.close()
     
 if __name__ == '__main__':
-    do_deleted()
+    do_delete()
     do_create()
 	
 	
