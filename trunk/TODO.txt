@@ -27,8 +27,6 @@ indexer.py:
 
 TODO: analyse the God class into something understandable
 
-TODO: manage published/private documents
-
 TODO: manage periodical runs
 
 TODO: memorize state of indexed document to avoid db lookup at each run
