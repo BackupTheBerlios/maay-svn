@@ -16,6 +16,10 @@
 
 __revision__ = '$Id$'
 
+def normalizeMimetype(fileExtension):
+    import mimetypes
+    return mimetypes.types_map.get('.%s' % fileExtension)
+
 
 class Query(object):
     restrictions = ('filetype', 'filename', 'searchtype')
