@@ -75,7 +75,6 @@ def makeDocumentId(filename):
     stream.close()
     return hasher.hexdigest()
     
-# TODO: manage published/private documents
 # TODO: manage periodical runs
 # TODO: memorize state of indexed document to avoid db lookup at each run
 # TODO: do an initial db query to initialize the indexation state (?)
@@ -118,7 +117,6 @@ class Indexer:
         return converter.isKnownType(filename)
 
     def start(self):
-        raise "FIXME Error. See comment below"
         # we index private dirs first because public overrides private
         existingFiles = self.runIndexer(isPrivate=True)
         # XXX FIXME: last run gave
@@ -130,7 +128,7 @@ class Indexer:
         #     existingFiles += self.runIndexer(isPrivate=False)
         # TypeError: unsupported operand type(s) for +=: 'Set' and 'Set'
 
-        existingFiles += self.runIndexer(isPrivate=False)
+        existingFiles.union(self.runIndexer(isPrivate=False))
         indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
         oldFiles = indexedFiles - existingFiles
         for filename in oldFiles:
