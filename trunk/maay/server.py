@@ -73,12 +73,20 @@ class MaayPage(rend.Page):
         self.maayId = maayId
 
     def render_loginurl(self, context, data):
+        url = URL.fromContext(context)
+        # store current URL into  'goThereAfter' to be able to return here
+        # after login
         if self.maayId != ANONYMOUS_AVATARID:
+            goThereAfter = URL(url.scheme, url.netloc,
+                               ['logout'] + url.pathList())
             context.fillSlots('actionlabel', 'Logout')
-            context.fillSlots('loginurl', '/logout')
         else:
+            goThereAfter = URL(url.scheme, url.netloc,
+                               ['login'] + url.pathList())
             context.fillSlots('actionlabel', 'Login')            
-            context.fillSlots('loginurl', '/login')
+        for param, value in url.queryList():
+            goThereAfter = goThereAfter.add(param, value)
+        context.fillSlots('loginurl', str(goThereAfter))
         return context.tag
 
     def child_login(self, context):
@@ -95,7 +103,17 @@ class LoginForm(MaayPage):
     """a basic login form. This page is rendered until the user
     is logged.
     """
-    addSlash = True
+    # addSlash = True
+
+    def path(self, context, data):
+        here = URL.fromContext(context)
+        # transform /login/somePathAndQuery into /__login__/somePathAndQuery
+        # to benefit from nevow.guard redirection magic
+        pathList = ['__login__'] + here.pathList()[1:]
+        goThereAfter = URL(here.scheme, here.netloc,
+                           pathList, here.queryList())
+        return str(goThereAfter)
+
     docFactory = loaders.stan(
         tags.html[
             tags.head[tags.title["Maay Login Page",],
@@ -104,7 +122,8 @@ class LoginForm(MaayPage):
                       ],
             
             tags.body[
-                tags.form(action='/'+guard.LOGIN_AVATAR, method='post')[
+                # tags.form(action='/'+guard.LOGIN_AVATAR, render=path, method='post')[
+                tags.form(action=path, method='post')[
                     tags.table(_class="loginTable")[
                         tags.tr[
                             tags.td[ "Username:" ],
@@ -122,7 +141,9 @@ class LoginForm(MaayPage):
             ]
         )
 
-
+    def childFactory(self, context, segments):
+        return LoginForm()
+    
 class SearchForm(MaayPage):
     """default search form"""
     docFactory = loaders.xmlfile(get_path_of('searchform.html'))
@@ -478,6 +499,8 @@ class MaaySessionWrapper(guard.SessionWrapper):
     XXX: TODO check if we could not use SessionWrapper.incorrectLoginError()
     """
     def login(self, request, session, credentials, segments):
+        # d = SessionWrapper.login()
+        # d.addErrback(..)
         mind = self.mindFactory(request, credentials)
         session.mind = mind
         d = self.portal.login(credentials, mind, self.credInterface)
