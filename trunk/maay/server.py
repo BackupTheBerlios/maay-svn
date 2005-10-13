@@ -123,10 +123,6 @@ class LoginForm(MaayPage):
         )
 
 
-def normalizeMimetype(fileExtension):
-    import mimetypes
-    return mimetypes.types_map.get('.%s' % fileExtension)
-
 class SearchForm(MaayPage):
     """default search form"""
     docFactory = loaders.xmlfile(get_path_of('searchform.html'))
@@ -299,7 +295,8 @@ class MaayPortal(object, portal.Portal):
             realm.createUserSession(ANONYMOUS_AVATARID, anonymousQuerier)
             anonymousQuerier.registerNode(self.config.get_node_id(),
                                           ip=socket.gethostbyname(socket.gethostname()),
-                                          port=6789, bandwidth=10)
+                                          port=webappConfig.rpcserver_port,
+                                          bandwidth=webappConfig.bandwidth)
         self.anonymousQuerier = anonymousQuerier
 
     def getAnonymousQuerier(self):
@@ -394,8 +391,27 @@ class WebappConfiguration(Configuration):
         ('registration-port',
          {'type' : "int", 'metavar' : "<registration_port>", 
           'help' : "Internet port on which the registration server is listening",
-          'default' : "2345",
+          'default' : 2345,
           }),
+        ('webserver-port',
+         {'type' : "int", 'metavar' : "<webserver_port>", 
+          'help' : "Internet port on which the web interface is listening",
+          'default' : 8080,
+          }),
+        ('rpcserver-port',
+         {'type' : "int", 'metavar' : "<rpcserver_port>", 
+          'help' : "Internet port on which the xmlrpc server is listening",
+          'default' : 6789,
+          }),
+        
+        ('bandwidth',
+         {'type' : "int", 'metavar' : "<bandwidth>", 
+          'help' : "Internet port on which the xmlrpc server is listening",
+          'default' : 10,
+          }),
+        
+        
+        
         
         ]
 
@@ -485,14 +501,14 @@ def run():
                              maayPortal.anonymousQuerier,
                              webappConfig.get_node_id(),
                              socket.gethostbyname(socket.gethostname()),
-                             6789,
-                             10)
+                             webappConfig.rpcserver_port,
+                             webappConfig.bandwidth)
                                                   
                              
     rpcserver = server.Site(MaayRPCServer(webappConfig.get_node_id(),
                                           maayPortal))
-    reactor.listenTCP(8080, website)
-    reactor.listenTCP(6789, rpcserver)
+    reactor.listenTCP(webappConfig.webserver_port, website)
+    reactor.listenTCP(webappConfig.rpcserver_port, rpcserver)
     print "Go !"
     reactor.run()
 

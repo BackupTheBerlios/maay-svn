@@ -74,7 +74,7 @@ class RPCServerTC(unittest.TestCase):
         portal = MaayPortal(WebappConfiguration())
         portal.registerChecker(FakeChecker(portal.realm))
         self.portal = portal
-        rpcserver = server.Site(rpc.MaayRPCServer(portal))
+        rpcserver = server.Site(rpc.MaayRPCServer(None, portal))
         self.p = reactor.listenTCP(0, rpcserver, interface="127.0.0.1")
         self.port = self.p.getHost().port
         
@@ -120,7 +120,7 @@ class RPCServerTC(unittest.TestCase):
     def testCertifiedRemoteCall(self):
         d = self._callRemote('authenticate', 'adim', 'adim')
         cnxId, _ = unittest.deferredResult(d)
-        retValue = self._callRemote('lastIndexationTime', cnxId, 'foo.pdf')
+        retValue = self._callRemote('lastIndexationTimeAndState', cnxId, 'foo.pdf')
         self.assertEquals(unittest.deferredResult(retValue), 0)
 
 if __name__ == '__main__':

@@ -21,11 +21,13 @@ import sys
 from twisted.web.xmlrpc import XMLRPC
 from twisted.cred.credentials import UsernamePassword, Anonymous
 from twisted.cred.error import UnauthorizedLogin
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 ## from twisted.python.failure import Failure
 
 from maay.querier import MaayQuerier, IQuerier, ANONYMOUS_AVATARID
 from maay.dbentity import Document
+from maay.p2pquerier import P2pQuerier, P2pQuery
+from maay.query import Query
 
 def make_uid(username, password):
     """forge a unique identifier"""
@@ -35,12 +37,13 @@ def make_uid(username, password):
 
 class MaayRPCServer(XMLRPC):
 
-    def __init__(self, portal):
+    def __init__(self, nodeId, portal):
         XMLRPC.__init__(self)
         self._sessions = {}
         self.portal = portal
         self.node_id = portal.config.get_node_id()
         self._sessions[ANONYMOUS_AVATARID] = portal.anonymousQuerier
+        self._p2pQuerier = P2pQuerier(nodeId, portal.anonymousQuerier)
         
     def _attachUser(self, (interface, querier, logout), username, password):
         if interface is not IQuerier or querier is None:
@@ -124,6 +127,22 @@ class MaayRPCServer(XMLRPC):
                                   lastModifiedOn, content_hash, mime_type, state,
                                   file_state)
         return 0
+
+    def xmlrpc_distributedQuery(self, queryId, sender, ttl, words, mime_type):
+        query = P2pQuery(queryId,
+                         sender,
+                         ttl,
+                         Query(words, filetype=mime_type))
+        # schedule the query for later processing and return immediately
+        # this enables the sender to query several nodes in a row
+        d = reactor.callLater(.01, self._p2pQuerier.receiveQuery, query)
+        return self.nodeId
+
+    def xmlrpc_distributedQueryAnswer(self, queryId, senderId, documents):
+        answer = P2pAnswer()
+        d = reactor.callLater(.01, self._p2pQuerier.receiveAnswer,answer)
+        return self.nodeId
+                         
     
     def cnxIsValid(self, cnxId):
         if cnxId in self._sessions:

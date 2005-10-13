@@ -78,6 +78,9 @@ class IQuerier(Interface):
     def registerNode(nodeId, ip, port, bandwidth, lastSeenTime=None):
         """register a node in the database"""
         
+    def registerNodeActivity(nodeId):
+        """update lastSeenTime for node"""
+        
     def close():
         """closes the DB connection"""
 
@@ -188,7 +191,7 @@ class AnonymousQuerier:
 
 
     def _updateQueryStatistics(self, words):
-        # FIXME: update node_interests too
+        # FIXME: update node_interests too, but we need the nodeId to do this
         cursor = self._cnx.cursor()
         for word in words:
             winfo = Word.selectOrInsertWhere(cursor, word=word)[0]
@@ -253,8 +256,20 @@ class AnonymousQuerier:
         node.bandwidth = bandwidth
         node.last_seen_time = lastSeenTime
         node.commit(cursor, update=True)
+        cursor.close()
 
+    def registerNodeActivity(self, nodeId):
+        cursor = self._cnx.cursor()
+        node = Node.selectWhere(cursor, node_id=nodeId)[0]
+        node.last_seen_time = int(time.time())
+        node.commit(cursor, update=True)
+        cursor.close()
 
+    def getActiveNeighbors(self, nodeId, nbNodes):
+        cursor = self._cnx.cursor()
+        nodes = Node.selectActive(nodeId, nbNodes)
+        cursor.close()
+        return nodes
     
 class MaayQuerier(AnonymousQuerier):
     """High-Level interface to Maay SQL database.

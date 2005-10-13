@@ -382,12 +382,28 @@ class Node(DBEntity):
      * double affinity: caracterisation of interests similar to the
        running node (values close to 1 ar better)
      
-     * int bandwidth: constant for now (value = 10)
+     * int bandwidth: bandwidth of the node
     """
     tableName = 'nodes'
     attributes = ('node_id', 'ip', 'port', 'last_seen_time', 'counter',
                   'claim_count', 'affinity', 'bandwidth')
     key = ('node_id',)
+
+    def _selectActiveQuery(cls):
+        query = cls._selectQuery()
+        query += " WHERE node_id != %s ORDER BY last_seen_time DESC LIMIT %s"
+        return query
+    
+    _selectActiveQuery = classmethod(_selectActiveQuery)
+
+    def selectActive(cls, cursor, currentNodeId, maxResults):
+        query = cls._selectActiveQuery()
+        cursor.execute(query, currentNodeId, maxResults)
+        results = cursor.fetchall()
+        return [cls(**dict(zip(cls.attributes, row))) for row in results]
+    selectActive = classmethod(selectActive)
+        
+
 
 class NodeInterest(DBEntity):
     """
