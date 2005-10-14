@@ -266,8 +266,8 @@ class AnonymousQuerier:
         cursor.close()
 
     def getActiveNeighbors(self, nodeId, nbNodes):
-        cursor = self._cnx.cursor()
-        nodes = Node.selectActive(nodeId, nbNodes)
+        cursor = self._cnx.cursor() 
+        nodes = Node.selectActive(cursor, nodeId, nbNodes) 
         cursor.close()
         return nodes
     
