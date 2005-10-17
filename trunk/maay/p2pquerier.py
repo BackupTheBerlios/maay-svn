@@ -72,10 +72,10 @@ class P2pQuerier:
     the statistical information available about the neighbors'
     documents.
     """
-    _queries = {}
+    _queries = {} # AUC : needs to be shared amongst instances, why not, but then, what ...
     
-    def __init__(self, nodeId, querier):
-        self.nodeId = nodeId
+    def __init__(self, nodeId, querier):  # about those ? 
+        self.nodeId = nodeId  
         self.querier = querier
 
     def sendQuery(self, query):
@@ -86,10 +86,10 @@ class P2pQuerier:
             print "sent %s to %s" % (query, neighbor)
 
     def receiveQuery(self, query):
-        if query.id in self._queries:
+        if query.id in self._queries: 
             return
         
-        self._queries[query.id] = query
+        self._queries[query.id] = query 
 
         query.hop()        
         if query.ttl > 0:

@@ -49,8 +49,7 @@ def normalizeHtmlEncoding(htmlEncoding):
     # default, return original one
     return htmlEncoding
 
-
-def guessEncoding(filename):
+def guessEncoding(filename): #may throw IOError
     """try to guess encoding from a buffer
         Bytes  	Encoding Form
         00 00 FE FF 	UTF-32, big-endian
@@ -65,6 +64,7 @@ def guessEncoding(filename):
         stream = bz2.BZ2File(filename, 'rb')
     else:
         stream = file(filename, 'rb')
+        
     try:
         buffer = stream.read(4)
         # try to guess from BOM

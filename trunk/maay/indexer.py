@@ -122,6 +122,7 @@ class Indexer:
         existingFiles.union(self.runIndexer(isPrivate=False))
         indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
         oldFiles = indexedFiles - existingFiles
+        oldfiles = []
         for filename in oldFiles:
             if self.verbose:
                 print "Requesting unindexation of %s" % filename
@@ -219,11 +220,12 @@ class FileIterator:
                     except UnicodeError:
                         dirpath = unicode(dirpath, 'iso-8859-1')
                     for filename in filenames:
-                        try:
-                            filename = unicode(filename, 'utf-8')
-                        except UnicodeError:
-                            filename = unicode(filename, 'iso-8859-1')
-                        yield os.path.join(dirpath, filename)
+                        if os.access(dirpath+filename, os.R_OK): # Can we open it ?
+                            try:
+                                filename = unicode(filename, 'utf-8')
+                            except UnicodeError:
+                                filename = unicode(filename, 'iso-8859-1')
+                            yield os.path.join(dirpath, filename)
                     
     def _removeSkippedDirnames(self, dirpath, dirnames):
         """removed skipped directories from dirnames (inplace !)"""
@@ -232,6 +234,7 @@ class FileIterator:
             if abspath in self.skipped:
                 print "skipping", dirname
                 dirnames.remove(dirname)
+
 
 
 
