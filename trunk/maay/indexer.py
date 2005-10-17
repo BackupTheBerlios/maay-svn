@@ -39,7 +39,7 @@ from maay.querier import MaayAuthenticationError
 from maay.texttool import removeControlChar
 
 # grabbed from nevow
-mimetypes.types_map.update(
+mimetypes.types_map.update( # is it really taken into account ? (python files seem not to appear)
     {
             '.conf':  'text/plain',
             '.diff':  'text/plain',
@@ -119,7 +119,7 @@ class Indexer:
     def start(self):
         # we index private dirs first because public overrides private
         existingFiles = self.runIndexer(isPrivate=True)
-        existingFiles.union(self.runIndexer(isPrivate=False))
+        existingFiles |= self.runIndexer(isPrivate=False)
         indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
         oldFiles = indexedFiles - existingFiles
         for filename in oldFiles:
@@ -219,7 +219,7 @@ class FileIterator:
                     except UnicodeError:
                         dirpath = unicode(dirpath, 'iso-8859-1')
                     for filename in filenames:
-                        if os.access(dirpath+filename, os.R_OK): # Can we open it ?
+                        if os.access(dirpath+'/'+filename, os.R_OK): # Can we open it ?
                             try:
                                 filename = unicode(filename, 'utf-8')
                             except UnicodeError:

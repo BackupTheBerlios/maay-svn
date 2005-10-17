@@ -186,6 +186,12 @@ class MaayHTMLParser(AbstractParser, HTMLParser):
         return self.title, result, self.links, 0
 
 
+class ExifParser(AbstractParser):
+    """A parser for Exif information found in image files"""
+
+    def parseString(self, source):
+        return u'An image', u'The image', [], 0
+
         
 _table = {}
 for i in xrange(32):

@@ -48,7 +48,7 @@ from tempfile import mkdtemp
 import gzip
 import bz2
 
-from maay.texttool import TextParser, MaayHTMLParser as HTMLParser, ParsingError
+from maay.texttool import TextParser, ExifParser, MaayHTMLParser as HTMLParser, ParsingError
 
 # REGISTRY is a mimetype / converterList map
 REGISTRY = {}
@@ -101,6 +101,18 @@ class HTMLConverter(BaseConverter):
     """provides a simple HTML parser"""
     OUTPUT_TYPE = 'html'
     MIME_TYPE = 'text/html'
+
+class ImageBasedConverter(BaseConverter):
+    """provides base Image converter
+       In the future, it may hold EXIF information retrieval methods"""
+    OUTPUT_TYPE = 'image'
+
+    def getParser(self):
+        return ExifParser ()
+
+class JpegConverter(ImageBasedConverter):
+    OUTPUT_TYPE = 'jpg'
+    MIME_TYPE = 'image/jpeg'
 
 class CommandBasedConverter(BaseConverter):
     COMMAND = None
@@ -159,7 +171,6 @@ class RTFConverter(CommandBasedConverter):
 class MSWordConverter(CommandBasedConverter):
     COMMAND = 'antiword "%(input)s" > "%(output)s"'
     MIME_TYPE = 'application/msword'
-
 
 def extractWordsFromFile(filename):
     mimetype = guess_type(filename)[0]
