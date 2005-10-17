@@ -122,7 +122,6 @@ class Indexer:
         existingFiles.union(self.runIndexer(isPrivate=False))
         indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
         oldFiles = indexedFiles - existingFiles
-        oldfiles = []
         for filename in oldFiles:
             if self.verbose:
                 print "Requesting unindexation of %s" % filename
