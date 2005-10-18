@@ -14,6 +14,7 @@
 #     along with this program; if not, write to the Free Software
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
+from twisted.internet import reactor
 from twisted.internet.protocol import ClientCreator
 from twisted.protocols.basic import LineReceiver
 from time import mktime
@@ -64,8 +65,8 @@ def login(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidt
         print "No querier found => no registration / no P2P"
 
 
-def logout(reactor, nodeId):
+def logout(reactor, regIp, regPort, nodeId):
     c = ClientCreator(reactor, RegistrationClient, None)
     d = c.connectTCP(regIP, regPort)
     d.addCallback(RegistrationClient.logout)
-    
+
