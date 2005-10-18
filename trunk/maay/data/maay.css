@@ -50,3 +50,19 @@ div.prevnext a {
   font-weight: bold;
   color: blue;
 }
+
+table.peersTable {
+  margin-top: 20px;
+  width: 100%;
+  border: 1px solid black;
+}
+
+table.peersTable th {
+  border-bottom: 1px dotted grey;
+  text-align: left;
+  margin: 0px;
+}
+
+table.peersTable td.nodeId {
+  background: lightgrey;
+}

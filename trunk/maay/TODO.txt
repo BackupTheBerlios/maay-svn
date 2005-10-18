@@ -9,6 +9,8 @@
 #B   X vérifier qu'on utiliser de l'UTF-8 partout (2005.09.27)
 #B   X gérer les documents compressés (2005.09.28)
 #B   X Regarder la conversion pdf->html (2005.09.28)
+#B   _ utiliser des macros pour gérer l'aspect commun de toutes les pages (2005.10.18)
+#B   _ s'assurer qu'on gère correctement les child_* des différentes ressources (2005.10.18)
 
 * Notes
 

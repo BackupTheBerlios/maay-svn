@@ -398,7 +398,7 @@ class Node(DBEntity):
 
     def selectActive(cls, cursor, currentNodeId, maxResults):
         query = cls._selectActiveQuery()
-        cursor.execute(query, currentNodeId, maxResults)
+        cursor.execute(query, (currentNodeId, maxResults))
         results = cursor.fetchall()
         return [cls(**dict(zip(cls.attributes, row))) for row in results]
     selectActive = classmethod(selectActive)

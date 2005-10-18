@@ -31,7 +31,7 @@ import os
 import re
 import socket
 
-from zope.interface import implements
+from zope.interface import implements, Interface
 
 from twisted.cred import portal, checkers, error
 from twisted.cred.checkers import ANONYMOUS, AllowAnonymousAccess, \
@@ -98,7 +98,6 @@ class MaayPage(rend.Page):
         req.getSession().expire()
         req.redirect('/' + guard.LOGOUT_AVATAR)
 
-
 class LoginForm(MaayPage):
     """a basic login form. This page is rendered until the user
     is logged.
@@ -143,7 +142,29 @@ class LoginForm(MaayPage):
 
     def childFactory(self, context, segments):
         return LoginForm()
+
+class PeersList(MaayPage):
+    """display list of registered peers"""
+    docFactory = loaders.xmlfile(get_path_of('peers.html'))
+    addSlash = True
+
+    def __init__(self, maayId, querier):
+        MaayPage.__init__(self, maayId)
+        self.querier = querier
+
+    def data_peers(self, context, data):
+        webappConfig = IWebappConfiguration(context)
+        peers = self.querier.getActiveNeighbors(webappConfig.get_node_id(), 10)
+        return peers
     
+    def render_peer(self, context, peerNode):
+        # Note: might be convenient to register a special flattener for
+        #       Node objects
+        for attrname in ('node_id', 'ip', 'port', 'last_seen_time',
+                         'claim_count', 'affinity', 'bandwidth'):
+            context.fillSlots(attrname, getattr(peerNode, attrname, 'N/A'))
+        return context.tag
+                    
 class SearchForm(MaayPage):
     """default search form"""
     docFactory = loaders.xmlfile(get_path_of('searchform.html'))
@@ -157,6 +178,9 @@ class SearchForm(MaayPage):
         print "Bye %s !" % (self.maayId,)
         # XXX: logout message should be forwarded to registration server
         return None
+
+    def child_peers(self, context):
+        return PeersList(self.maayId, self.querier)
 
     def child_search(self, context):
         # query = unicode(context.arg('words'))        
@@ -378,6 +402,8 @@ class Maay404(rend.FourOhFour):
         """
         return self.loader.load(context)[0]
 
+class IWebappConfiguration(Interface):
+    """provide an interface in order to be able to remember webappconfig"""
 
 class WebappConfiguration(Configuration):
     options = [
@@ -424,16 +450,16 @@ class WebappConfiguration(Configuration):
           'help' : "Internet port on which the xmlrpc server is listening",
           'default' : 6789,
           }),
-        
         ('bandwidth',
          {'type' : "int", 'metavar' : "<bandwidth>", 
           'help' : "Internet port on which the xmlrpc server is listening",
           'default' : 10,
           }),
-        
-        
-        
-        
+        ('nodeid-file',
+         {'type' : "string", 'metavar' : "<node_id_file>",
+          'help' : "Maay will store the generated node id in this file",
+          'default' : "node_id",
+          }),
         ]
 
     config_file = 'webapp.ini'
@@ -450,7 +476,7 @@ class WebappConfiguration(Configuration):
     def _read_node_id(self):
         for directory in self.get_config_dirs():
             try:
-                filename = os.path.join(directory,'node_id')
+                filename = os.path.join(directory, self.nodeid_file)
                 f = open(filename,'r')
                 for line in f:
                     line = line.strip()
@@ -476,7 +502,7 @@ class WebappConfiguration(Configuration):
         node_id = self._generate_node_id()
         for directory in self.get_config_dirs():
             try:
-                filename = os.path.join(directory, 'node_id')
+                filename = os.path.join(directory, self.nodeid_file)
                 f = open(filename, 'w')
                 lines = ['# This file contains the Node Identifier for your computer\n',
                          '# Do not edit it or erase it, or this will corrupt the database\n',
@@ -519,6 +545,7 @@ def run():
     website = appserver.NevowSite(MaaySessionWrapper(maayPortal,
                                                      mindFactory=MaayMindFactory))
     website.remember(Maay404(), inevow.ICanHandleNotFound)
+    website.remember(webappConfig, IWebappConfiguration)
     registrationclient.login(reactor,
                              webappConfig.registration_host, webappConfig.registration_port,
                              maayPortal.anonymousQuerier,
