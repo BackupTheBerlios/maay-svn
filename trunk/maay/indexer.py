@@ -224,7 +224,7 @@ class FileIterator:
             # test path not in self.skipped (dummy config files)
             if path not in self.skipped:
                 for dirpath, dirnames, filenames in os.walk(path):
-                    print "looking in", dirpath
+                    # print "looking in", dirpath
                     self._removeSkippedDirnames(dirpath, dirnames)
                     try:
                         dirpath = unicode(dirpath, 'utf-8')
@@ -243,7 +243,7 @@ class FileIterator:
         for dirname in dirnames[:]:
             abspath = self.normalizeCase(os.path.join(dirpath, dirname))
             if abspath in self.skipped:
-                print "skipping", dirname
+                # print "skipping", dirname
                 dirnames.remove(dirname)
 
 

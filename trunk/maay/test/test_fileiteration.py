@@ -100,5 +100,19 @@ class FileIterationTC(unittest.TestCase):
             onAbspaths = list(FileIterator(absIndexed, absSkipped))
             self.assertEquals(onRelatives, onAbspaths)
 
+    def testSkipNonAllowed(self):
+        """tests that files that don't have 'read' permission are skipped"""
+        # these two files should be skipped
+        os.chmod('data/a/b/c/foo', 0)
+        os.chmod('data/b/c/d/spam', 0)
+        it = FileIterator(['data/a', 'data/b', 'data/c'])
+        expected = Set([abspath(join(u'data', 'a', 'b', 'c', 'bar')),
+                        abspath(join(u'data', 'b', 'c', 'd', 'baz')),
+                        abspath(join(u'data', 'b', 'c', 'e', 'bazbar')),
+                        abspath(join(u'data', 'b', 'c', 'e', 'foobar')),
+                        ])
+        self.assertEquals(Set(it), expected)
+        
+        
 if __name__ == '__main__':
     unittest.main()
