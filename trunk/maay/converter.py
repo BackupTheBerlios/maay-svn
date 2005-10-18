@@ -43,7 +43,7 @@ __revision__ = '$Id$'
 # XXX: need to handle file encodings
 
 import os
-from mimetypes import guess_type
+from mimetypes import guess_type, types_map
 from tempfile import mkdtemp
 import gzip
 import bz2
@@ -75,10 +75,7 @@ class BaseConverter:
     OUTPUT_ENCODING = None
 
     def getParser(self):
-        if self.OUTPUT_TYPE == 'html':
-            return HTMLParser()
-        else:
-            return TextParser()
+        raise NotImplementedException()
 
     def extractWordsFromFile(self, filename):
         """entry point of each converter class
@@ -96,11 +93,17 @@ class RawTextConverter(BaseConverter):
     """provides simple text parser"""
     OUTPUT_TYPE = 'text'
     MIME_TYPE = 'text/plain'
+
+    def getParser(self):
+        return TextParser()
         
 class HTMLConverter(BaseConverter):
     """provides a simple HTML parser"""
     OUTPUT_TYPE = 'html'
     MIME_TYPE = 'text/html'
+
+    def getParser(self):
+        return HTMLParser()
 
 class ImageBasedConverter(BaseConverter):
     """provides base Image converter
@@ -111,7 +114,7 @@ class ImageBasedConverter(BaseConverter):
         return ExifParser ()
 
 class JpegConverter(ImageBasedConverter):
-    OUTPUT_TYPE = 'jpg'
+    OUTPUT_TYPE = 'jpeg'
     MIME_TYPE = 'image/jpeg'
 
 class CommandBasedConverter(BaseConverter):
@@ -153,17 +156,17 @@ class CommandBasedConverter(BaseConverter):
             os.rmdir(outputDir)
 
 
-class PDFConverter(CommandBasedConverter):
+class PDFConverter(CommandBasedConverter, HTMLConverter):
     COMMAND = 'pdftohtml -i -q -noframes -stdout -enc UTF-8 "%(input)s" > "%(output)s"'
     OUTPUT_TYPE = 'html'
     MIME_TYPE = 'application/pdf'
     OUTPUT_ENCODING = 'UTF-8'
 
-class PSConverter(CommandBasedConverter):
+class PSConverter(CommandBasedConverter, RawTextConverter):
     COMMAND = 'ps2ascii "%(input)s" "%(output)s"'
     MIME_TYPE = 'application/postscript'
 
-class RTFConverter(CommandBasedConverter):
+class RTFConverter(CommandBasedConverter, RawTextConverter):
     COMMAND = 'unrtf --html "%(input)s" > "%(output)s"'
     OUTPUT_TYPE = 'html'
     MIME_TYPE = 'text/rtf'

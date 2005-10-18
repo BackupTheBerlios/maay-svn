@@ -38,8 +38,8 @@ from maay.dbentity import Document, FileInfo
 from maay.querier import MaayAuthenticationError
 from maay.texttool import removeControlChar
 
-# grabbed from nevow
-mimetypes.types_map.update( # is it really taken into account ? (python files seem not to appear)
+# grabbed from nevow, but it doesn't work until you test it interactively ;-)
+mimetypes.types_map.update( 
     {
             '.conf':  'text/plain',
             '.diff':  'text/plain',
@@ -54,12 +54,12 @@ mimetypes.types_map.update( # is it really taken into account ? (python files se
             '.xul':   'application/vnd.mozilla.xul+xml',
             '.py':    'text/plain',
             '.patch': 'text/plain',
-            '.c' : 'text/plain',
-            '.h': 'text/plain',
-            '.C': 'text/plain',
-            '.cpp': 'text/plain',
-            '.cc': 'text/plain',
-            '.c++': 'text/plain',
+            '.c' :    'text/plain',
+            '.h':     'text/plain',
+            '.C':     'text/plain',
+            '.cpp':   'text/plain',
+            '.cc':    'text/plain',
+            '.c++':   'text/plain',
         }
     )
 
@@ -116,19 +116,26 @@ class Indexer:
     def isIndexable(self, filename):
         return converter.isKnownType(filename)
 
-    def start(self):
-        # we index private dirs first because public overrides private
-        existingFiles = self.runIndexer(isPrivate=True)
-        existingFiles |= self.runIndexer(isPrivate=False)
-        indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
-        oldFiles = indexedFiles - existingFiles
-        for filename in oldFiles:
+    def purgeFiles(self,fileset):
+        for filename in fileset:
             if self.verbose:
                 print "Requesting unindexation of %s" % filename
             self.serverProxy.removeFileInfo(self.cnxId, filename)
         if self.verbose:
             print "Requesting cleanup of unreferenced documents"
         self.serverProxy.removeUnreferencedDocuments(self.cnxId)
+
+    def _purgeEverything(self):
+        indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
+        self.purgeFiles(indexedFiles)
+
+    def start(self):
+        # we index private dirs first because public overrides private
+        existingFiles = self.runIndexer(isPrivate=True)
+        existingFiles |= self.runIndexer(isPrivate=False)
+        indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
+        oldFiles = indexedFiles - existingFiles
+        self.purgeFiles(oldFiles)
 
     def runIndexer(self, isPrivate=True):
         existingFiles = Set()
@@ -179,6 +186,11 @@ class Indexer:
         try:
             title = removeControlChar(title)
             text = removeControlChar(text)
+            if self.verbose:
+                try:
+                    print " ... indexed as", title
+                except UnicodeEncodeError, e:
+                    print " ... (BUG : invalid unicode elements in Title) ..."
             self.serverProxy.indexDocument(self.cnxId, filename, title, text,
                                            fileSize, lastModTime, content_hash,
                                            mime_type, state, file_state)
@@ -302,6 +314,26 @@ class IndexerConfiguration(Configuration):
 
     def __init__(self):
         Configuration.__init__(self, name="Indexer")
+
+
+# XXX the purge starter should be factored back into a slightly
+#     more parametrable run. For now it's just a convenience thing.
+
+def purge():
+    indexerConfig = IndexerConfiguration()
+    indexerConfig.load()
+    try:
+        try:
+            indexer = Indexer(indexerConfig)
+        except MaayAuthenticationError, exc:
+            print "AuthenticationError:", exc
+            sys.exit(1)
+        indexer._purgeEverything()
+    except socket.error, exc:
+        print "Cannot contact server:", exc
+        print "Check that the server is running on %s:%s" % \
+              (indexerConfig.host, indexerConfig.port)
+        sys.exit(1)
 
 def run():
     indexerConfig = IndexerConfiguration()
