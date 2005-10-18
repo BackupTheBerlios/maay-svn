@@ -75,7 +75,7 @@ class BaseConverter:
     OUTPUT_ENCODING = None
 
     def getParser(self):
-        raise NotImplementedException()
+        raise NotImplementedError()
 
     def extractWordsFromFile(self, filename):
         """entry point of each converter class
