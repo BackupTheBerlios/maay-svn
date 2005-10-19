@@ -19,7 +19,7 @@
 __revision__ = '$Id$'
 
 import unittest
-from maay.server import Query
+from maay.query import Query
 from maay.p2pquerier import *
 from maay.dbentity import Document
 
@@ -28,7 +28,7 @@ class P2pQueryTC(unittest.TestCase):
         self.query = P2pQuery(queryId='1'*40,
                               sender='http://localhost:3423',
                               ttl=2,
-                              query=None)
+                              query=Query.fromRawQuery("foo"))
 
     def testHop(self):
         ttl = self.query.ttl
@@ -48,11 +48,11 @@ class P2pQueryTC(unittest.TestCase):
 
 class P2pQuerierTC(unittest.TestCase):
     def setUp(self):
-        self.querier = P2pQuerier('0'*40)
+        self.querier = P2pQuerier('0'*40, None)  #XXX: How can we get a querier ?
         self.query = P2pQuery(queryId='1'*40,
                               sender='http://localhost:3423',
                               ttl=2,
-                              query=None)
+                              query=Query.fromRawQuery("foo"))
 
     def tearDown(self):
         self.querier._queries = {}

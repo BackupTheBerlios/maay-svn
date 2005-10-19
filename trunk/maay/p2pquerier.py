@@ -19,19 +19,23 @@
 """
 __revision__ = '$Id$'
 
-from sets import Set
+from logilab.common.compat import set
 
 from twisted.web.xmlrpc import Proxy
 
 # XXX should P2pQuery derive from query.Query?
 class P2pQuery:
     def __init__(self, queryId, sender, ttl, query):
+        """
+        :param query: the query to wrap
+        :type query: `maay.query.Query`
+        """
         self.id = queryId
         self.sender = sender
         self.ttl = ttl
         self.query = query
         self.query.searchtype = 'p2p'
-        self.documents = Set
+        self.documents = set()
 
     def hop(self):
         self.ttl -= 1
@@ -72,7 +76,7 @@ class P2pQuerier:
     the statistical information available about the neighbors'
     documents.
     """
-    _queries = {} # AUC : needs to be shared amongst instances, why not, but then, what ...
+    _queries = {} 
     
     def __init__(self, nodeId, querier):  # about those ? 
         self.nodeId = nodeId  
