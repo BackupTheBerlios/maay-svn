@@ -57,11 +57,12 @@ Le petit chat est mort."""
         cursor = self.cnx.cursor()
         # At this point, database should be emtpy, so no document
         # should match <digest>
+        title = 'Le Tartuffe'
         matchingDocs = Document.selectWhere(cursor, document_id=digest)
         self.assertEquals(len(matchingDocs), 0)
         self.querier.indexDocument('0'*40,
                                    '/tmp/Tartuffe.txt',
-                                   'Le Tartuffe',
+                                   title,
                                    text,
                                    len(text),
                                    30000,
@@ -71,7 +72,7 @@ Le petit chat est mort."""
                                    FileInfo.CREATED_FILE_STATE)
         matchingDocs = Document.selectWhere(cursor, document_id=digest)
         self.assertEquals(len(matchingDocs), 1)
-        self.assertEquals(matchingDocs[0].text, text)
+        self.assertEquals(matchingDocs[0].text, '%s %s' % (title, text))
         
 
     def test_normalizeText(self):
