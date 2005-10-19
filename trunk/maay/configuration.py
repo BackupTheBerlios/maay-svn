@@ -46,6 +46,9 @@ def _get_data_dir():
     raise AssertionError("Unknown platform setup")
 
 def _update_env_path(maay_dir):
+    """Updates PATH to explicitly add antiword, mysql, etc.
+       default installation paths
+    """
     assert sys.platform == 'win32', 'This method must not be called on non windows platforms'
     path = []
     if os.environ.get('PATH'):
@@ -55,7 +58,17 @@ def _update_env_path(maay_dir):
             path.append(os.path.join(maay_dir, directory))
     os.environ['PATH'] =  os.pathsep.join(path)
 
-        
+## XXX: proposed replacement for the above function (need to be
+##      accepted and tested on windows)
+## def XXX_update_env_path(maay_dir):
+##     assert sys.platform == 'win32', 'This method must not be called on non windows platforms'
+##     path = os.environ.get('PATH', '').split(os.pathsep)
+##     for otherPath in (u'pdftohtml', os.path.join(u'mysql', u'bin'), ur'c:\antiword'):
+##         if otherPath not in path:
+##             path.append(os.path.join(maay_dir, otherPath))
+##     os.environ['PATH'] = os.pathsep.join(path)
+
+
 def get_path_of(datafile):
     """return the path of a data file, depending on the platform
     Handles development paths for testing as well as deployed paths"""

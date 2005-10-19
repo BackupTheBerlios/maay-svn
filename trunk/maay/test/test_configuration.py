@@ -59,20 +59,25 @@ class WebappConfigTC(unittest.TestCase):
         self.assertEquals(config.db_name, 'muche')
 
 
-class Win32ConfigTC(unittest.TestCase):
+if sys.platform == 'win32':
+    class Win32ConfigTC(unittest.TestCase):
+        def testUpdateEnvPath(self):
+            platform = sys.platform
+            oldpath = os.environ['PATH']
+            sys.platform = 'win32'
+            try:
+                configuration._update_env_path("tmp")
+                envpath = os.environ['PATH']
+                regexp = r'tmp[/\\]pdftohtml[:;]tmp[/\\]mysql[/\\]bin[:;]tmp[/\\]c:\antiword$'
+                self.failUnless(re.search(regexp, envpath)), envpath
+            finally:
+                sys.platform = platform
+                os.environ['PATH'] = oldpath
+else:
+    print "****  Skipping Win32 tests on non-windows platforms"
+    print "****  (os.path.join(some_dir, 'c:\antiword') does not make"
+    print "****  sense on non-windows platform, and makes tests a lot "
+    print "****  more obfuscated and hard to read/maintain"
 
-    def test_update_env_path(self):
-        platform = sys.platform
-        oldpath = os.environ['PATH']
-        sys.platform = 'win32'
-        try:
-            configuration._update_env_path("tmp")
-            envpath = os.environ['PATH']
-            regexp = r'.*[:;]tmp[/\\]antiword[:;]tmp[/\\]pdftohtml[:;]tmp[/\\]mysql[/\\]bin$'
-            self.failUnless(re.match(regexp, envpath)), envpath
-        finally:
-            sys.platform = platform
-            os.environ['PATH'] = oldpath 
-            
 if __name__ == '__main__':
     unittest.main()
