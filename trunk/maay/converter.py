@@ -96,6 +96,10 @@ class RawTextConverter(BaseConverter):
 
     def getParser(self):
         return TextParser()
+
+class PythonSourceConverter(RawTextConverter):
+    """provides support for various kinds of languages"""
+    MIME_TYPE = 'text/x-python'
         
 class HTMLConverter(BaseConverter):
     """provides a simple HTML parser"""
@@ -111,7 +115,7 @@ class ImageBasedConverter(BaseConverter):
     OUTPUT_TYPE = 'image'
 
     def getParser(self):
-        return ExifParser ()
+        return ExifParser()
 
 class JpegConverter(ImageBasedConverter):
     OUTPUT_TYPE = 'jpeg'

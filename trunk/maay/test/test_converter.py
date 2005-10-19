@@ -26,7 +26,7 @@ class ConvertersTC(unittest.TestCase):
     def testRegistry(self):
         """tests that converters we get match filenames's mimetype"""
         filenames = ['foo.pdf', 'foo.ps', 'foo.html', 'foo.txt',
-                     'foo.doc', 'foo.rtf']
+                     'foo.doc', 'foo.rtf', 'foo.py']
         for filename in filenames:
             mimetype = guess_type(filename)[0]
             if mimetype is None:
