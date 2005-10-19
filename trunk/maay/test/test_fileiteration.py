@@ -64,13 +64,14 @@ class FileIterationTC(unittest.TestCase):
     def testNothingSkipped(self):
         it = FileIterator(['a', 'b', 'c'])
         self.assertEquals(list(it), [])
-        it = FileIterator(['data/a', 'data/b', 'data/c'])
-        expected = Set([abspath(join(u'data', 'a', 'b', 'c', 'bar')),
-                        abspath(join(u'data', 'a', 'b', 'c', 'foo')),
-                        abspath(join(u'data', 'b', 'c', 'd', 'baz')),
-                        abspath(join(u'data', 'b', 'c', 'd', 'spam')),
-                        abspath(join(u'data', 'b', 'c', 'e', 'bazbar')),
-                        abspath(join(u'data', 'b', 'c', 'e', 'foobar')),
+        it = FileIterator([join(DATADIR, 'a'), join(DATADIR, 'b'),
+                           join(DATADIR, 'c')])
+        expected = Set([abspath(join(DATADIR, 'a', 'b', 'c', 'bar')),
+                        abspath(join(DATADIR, 'a', 'b', 'c', 'foo')),
+                        abspath(join(DATADIR, 'b', 'c', 'd', 'baz')),
+                        abspath(join(DATADIR, 'b', 'c', 'd', 'spam')),
+                        abspath(join(DATADIR, 'b', 'c', 'e', 'bazbar')),
+                        abspath(join(DATADIR, 'b', 'c', 'e', 'foobar')),
                         ])
         self.assertEquals(Set(it), expected)
 
@@ -81,12 +82,13 @@ class FileIterationTC(unittest.TestCase):
 
 
     def testSkippingSomething(self):
-        everything = ['data/a', 'data/b', 'data/c']
-        skipped = ['data/a', 'data/b/c/e']
+        everything = [join(DATADIR, 'a'), join(DATADIR, 'b'),
+                      join(DATADIR, 'c')]
+        skipped = [join(DATADIR, 'a'), join(DATADIR, 'b', 'c', 'e')]
         it = FileIterator(everything, skipped)
-        expected = Set([abspath(join(u'data', 'b', 'c', 'd', 'baz')),
-                    abspath(join(u'data', 'b', 'c', 'd', 'spam')),
-                    ])
+        expected = Set([abspath(join(DATADIR, 'b', 'c', 'd', 'baz')),
+                        abspath(join(DATADIR, 'b', 'c', 'd', 'spam')),
+                        ])
         self.assertEquals(expected, Set(it))
 
     def testRelativePathConversion(self):
@@ -103,13 +105,14 @@ class FileIterationTC(unittest.TestCase):
     def testSkipNonAllowed(self):
         """tests that files that don't have 'read' permission are skipped"""
         # these two files should be skipped
-        os.chmod('data/a/b/c/foo', 0)
-        os.chmod('data/b/c/d/spam', 0)
-        it = FileIterator(['data/a', 'data/b', 'data/c'])
-        expected = Set([abspath(join(u'data', 'a', 'b', 'c', 'bar')),
-                        abspath(join(u'data', 'b', 'c', 'd', 'baz')),
-                        abspath(join(u'data', 'b', 'c', 'e', 'bazbar')),
-                        abspath(join(u'data', 'b', 'c', 'e', 'foobar')),
+        os.chmod(join(DATADIR, 'a/b/c/foo'), 0)
+        os.chmod(join(DATADIR, 'b/c/d/spam'), 0)
+        it = FileIterator([join(DATADIR, 'a'), join(DATADIR, 'b'),
+                           join(DATADIR, 'c')])
+        expected = Set([abspath(join(DATADIR, 'a', 'b', 'c', 'bar')),
+                        abspath(join(DATADIR, 'b', 'c', 'd', 'baz')),
+                        abspath(join(DATADIR, 'b', 'c', 'e', 'bazbar')),
+                        abspath(join(DATADIR, 'b', 'c', 'e', 'foobar')),
                         ])
         self.assertEquals(Set(it), expected)
         
