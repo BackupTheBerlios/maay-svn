@@ -22,7 +22,8 @@
 import unittest
 from os.path import join, dirname
 
-from maay.texttool import MaayHTMLParser, guessEncoding, open, untagText, normalizeText, removeControlChar
+from maay.texttool import MaayHTMLParser, TextParser, guessEncoding, \
+     universalOpen, untagText, normalizeText, removeControlChar
 
 RAW_TEXT = u"foo été bar baz top bim bam boum"
 
@@ -37,7 +38,20 @@ and this is <a href="somethingelse.com">another link</a>
 
 DATADIR = join(dirname(__file__), 'data')
 
-    
+
+class TextParserTC(unittest.TestCase):
+
+    def setUp(self):
+        self.parser = TextParser()
+
+    def testTitleGuess(self):
+        """Make sure the title is the filename when we treat a text file
+           or no title could be found
+        """
+        title, text, links, offset = self.parser.parseFile(join(DATADIR, 'latin1.txt'), 'ISO-8859-1')
+        self.assertEquals(title, 'latin1.txt')
+        self.assertEquals(normalizeText(text), "c'est l'ete")
+        self.assertEquals(links, [])
 
 class HTMLParserTC(unittest.TestCase):
 
@@ -47,10 +61,21 @@ class HTMLParserTC(unittest.TestCase):
     def testParseRaw(self):
         html = '<body>%s</body>' % RAW_TEXT
         title, text, links, offset = self.parser.parseString(html)
-        self.assertEquals(title, RAW_TEXT)
+        # parseString() should return empty title when non available in the HTML
+        self.assertEquals(title, '')
         self.assertEquals(normalizeText(text),
                           RAW_TEXT.replace(u'é', 'e'))
         self.assertEquals(links, [])
+
+    def testTitleGuess(self):
+        """Make sure the title is the filename when we treat a text file
+           or no title could be found
+        """
+        title, text, links, offset = self.parser.parseFile(join(DATADIR, "notitle.html"))
+        self.assertEquals(title, 'notitle.html')
+        self.assertEquals(normalizeText(text), "maille maay")
+        self.assertEquals(links, [])
+
 
     def testParseSimpleHtml(self):
         title, text, links, offset = self.parser.parseString(SIMPLE_HTML)
@@ -115,14 +140,14 @@ class GuessEncofingTC(unittest.TestCase):
 
 class OpenTC(unittest.TestCase):
     def testGzip(self):
-        f = open(join(DATADIR, 'compressed_gzip.txt.gz'), 'rb', 'utf-8')
+        f = universalOpen(join(DATADIR, 'compressed_gzip.txt.gz'), 'rb', 'utf-8')
         data = f.read()
         f.close()
         self.assertEquals(type(data), unicode)
         self.failUnless(u'entête' in data)
         
     def testBz2(self):
-        f = open(join(DATADIR, 'compressed_bzip2.txt.bz2'), 'rb', 'utf-8')
+        f = universalOpen(join(DATADIR, 'compressed_bzip2.txt.bz2'), 'rb', 'utf-8')
         data = f.read()
         f.close()
         self.assertEquals(type(data), unicode)

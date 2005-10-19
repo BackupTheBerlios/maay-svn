@@ -18,6 +18,7 @@
 """this module provide text / parsing tools"""
 
 __revision__ = '$Id$'
+__metaclass__ = type
 
 from HTMLParser import HTMLParser, HTMLParseError
 import codecs
@@ -95,7 +96,7 @@ def guessEncoding(filename): #may throw IOError
         stream.close()
 
 
-def open(filename, mode='rb', encoding='ascii', errors='strict'):
+def universalOpen(filename, mode='rb', encoding='ascii', errors='strict'):
     """open potentially compressed files using a codec converter"""
     if 'r' in mode:
         converter = codecs.getreader(encoding)
@@ -115,32 +116,40 @@ def open(filename, mode='rb', encoding='ascii', errors='strict'):
 
 class AbstractParser:
     """base-class for file parsers"""
-    def parseFile(self, filename, encoding=None):
+    def parseFile(self, filepath, encoding=None):
         """returns a 4-uple (title, normalized_text, links, offset)
         TODO: port original code from htmltotext
         :param encoding: if None, then need to be guessed
+
+        When a title cannot be computed from file content,
+        the last component of the filepath is used instead
         """
-        encoding = encoding or guessEncoding(filename)
+        encoding = encoding or guessEncoding(filepath)
         try:
-            stream = open(filename, 'rb', encoding, errors='ignore')
+            stream = universalOpen(filepath, 'rb', encoding, errors='ignore')
         except LookupError:
             raise ParsingError('Unsupported document encoding %s' % encoding)
         try:
-            return self.parseString(stream.read())
+            title, result, links, offset = self.parseString(stream.read())
+            if not title:
+                title = filepath.split('/')[-1]
+            return title, result, links, offset 
         finally:
             stream.close()
 
     def parseString(self, source):
+        """returns a 4-uple (title, normalized_text, links, offset)
+           to parseFile
+           When a title cannot be computed from file content parseFile
+           expects an empty string
+        """
         raise NotImplementedError()
 
 
 class TextParser(AbstractParser):
 
     def parseString(self, source):
-        result = source
-        first_line = min(80, result.find('\n'))
-        title = result[:first_line]
-        return title, result, [], 0
+        return '', source, [], 0
         
 
 class MaayHTMLParser(AbstractParser, HTMLParser):
@@ -180,9 +189,6 @@ class MaayHTMLParser(AbstractParser, HTMLParser):
         except HTMLParseError, exc:
             print "Error parsing document: %s" % exc
         result = u'\n'.join(self.textbuf)
-        if not self.title:
-            first_line = min(80, result.find('\n'))
-            self.title = result[:first_line]
         return self.title, result, self.links, 0
 
 
@@ -190,7 +196,7 @@ class ExifParser(AbstractParser):
     """A parser for Exif information found in image files"""
 
     def parseString(self, source):
-        return u'An image', u'The image', [], 0
+        return '', u'The image', [], 0
 
         
 _table = {}
