@@ -33,6 +33,7 @@ from twisted.cred.credentials import IUsernamePassword
 from twisted.python.failure import Failure
 
 from maay import rpc
+from maay.dbentity import Document
 from maay.querier import MaayQuerier, AnonymousQuerier, ANONYMOUS_AVATARID
 from maay.server import MaayPortal, WebappConfiguration
 
@@ -114,14 +115,14 @@ class RPCServerTC(unittest.TestCase):
     
     def testUncertifiedRemoteCall(self):
         """only authentified people should be able to call remote methods"""
-        retValue = self._callRemote('lastIndexationTime', 'evil', 'foo.pdf')
-        self.assertEquals(unittest.deferredResult(retValue), -1)
+        retValue = self._callRemote('lastIndexationTimeAndState', 'evil', 'foo.pdf')
+        self.assertEquals(unittest.deferredResult(retValue), [-1, Document.UNKNOWN_STATE])
 
     def testCertifiedRemoteCall(self):
         d = self._callRemote('authenticate', 'adim', 'adim')
         cnxId, _ = unittest.deferredResult(d)
         retValue = self._callRemote('lastIndexationTimeAndState', cnxId, 'foo.pdf')
-        self.assertEquals(unittest.deferredResult(retValue), 0)
+        self.assertEquals(unittest.deferredResult(retValue), [0, Document.UNKNOWN_STATE])
 
 if __name__ == '__main__':
     # FIXME: the following is nicer but triggers an assertion
