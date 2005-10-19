@@ -36,6 +36,7 @@ class Query(object):
         return self.searchtype == 'p2p'
 
     def fromRawQuery(rawQuery, offset=0):
+        """:type rawQuery: str"""
         rawWords = rawQuery.split()
         words = []
         restrictions = {}

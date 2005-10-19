@@ -140,8 +140,8 @@ class AnonymousQuerier:
         self._updateQueryStatistics(words)
         try:
             cursor = self._cnx.cursor()
-            return Document.selectContaining(cursor, words, query.filetype, query.offset,
-                                             self.searchInPrivate)
+            return Document.selectContaining(cursor, words, query.filetype,
+                                             query.offset, self.searchInPrivate)
         finally:
             cursor.close()
 
@@ -333,6 +333,9 @@ class MaayQuerier(AnonymousQuerier):
         # insert or update in table file_info
         fileinfo = FileInfo.selectWhere(cursor,
                                         file_name=filename)
+        # insert title into text to be able to find documents according
+        # to their title (e.g: searching 'foo' should find 'foo.pdf')
+        text = '%s %s' % (title, text)
         if fileinfo:
             fileinfo = fileinfo[0]
             fileinfo.file_time = lastModifiedOn

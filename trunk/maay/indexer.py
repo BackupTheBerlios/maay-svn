@@ -184,13 +184,10 @@ class Indexer:
         if self.verbose:
             print "Requesting indexation of %s" % filename
         try:
-            title = removeControlChar(title)
+            title = removeControlChar(title) 
             text = removeControlChar(text)
             if self.verbose:
-                try:
-                    print " ... indexed as", title
-                except UnicodeEncodeError, e:
-                    print " ... (BUG : invalid unicode elements in Title) ..."
+                print " ... indexed as", title.encode('utf-8')
             self.serverProxy.indexDocument(self.cnxId, filename, title, text,
                                            fileSize, lastModTime, content_hash,
                                            mime_type, state, file_state)
@@ -231,7 +228,7 @@ class FileIterator:
                     except UnicodeError:
                         dirpath = unicode(dirpath, 'iso-8859-1')
                     for filename in filenames:
-                        if os.access(dirpath+'/'+filename, os.R_OK): # Can we open it ?
+                        if os.access(os.path.join(dirpath, filename), os.R_OK): # Can we open it ?
                             try:
                                 filename = unicode(filename, 'utf-8')
                             except UnicodeError:
