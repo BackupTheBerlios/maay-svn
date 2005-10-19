@@ -21,6 +21,7 @@ __all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore',
            'Word', 'Node', 'NodeInterest']
 
 import re
+from sets import Set
 
 from maay.texttool import normalizeText, WORD_MIN_LEN, WORD_MAX_LEN
 
@@ -177,14 +178,16 @@ class Document(DBEntity):
     # Caution : in the maay.orig branch, this parameter gets stored as
     # a string containing a single integer, so values of state above 9
     # are lost
-    PUBLISHED_STATE = 1 << 0
+    # XXX: only PUBLISHED and PRIVATE states are correctly handled
+    PRIVATE_STATE = 0 
+    PUBLISHED_STATE = 1 # << 0
+
     CACHED_STATE = 1 << 1
     KNOWN_STATE = 1 << 2
-    PRIVATE_STATE = 1 << 3
     UNKNOWN_STATE = 1 << 9 ### FIXME : this gets stored in the
-                           ### database as a char in table Document or
-                           ### as a tinyint(4) in table files. Check
-                           ### to see if you get 0 or something else.
+                            ### database as a char in table Document or
+                            ### as a tinyint(4) in table files. Check
+                            ### to see if you get 0 or something else.
 
 
     attributes = ('db_document_id', 'document_id', 'mime_type', 'title',
@@ -208,13 +211,12 @@ class Document(DBEntity):
         return self.text[:200]
     abstract = property(get_abstract)
 
-
     def _selectContainingQuery(cls, words, mimetype=None, offset=0, allowPrivate=False):
-        words = [normalizeText(unicode(w))
-                 for w in words
-                 if WORD_MIN_LEN <= len(w) <= WORD_MAX_LEN]
         if not words:
             return ''
+        words = [normalizeText(unicode(w))
+                 for w in words
+                 if WORD_MIN_LEN <= len(w) <= WORD_MAX_LEN]        
         # XXX mimetype handling is a HACK. It needs to be integrated
         #     nicely in order to handle any kind of restrictions easily
         if mimetype is not None:
@@ -229,7 +231,7 @@ class Document(DBEntity):
         # Question: what is the HAVING clause supposed to do ?
         # Answer: we select all documents containing one of the words
         # that we are looking for, group them by their identifier, and
-        # only keep those identifier which appeared once for each word
+        # only keep those identifiers which appeared once for each word
         # we were looking for.
         # XXX: LIMIT clause should be optional
         query = ("SELECT D.db_document_id, "
@@ -253,17 +255,20 @@ class Document(DBEntity):
     _selectContainingQuery = classmethod(_selectContainingQuery)
 
     def selectContaining(cls, cursor, words, mimetype=None, offset=0, allowPrivate=False):
-        query, params= cls._selectContainingQuery(words, mimetype,
-                                                  offset=offset,
-                                                  allowPrivate=allowPrivate)
+        query, params = cls._selectContainingQuery(words, mimetype,
+                                                   offset=offset,
+                                                   allowPrivate=allowPrivate)
         if query:
             cursor.execute(query, params)
             results = cursor.fetchall()
-            return [cls(**dict(zip(['db_document_id', 'document_id', 'title', 'size', 'text', 'url', 'mime_type', 'publication_time'],
+            return [cls(**dict(zip(['db_document_id', 'document_id', 'title',
+                                    'size', 'text', 'url', 'mime_type',
+                                    'publication_time'],
                                    row)))
                     for row in results]
         else:
-            return []
+            return [] 
+        
     selectContaining = classmethod(selectContaining)
     
 
@@ -428,3 +433,4 @@ class NodeInterest(DBEntity):
     key = ('node_id', 'word')
 
     
+
