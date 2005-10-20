@@ -186,6 +186,8 @@ def extractWordsFromFile(filename):
         except IndexationFailure, exc:
             print "indexation failed for %s, trying another converter" % filename
             continue
+    # reaching this point means that none of our converters was able
+    # to decode the input file
     raise IndexationFailure("Could not index file %r" % filename)
 
 def isKnownType(filename):
