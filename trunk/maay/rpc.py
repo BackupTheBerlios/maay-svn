@@ -41,7 +41,7 @@ class MaayRPCServer(XMLRPC):
         XMLRPC.__init__(self)
         self._sessions = {}
         self.portal = portal
-        self.node_id = portal.config.get_node_id()
+        self.nodeId = portal.config.get_node_id()
         self._sessions[ANONYMOUS_AVATARID] = portal.anonymousQuerier
         self._p2pQuerier = P2pQuerier(nodeId, portal.anonymousQuerier)
         
@@ -123,7 +123,7 @@ class MaayRPCServer(XMLRPC):
             return 1
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
-            querier.indexDocument(self.node_id, filename, title, text, fileSize,
+            querier.indexDocument(self.nodeId, filename, title, text, fileSize,
                                   lastModifiedOn, content_hash, mime_type, state,
                                   file_state)
         return 0
