@@ -1,39 +1,27 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
-  <head>
-    <title>Results</title>
-    <link rel="stylesheet" type="text/css" href="maaycss"/>
-    <link rel="shortcut icon" href="images/maay.ico" />
- </head>
- 
-  <body>
-    <a nevow:render="loginurl"><nevow:attr name="href"><nevow:slot name="loginurl" /></nevow:attr><nevow:slot name="actionlabel" /></a>
-    <div class="reSearch">
-      <img src="images/smallmaay.png" />
-      <form action="search" accept-charset="utf-8">
-	<input type="text" name="words" nevow:render="searchfield"><nevow:attr name="value" ><nevow:slot name="words" /></nevow:attr></input>
-	<input type="submit" class="searchButton" value="search" />
-      </form>      
-    </div>
-    <div class="message" nevow:render="title">Results for "<nevow:slot name="words" />"</div>
-    <table class="results" nevow:render="sequence" nevow:data="results">
-      <tr nevow:pattern="item" nevow:render="row">
-	<td>
-	  <div class="resultItem">
-	    <a class="docTitle"><nevow:attr name="href">/download?docid=<nevow:slot name="docid" />&amp;words=<nevow:slot name="words" /></nevow:attr><nevow:slot name="doctitle">DOC TITLE</nevow:slot></a>
-	    <div class="resultDesc"><nevow:slot name="abstract" /></div>
-	    <span class="resultUrl"><nevow:attr name="href"><nevow:slot name="docurl" /></nevow:attr><nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
-	  </div>
-	</td>
-      </tr>
-    </table>
-    <div class="prevnext"><a><nevow:attr name="href"
-    nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
-    name="href" nevow:render="nextset_url"/>Next</a></div>
-    <hr />
-    <a href="http://maay.netofpeers.net/">Maay Home page</a> <a href="http://developer.berlios.de/projects/maay/">
-<img src="http://developer.berlios.de/bslogo.php?group_id=0"
-    width="124" height="32" border="0" alt="BerliOS Logo" /></a>
-  </body>  
-</html>
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<nevow:invisible xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+  <a nevow:render="loginurl"><nevow:attr name="href"><nevow:slot name="loginurl" /></nevow:attr><nevow:slot name="actionlabel" /></a>
+  <div class="reSearch">
+    <img src="images/smallmaay.png" />
+    <form action="search" accept-charset="utf-8">
+      <input type="text" name="words" nevow:render="searchfield"><nevow:attr name="value" ><nevow:slot name="words" /></nevow:attr></input>
+      <input type="submit" class="searchButton" value="search" />
+    </form>      
+  </div>
+  <div class="message" nevow:render="title">Results for "<nevow:slot name="words" />"</div>
+  <table class="results" nevow:render="sequence" nevow:data="results">
+    <tr nevow:pattern="item" nevow:render="row">
+      <td>
+	<div class="resultItem">
+	  <a class="docTitle"><nevow:attr name="href">/download?docid=<nevow:slot name="docid" />&amp;words=<nevow:slot name="words" /></nevow:attr><nevow:slot name="doctitle">DOC TITLE</nevow:slot></a>
+	  <div class="resultDesc"><nevow:slot name="abstract" /></div>
+	  <span class="resultUrl"><nevow:attr name="href"><nevow:slot name="docurl" /></nevow:attr><nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
+	</div>
+      </td>
+    </tr>
+  </table>
+  <div class="prevnext"><a><nevow:attr name="href"
+  nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
+  name="href" nevow:render="nextset_url"/>Next</a></div>
+</nevow:invisible>

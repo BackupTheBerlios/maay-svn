@@ -65,6 +65,7 @@ from maay import registrationclient
 from maay.query import Query
 
 class MaayPage(rend.Page):
+    docFactory = loaders.xmlfile(get_path_of('skeleton.html'))
     child_maaycss = static.File(get_path_of('maay.css'))
     child_images = static.File(get_path_of('images/'))
 
@@ -88,6 +89,9 @@ class MaayPage(rend.Page):
             goThereAfter = goThereAfter.add(param, value)
         context.fillSlots('loginurl', str(goThereAfter))
         return context.tag
+
+    def macro_body(self, context):
+        return self.bodyFactory
 
     def child_login(self, context):
         return LoginForm(self.maayId)
@@ -113,7 +117,7 @@ class LoginForm(MaayPage):
                            pathList, here.queryList())
         return str(goThereAfter)
 
-    docFactory = loaders.stan(
+    bodyFactory = loaders.stan(
         tags.html[
             tags.head[tags.title["Maay Login Page",],
                       tags.link(rel='stylesheet', type='text/css', href='maaycss'),
@@ -145,7 +149,7 @@ class LoginForm(MaayPage):
 
 class PeersList(MaayPage):
     """display list of registered peers"""
-    docFactory = loaders.xmlfile(get_path_of('peers.html'))
+    bodyFactory = loaders.xmlfile(get_path_of('peers.html'))
     addSlash = True
 
     def __init__(self, maayId, querier):
@@ -167,7 +171,7 @@ class PeersList(MaayPage):
                     
 class SearchForm(MaayPage):
     """default search form"""
-    docFactory = loaders.xmlfile(get_path_of('searchform.html'))
+    bodyFactory = loaders.xmlfile(get_path_of('searchform.html'))
     addSlash = True
 
     def __init__(self, maayId, querier):
@@ -204,7 +208,7 @@ class SearchForm(MaayPage):
 
 class ResultsPage(MaayPage):
     """default results page"""
-    docFactory = loaders.xmlfile(get_path_of('resultpage.html'))
+    bodyFactory = loaders.xmlfile(get_path_of('resultpage.html'))
     addSlash = False
     
     def __init__(self, maayId, results, query):
