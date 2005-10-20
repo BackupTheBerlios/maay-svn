@@ -50,11 +50,11 @@ class P2pQuery:
         """return a dictionnary of arguments suitable for use as a
         **kwargs parameters to a call to distributedQuery"""
 
-        return {'id':self.query_id,
-                'sender':sender,
-                'ttl':ttl,
+        return {'id':self.id,
+                'sender':self.sender,
+                'ttl':self.ttl,
                 'words': self.query.words,
-                'mime_type': self.query.mime_type,
+                'mime_type': self.query.filetype,
                 }
 
 class P2pAnswer:

@@ -46,6 +46,28 @@ class P2pQueryTC(unittest.TestCase):
         self.failUnless(self.query.isKnown(doc))
         self.failIf(self.query.isKnown(Document(document_id = '1'*40)))
 
+    def testSimpleQueryAsKwargs(self):
+        self.assertEquals(self.query.asKwargs(),
+                          {'id' : '1'*40,
+                           'sender' : 'http://localhost:3423',
+                           'ttl' : 2,
+                           'words' : 'foo',
+                           'mime_type' : None})
+
+    def testComplexQueryAsKwargs(self):
+        query = P2pQuery(queryId='1'*40,
+                         sender='http://localhost:3423',
+                         ttl=2,
+                         query=Query.fromRawQuery("foo bar filetype:pdf"))
+        self.assertEquals(query.asKwargs(),
+                          {'id' : '1'*40,
+                           'sender' : 'http://localhost:3423',
+                           'ttl' : 2,
+                           'words' : 'foo bar',
+                           'mime_type' : 'application/pdf'})
+        
+    
+
 class P2pQuerierTC(unittest.TestCase):
     def setUp(self):
         self.querier = P2pQuerier('0'*40, None)  #XXX: How can we get a querier ?
