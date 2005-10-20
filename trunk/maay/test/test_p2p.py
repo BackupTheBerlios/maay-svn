@@ -52,7 +52,7 @@ class P2pQueryTC(unittest.TestCase):
                            'sender' : 'http://localhost:3423',
                            'ttl' : 2,
                            'words' : 'foo',
-                           'mime_type' : None})
+                           'mime_type' : ''})
 
     def testComplexQueryAsKwargs(self):
         query = P2pQuery(queryId='1'*40,

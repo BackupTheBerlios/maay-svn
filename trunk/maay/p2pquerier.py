@@ -49,12 +49,15 @@ class P2pQuery:
     def asKwargs(self):
         """return a dictionnary of arguments suitable for use as a
         **kwargs parameters to a call to distributedQuery"""
-
+        # NOTE: We mustn't have None values in this dict because
+        #       None can't be sent via XMLRPC.
+        #       (Well, it can be in Twisted, but then I guess that
+        #       we have to restrict to Twisted and Python world)
         return {'id':self.id,
                 'sender':self.sender,
                 'ttl':self.ttl,
                 'words': self.query.words,
-                'mime_type': self.query.filetype,
+                'mime_type': self.query.filetype or '',
                 }
 
 class P2pAnswer:
@@ -84,7 +87,7 @@ class P2pQuerier:
 
     def sendQuery(self, query):
         for neighbor in self._selectTargetNeighbors(query):
-            proxy = Proxy(neighbor)
+            proxy = Proxy(neighbor.getRpcUrl())
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
             print "sent %s to %s" % (query, neighbor)

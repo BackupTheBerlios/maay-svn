@@ -369,6 +369,7 @@ class Word(DBEntity):
     attributes = ('word', 'claim_count', 'download_count')
     key = ('word',)
 
+
 class Node(DBEntity):
     """
     Attributes:
@@ -408,6 +409,9 @@ class Node(DBEntity):
         return [cls(**dict(zip(cls.attributes, row))) for row in results]
     selectActive = classmethod(selectActive)
         
+
+    def getRpcUrl(self):
+        return 'http://%s:%s' % (self.ip, self.port)
 
 
 class NodeInterest(DBEntity):
