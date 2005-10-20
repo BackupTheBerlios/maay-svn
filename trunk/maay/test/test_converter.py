@@ -1,3 +1,10 @@
+# Copyright (c) 2000-2003 LOGILAB S.A. (Paris, FRANCE).
+# http://www.logilab.fr/ -- mailto:contact@logilab.fr
+"""
+
+"""
+
+__revision__ = "$Id$"
 #     Copyright (C) 2005 France Telecom R&D
 #
 #     This program is free software; you can redistribute it and/or modify
@@ -35,7 +42,7 @@ class ConvertersTC(unittest.TestCase):
                 continue
             converters = converter.REGISTRY[mimetype]
             for klass in converters:
-                self.assertEquals(klass.MIME_TYPE, mimetype)
+                self.assert_(mimetype in klass.MIME_TYPES)
 
     def testLowLevelRegistry(self):
         """tests predefined converters registration"""
@@ -45,17 +52,17 @@ class ConvertersTC(unittest.TestCase):
         self.assert_(converter.PSConverter in converter.REGISTRY['application/postscript'])
         self.assert_(converter.PDFConverter in converter.REGISTRY['application/pdf'])
         self.assert_(converter.MSWordConverter in converter.REGISTRY['application/msword'])
-        self.assert_(converter.PythonSourceConverter in converter.REGISTRY['text/x-python'])
-        self.assert_(converter.CSourceConverter in converter.REGISTRY['text/x-csrc'])
-        self.assert_(converter.CPlusPlusSourceConverter in converter.REGISTRY['text/x-c++src'])
-        self.assert_(converter.JavaSourceConverter in converter.REGISTRY['text/x-java'])
+        self.assert_(converter.RawTextConverter in converter.REGISTRY['text/x-python'])
+        self.assert_(converter.RawTextConverter in converter.REGISTRY['text/x-csrc'])
+        self.assert_(converter.RawTextConverter in converter.REGISTRY['text/x-c++src'])
+        self.assert_(converter.RawTextConverter in converter.REGISTRY['text/x-java'])
         
     def testCustomizedConverter(self):
         """make sure a user can define its own converter"""
         original_converters = list(converter.REGISTRY.get('application/pdf', []))
         class MyConverter(converter.CommandBasedConverter):
             COMMAND = "mypdfindexer %(input)s %(output)s"
-            MIME_TYPE = 'application/pdf'
+            MIME_TYPES = ('application/pdf',)
         new_converters = converter.REGISTRY.get('application/pdf', [])
         self.assertEquals(new_converters, [MyConverter] + original_converters)
 

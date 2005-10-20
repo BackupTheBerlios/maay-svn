@@ -23,12 +23,12 @@ Typical use ::
     >>> title, text, links, offset = extractWordsFromFile('foo.doc')
 
 To define a new command-based converter, just extend the
-CommandBasedConverter class and define MIME_TYPE and
+CommandBasedConverter class and define MIME_TYPES and
 optionally OUTPUT_TYPE variables ::
 
     from maay import converter
     class MyPDFConverter(converter.CommandBasedConverter):
-        MIME_TYPE = 'application/pdf'
+        MIME_TYPES = ('application/pdf',)
         OUTPUT_TYPE = 'text'
         COMMAND = 'mypdfconverter %(input)s -o %(output)s'
 
@@ -60,8 +60,8 @@ class MetaConverter(type):
     """a simple metaclass for automatic converter registration"""
     def __new__(cls, classname, bases, classdict):
         klass = type.__new__(cls, classname, bases, classdict)
-        mimetype = classdict.get('MIME_TYPE')
-        if mimetype:
+        mimetypes = classdict.get('MIME_TYPES', [])
+        for mimetype in mimetypes:
             # insert user-defined converter first
             REGISTRY.setdefault(mimetype, []).insert(0, klass)
         return klass
@@ -92,31 +92,16 @@ class BaseConverter:
 class RawTextConverter(BaseConverter):
     """provides simple text parser"""
     OUTPUT_TYPE = 'text'
-    MIME_TYPE = 'text/plain'
+    MIME_TYPES = ('text/plain', 'text/x-python', 'text/x-csrc', 'text/x-c++src',
+                  'text/x-java')
 
     def getParser(self):
         return TextParser()
-
-class PythonSourceConverter(RawTextConverter):
-    """provides support for python source files"""
-    MIME_TYPE = 'text/x-python'
-
-class CSourceConverter(RawTextConverter):
-    """provides support for C source files"""
-    MIME_TYPE = 'text/x-csrc'
-    
-class CPlusPlusSourceConverter(RawTextConverter):
-    """provides support for C++ source files"""
-    MIME_TYPE = 'text/x-c++src'
-
-class JavaSourceConverter(RawTextConverter):
-    """provides support for Java source files"""
-    MIME_TYPE = 'text/x-java'
         
 class HTMLConverter(BaseConverter):
     """provides a simple HTML parser"""
     OUTPUT_TYPE = 'html'
-    MIME_TYPE = 'text/html'
+    MIME_TYPES = ('text/html',)
 
     def getParser(self):
         return HTMLParser()
@@ -131,7 +116,7 @@ class ImageBasedConverter(BaseConverter):
 
 class JpegConverter(ImageBasedConverter):
     OUTPUT_TYPE = 'jpeg'
-    MIME_TYPE = 'image/jpeg'
+    MIME_TYPES = ('image/jpeg',)
 
 class CommandBasedConverter(BaseConverter):
     COMMAND = None
@@ -175,21 +160,21 @@ class CommandBasedConverter(BaseConverter):
 class PDFConverter(CommandBasedConverter, HTMLConverter):
     COMMAND = 'pdftohtml -i -q -noframes -stdout -enc UTF-8 "%(input)s" > "%(output)s"'
     OUTPUT_TYPE = 'html'
-    MIME_TYPE = 'application/pdf'
+    MIME_TYPES = ('application/pdf',)
     OUTPUT_ENCODING = 'UTF-8'
 
 class PSConverter(CommandBasedConverter, RawTextConverter):
     COMMAND = 'ps2ascii "%(input)s" "%(output)s"'
-    MIME_TYPE = 'application/postscript'
+    MIME_TYPES = ('application/postscript',)
 
 class RTFConverter(CommandBasedConverter, RawTextConverter):
     COMMAND = 'unrtf --html "%(input)s" > "%(output)s"'
     OUTPUT_TYPE = 'html'
-    MIME_TYPE = 'text/rtf'
+    MIME_TYPES = ('text/rtf',)
 
 class MSWordConverter(CommandBasedConverter):
     COMMAND = 'antiword "%(input)s" > "%(output)s"'
-    MIME_TYPE = 'application/msword'
+    MIME_TYPES = ('application/msword',)
 
 def extractWordsFromFile(filename):
     mimetype = guess_type(filename)[0]
