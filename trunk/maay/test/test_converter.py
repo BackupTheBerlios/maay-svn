@@ -26,7 +26,8 @@ class ConvertersTC(unittest.TestCase):
     def testRegistry(self):
         """tests that converters we get match filenames's mimetype"""
         filenames = ['foo.pdf', 'foo.ps', 'foo.html', 'foo.txt',
-                     'foo.doc', 'foo.rtf', 'foo.py']
+                     'foo.doc', 'foo.rtf', 'foo.py', 'foo.c', 'foo.cpp',
+                     'foo.c++', 'foo.java']
         for filename in filenames:
             mimetype = guess_type(filename)[0]
             if mimetype is None:
@@ -44,7 +45,11 @@ class ConvertersTC(unittest.TestCase):
         self.assert_(converter.PSConverter in converter.REGISTRY['application/postscript'])
         self.assert_(converter.PDFConverter in converter.REGISTRY['application/pdf'])
         self.assert_(converter.MSWordConverter in converter.REGISTRY['application/msword'])
-
+        self.assert_(converter.PythonSourceConverter in converter.REGISTRY['text/x-python'])
+        self.assert_(converter.CSourceConverter in converter.REGISTRY['text/x-csrc'])
+        self.assert_(converter.CPlusPlusSourceConverter in converter.REGISTRY['text/x-c++src'])
+        self.assert_(converter.JavaSourceConverter in converter.REGISTRY['text/x-java'])
+        
     def testCustomizedConverter(self):
         """make sure a user can define its own converter"""
         original_converters = list(converter.REGISTRY.get('application/pdf', []))

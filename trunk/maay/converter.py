@@ -98,8 +98,20 @@ class RawTextConverter(BaseConverter):
         return TextParser()
 
 class PythonSourceConverter(RawTextConverter):
-    """provides support for various kinds of languages"""
+    """provides support for python source files"""
     MIME_TYPE = 'text/x-python'
+
+class CSourceConverter(RawTextConverter):
+    """provides support for C source files"""
+    MIME_TYPE = 'text/x-csrc'
+    
+class CPlusPlusSourceConverter(RawTextConverter):
+    """provides support for C++ source files"""
+    MIME_TYPE = 'text/x-c++src'
+
+class JavaSourceConverter(RawTextConverter):
+    """provides support for Java source files"""
+    MIME_TYPE = 'text/x-java'
         
 class HTMLConverter(BaseConverter):
     """provides a simple HTML parser"""
