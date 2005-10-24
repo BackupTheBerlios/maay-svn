@@ -44,14 +44,23 @@ class TextParserTC(unittest.TestCase):
     def setUp(self):
         self.parser = TextParser()
 
-    def testTitleGuess(self):
+    def testTitleGuess(self): #XXX: complete this with PDF/PS files before commit time !!!
         """Make sure the title is the filename when we treat a text file
            or no title could be found
         """
-        title, text, links, offset = self.parser.parseFile(join(DATADIR, 'latin1.txt'), 'ISO-8859-1')
+        title, text, links, offset = self.parser.parseFile(join(DATADIR, 'latin1.txt'), 'latin1.txt', 'ISO-8859-1')
         self.assertEquals(title, 'latin1.txt')
         self.assertEquals(normalizeText(text), "c'est l'ete")
         self.assertEquals(links, [])
+        # Now, PS file
+        title, text, links, offset = self.parser.parseFile(join(DATADIR, 'utf8.ps'), 'utf8.ps', 'UTF-8')
+        self.assertEquals(title, 'utf8.ps')
+        self.assertEquals(links, [])
+        # The PDF (yes, it's important to test this too)
+        title, text, links, offset = self.parser.parseFile(join(DATADIR, 'utf8.pdf'), 'utf8.pdf', 'UTF-8')
+        self.assertEquals(title, 'utf8.pdf')
+        self.assertEquals(links, [])
+
 
 class HTMLParserTC(unittest.TestCase):
 
@@ -71,7 +80,7 @@ class HTMLParserTC(unittest.TestCase):
         """Make sure the title is the filename when we treat a text file
            or no title could be found
         """
-        title, text, links, offset = self.parser.parseFile(join(DATADIR, "notitle.html"))
+        title, text, links, offset = self.parser.parseFile(join(DATADIR, "notitle.html"), 'notitle.html')
         self.assertEquals(title, 'notitle.html')
         self.assertEquals(normalizeText(text), "maille maay")
         self.assertEquals(links, [])
@@ -87,7 +96,7 @@ class HTMLParserTC(unittest.TestCase):
 
     def testParseHtmlFileWithEncoding(self):
         filename = join(DATADIR, 'encoded.html')
-        title, text, links, offset = self.parser.parseFile(filename, 'iso-8859-1')
+        title, text, links, offset = self.parser.parseFile(filename, 'encoded.html', 'iso-8859-1')
         self.assertEquals(title, 'maille Maay')
         self.assertEquals(normalizeText(text),
                           'hello ete world this is a link and this is another link')
@@ -95,7 +104,7 @@ class HTMLParserTC(unittest.TestCase):
         
     def testParseHtmlFileAndGuessEncoding(self):
         filename = join(DATADIR, 'encoded.html')
-        title, text, links, offset = self.parser.parseFile(filename)
+        title, text, links, offset = self.parser.parseFile(filename, 'encoded.html')
         self.assertEquals(title, 'maille Maay')
         self.assertEquals(normalizeText(text),
                           'hello ete world this is a link and this is another link')

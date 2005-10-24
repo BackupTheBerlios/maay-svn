@@ -77,16 +77,17 @@ class BaseConverter:
     def getParser(self):
         raise NotImplementedError()
 
-    def extractWordsFromFile(self, filename):
+    def extractWordsFromFile(self, filepath):
         """entry point of each converter class
 
         :returns: a word-vector
         """
         parser = self.getParser()
         try:
-            return parser.parseFile(filename, self.OUTPUT_ENCODING)
+            return parser.parseFile(filepath, lastComponent(filepath),
+                                    self.OUTPUT_ENCODING)
         except ParsingError, exc:
-            raise IndexationFailure("Cannot index document %s (%s)" % (filename, exc))
+            raise IndexationFailure("Cannot index document %s (%s)" % (filepath, exc))
 
 
 class RawTextConverter(BaseConverter):
@@ -104,7 +105,7 @@ class HTMLConverter(BaseConverter):
     MIME_TYPES = ('text/html',)
 
     def getParser(self):
-        return HTMLParser()
+        return HTMLParser() # This is really MaayHTMLParser from texttool
 
 class ImageBasedConverter(BaseConverter):
     """provides base Image converter
@@ -118,46 +119,77 @@ class JpegConverter(ImageBasedConverter):
     OUTPUT_TYPE = 'jpeg'
     MIME_TYPES = ('image/jpeg',)
 
+
+def lastComponent(filepath):
+    """returns the last component of a file path
+       ex : '/home/data/foo.gz' -> 'foo.gz'
+    """
+    return filepath.split('/')[-1] #XXX: replace '/' by os independant method
+
+
+def uncompressFile(filepath, outputDir):
+    """returns a filepath for the same, uncompressed, file
+       located in the provided output dir
+    """
+    if filepath.endswith('.gz'):
+        opener = gzip.open
+    elif filepath.endswith('.bz2'):
+        opener = bz2.BZ2File
+    else:
+        opener = file
+    compressed = opener(filepath, 'rb')
+    uncompressedFile = os.path.join(outputDir, lastComponent(filepath+"-in"))
+    uncompressed = file(uncompressedFile, 'wb')
+    uncompressed.write(compressed.read())
+    compressed.close()
+    uncompressed.close()
+    return uncompressedFile
+    
+
 class CommandBasedConverter(BaseConverter):
     COMMAND = None
 
-    def extractWordsFromFile(self, filename):
-        outputDir = mkdtemp()
-        if filename.endswith('.gz'):
-            opener = gzip.open
-        elif filename.endswith('.bz2'):
-                opener = bz2.BZ2File
-        else:
-            opener = file
-            
-        compressed = opener(filename, 'rb')
-        uncompressedFile = os.path.join(outputDir, 'uncompressed')
-        uncompressed = file(uncompressedFile, 'wb')
-        uncompressed.write(compressed.read())
-        compressed.close()
-        uncompressed.close()
+    def extractWordsFromFile(self, filepath):
+        """XXX: some nasty side-effects lurking here
+           1) for ps2ascii to work, we must have inputFile != outputFile
+              hence the "-in" which is concatenated in uncompressFile above
+           2) pdftohtml will always generate a wrongly titled document named
+              after the input file (ie 'foo.pdf-in')
+           For the title problem, we provide this workaround : provide
+           the correct filename as additional parameter to the parser.
+        """
 
-            
-        outputFile = os.path.join(outputDir, 'outfile')
-        command_args = {'input' : uncompressedFile, 'output' : outputFile}
+        outputDir = mkdtemp()
+
+        inputFile = uncompressFile (filepath, outputDir)
+        outputFile = os.path.join(outputDir, lastComponent(filepath))
+
+        command_args = {'input' : inputFile, 'output' : outputFile}
         cmd = self.COMMAND % command_args
+
         #print "Executing %r" % cmd
         errcode = os.system(cmd)
         try:
             if errcode == 0: # OK
                 parser = self.getParser()
-                return parser.parseFile(outputFile, self.OUTPUT_ENCODING)
+                return parser.parseFile(outputFile, lastComponent(filepath),
+                                        self.OUTPUT_ENCODING)                                        
             else:
-                raise IndexationFailure('Unable to index %r' % filename)
+                raise IndexationFailure('Unable to index %r' % filepath)
         finally:
             if os.path.isfile(outputFile):
                 os.remove(outputFile)
-            if os.path.isfile(uncompressedFile):
-                os.remove(uncompressedFile)
+            if os.path.isfile(inputFile):
+                os.remove(inputFile)
             os.rmdir(outputDir)
 
 
 class PDFConverter(CommandBasedConverter, HTMLConverter):
+    """This PDF converter has a little problem :
+       it uses pdftohtml which systematically builds a html
+       file whose TITLE field is its input file name.
+       This can inpact the title guessing algorithm we want.
+    """
     COMMAND = 'pdftohtml -i -q -noframes -stdout -enc UTF-8 "%(input)s" > "%(output)s"'
     OUTPUT_TYPE = 'html'
     MIME_TYPES = ('application/pdf',)

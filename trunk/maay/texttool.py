@@ -116,7 +116,7 @@ def universalOpen(filename, mode='rb', encoding='ascii', errors='strict'):
 
 class AbstractParser:
     """base-class for file parsers"""
-    def parseFile(self, filepath, encoding=None):
+    def parseFile(self, filepath, pristineFilename, encoding=None):
         """returns a 4-uple (title, normalized_text, links, offset)
         TODO: port original code from htmltotext
         :param encoding: if None, then need to be guessed
@@ -132,7 +132,7 @@ class AbstractParser:
         try:
             title, result, links, offset = self.parseString(stream.read())
             if not title:
-                title = unicode(filepath.split('/')[-1])
+                title = unicode(pristineFilename) 
             return title, result, links, offset 
         finally:
             stream.close()
@@ -189,6 +189,10 @@ class MaayHTMLParser(AbstractParser, HTMLParser):
         except HTMLParseError, exc:
             print "Error parsing document: %s" % exc
         result = u'\n'.join(self.textbuf)
+        #XXX: wacky hack to get a correct title when we just processed
+        #     a file from PDFTOHTML
+        if self.title[-7:len(self.title)] == '.pdf-in':
+            self.title = u''
         return self.title, result, self.links, 0
 
 
