@@ -42,7 +42,7 @@ __revision__ = '$Id$'
 
 # XXX: need to handle file encodings
 
-import os
+import os, os.path as osp
 from mimetypes import guess_type, types_map
 from tempfile import mkdtemp
 import gzip
@@ -84,7 +84,7 @@ class BaseConverter:
         """
         parser = self.getParser()
         try:
-            return parser.parseFile(filepath, lastComponent(filepath),
+            return parser.parseFile(filepath, osp.basename(filepath),
                                     self.OUTPUT_ENCODING)
         except ParsingError, exc:
             raise IndexationFailure("Cannot index document %s (%s)" % (filepath, exc))
@@ -117,13 +117,6 @@ class ImageConverter(BaseConverter):
         return ExifParser()
 
 
-def lastComponent(filepath):
-    """returns the last component of a file path
-       ex : '/home/data/foo.gz' -> 'foo.gz'
-    """
-    return filepath.split('/')[-1] #XXX: replace '/' by os independant method
-
-
 def uncompressFile(filepath, outputDir):
     """returns a filepath for the same, uncompressed, file
        located in the provided output dir
@@ -135,7 +128,7 @@ def uncompressFile(filepath, outputDir):
     else:
         opener = file
     compressed = opener(filepath, 'rb')
-    uncompressedFile = os.path.join(outputDir, lastComponent(filepath+"-in"))
+    uncompressedFile = osp.join(outputDir, osp.basename(filepath+"-in"))
     uncompressed = file(uncompressedFile, 'wb')
     uncompressed.write(compressed.read())
     compressed.close()
@@ -159,7 +152,7 @@ class CommandBasedConverter(BaseConverter):
         outputDir = mkdtemp()
 
         inputFile = uncompressFile (filepath, outputDir)
-        outputFile = os.path.join(outputDir, lastComponent(filepath))
+        outputFile = osp.join(outputDir, osp.basename(filepath))
 
         command_args = {'input' : inputFile, 'output' : outputFile}
         cmd = self.COMMAND % command_args
@@ -169,14 +162,14 @@ class CommandBasedConverter(BaseConverter):
         try:
             if errcode == 0: # OK
                 parser = self.getParser()
-                return parser.parseFile(outputFile, lastComponent(filepath),
-                                        self.OUTPUT_ENCODING)                                        
+                return parser.parseFile(outputFile, osp.basename(filepath),
+                                        self.OUTPUT_ENCODING)
             else:
                 raise IndexationFailure('Unable to index %r' % filepath)
         finally:
-            if os.path.isfile(outputFile):
+            if osp.isfile(outputFile):
                 os.remove(outputFile)
-            if os.path.isfile(inputFile):
+            if osp.isfile(inputFile):
                 os.remove(inputFile)
             os.rmdir(outputDir)
 
