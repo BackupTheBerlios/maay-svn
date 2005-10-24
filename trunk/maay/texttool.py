@@ -132,7 +132,7 @@ class AbstractParser:
         try:
             title, result, links, offset = self.parseString(stream.read())
             if not title:
-                title = filepath.split('/')[-1]
+                title = unicode(filepath.split('/')[-1])
             return title, result, links, offset 
         finally:
             stream.close()
@@ -141,7 +141,7 @@ class AbstractParser:
         """returns a 4-uple (title, normalized_text, links, offset)
            to parseFile
            When a title cannot be computed from file content parseFile
-           expects an empty string
+           expects an empty unicode string
         """
         raise NotImplementedError()
 
@@ -149,7 +149,7 @@ class AbstractParser:
 class TextParser(AbstractParser):
 
     def parseString(self, source):
-        return '', source, [], 0
+        return u'', source, [], 0
         
 
 class MaayHTMLParser(AbstractParser, HTMLParser):
@@ -157,7 +157,7 @@ class MaayHTMLParser(AbstractParser, HTMLParser):
         HTMLParser.__init__(self)
         self.links = []
         self.textbuf = []
-        self.title = ''
+        self.title = u''
         self.parsingTitle = False
         self.parsingBody = False
         
@@ -196,7 +196,7 @@ class ExifParser(AbstractParser):
     """A parser for Exif information found in image files"""
 
     def parseString(self, source):
-        return '', u'The image', [], 0
+        return u'', u'The image', [], 0
 
         
 _table = {}
