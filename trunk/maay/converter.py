@@ -107,17 +107,14 @@ class HTMLConverter(BaseConverter):
     def getParser(self):
         return HTMLParser() # This is really MaayHTMLParser from texttool
 
-class ImageBasedConverter(BaseConverter):
+class ImageConverter(BaseConverter):
     """provides base Image converter
        In the future, it may hold EXIF information retrieval methods"""
     OUTPUT_TYPE = 'image'
+    MIME_TYPES = ('image/jpeg','image/png', 'image/x-xpixmap')
 
     def getParser(self):
         return ExifParser()
-
-class JpegConverter(ImageBasedConverter):
-    OUTPUT_TYPE = 'jpeg'
-    MIME_TYPES = ('image/jpeg',)
 
 
 def lastComponent(filepath):

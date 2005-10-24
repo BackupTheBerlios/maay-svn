@@ -34,7 +34,7 @@ class ConvertersTC(unittest.TestCase):
         """tests that converters we get match filenames's mimetype"""
         filenames = ['foo.pdf', 'foo.ps', 'foo.html', 'foo.txt',
                      'foo.doc', 'foo.rtf', 'foo.py', 'foo.c', 'foo.cpp',
-                     'foo.c++', 'foo.java']
+                     'foo.c++', 'foo.java', 'foo.xpm', 'foo.jpg', 'foo.png']
         for filename in filenames:
             mimetype = guess_type(filename)[0]
             if mimetype is None:
@@ -56,6 +56,9 @@ class ConvertersTC(unittest.TestCase):
         self.assert_(converter.RawTextConverter in converter.REGISTRY['text/x-csrc'])
         self.assert_(converter.RawTextConverter in converter.REGISTRY['text/x-c++src'])
         self.assert_(converter.RawTextConverter in converter.REGISTRY['text/x-java'])
+        self.assert_(converter.ImageConverter in converter.REGISTRY['image/jpeg'])
+        self.assert_(converter.ImageConverter in converter.REGISTRY['image/png'])
+        self.assert_(converter.ImageConverter in converter.REGISTRY['image/x-xpixmap'])
         
     def testCustomizedConverter(self):
         """make sure a user can define its own converter"""
