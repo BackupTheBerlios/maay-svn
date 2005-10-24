@@ -30,6 +30,12 @@ class GlobalFunctionTC(unittest.TestCase):
         f.close()
         self.assertEquals(makeDocumentId(filename), sha.sha(data).hexdigest())
         os.remove(filename)
+
+    def testMimetypeUpdate(self):
+        #XXX: This may need to go away since we provide converters for python
+        # and the type_map update in indexer is not sufficient to catch python files
+        # as text files
+        self.assertEquals('text/plain', mimetypes.types_map['.py'])
         
         
 
