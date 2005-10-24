@@ -447,7 +447,7 @@ class WebappConfiguration(Configuration):
         ('webserver-port',
          {'type' : "int", 'metavar' : "<webserver_port>", 
           'help' : "Internet port on which the web interface is listening",
-          'default' : 8080,
+          'default' : 7777,
           }),
         ('rpcserver-port',
          {'type' : "int", 'metavar' : "<rpcserver_port>", 
