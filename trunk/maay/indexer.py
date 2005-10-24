@@ -182,12 +182,12 @@ class Indexer:
                       lastModTime, content_hash, mime_type, state,
                       file_state=FileInfo.CREATED_FILE_STATE):
         if self.verbose:
-            print "Requesting indexation of %s" % filename
+            print "Requesting indexation of %s" % filename,
         try:
             title = removeControlChar(title) 
             text = removeControlChar(text)
             if self.verbose:
-                print " ... indexed as", title.encode('utf-8')
+                print u'('+title.encode('utf-8')+u')'
             self.serverProxy.indexDocument(self.cnxId, filename, title, text,
                                            fileSize, lastModTime, content_hash,
                                            mime_type, state, file_state)
@@ -350,3 +350,5 @@ def run():
 
 if __name__ == '__main__':
     run()
+
+#print "PYTHON", mimetypes.types_map['.py']
