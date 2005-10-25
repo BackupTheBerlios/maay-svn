@@ -64,6 +64,8 @@ from maay.texttool import makeAbstract, WORDS_RGX, normalizeText
 from maay import registrationclient
 from maay.query import Query
 
+ANONYMOUS_AVATARID = 'maay' # it's only a matter of definition after all ...
+
 class MaayPage(rend.Page):
     docFactory = loaders.xmlfile(get_path_of('skeleton.html'))
     child_maaycss = static.File(get_path_of('maay.css'))
@@ -73,22 +75,23 @@ class MaayPage(rend.Page):
         rend.Page.__init__(self)
         self.maayId = maayId
 
-    def render_loginurl(self, context, data):
-        url = URL.fromContext(context)
-        # store current URL into  'goThereAfter' to be able to return here
-        # after login
-        if self.maayId != ANONYMOUS_AVATARID:
-            goThereAfter = URL(url.scheme, url.netloc,
-                               ['logout'] + url.pathList())
-            context.fillSlots('actionlabel', 'Logout')
-        else:
-            goThereAfter = URL(url.scheme, url.netloc,
-                               ['login'] + url.pathList())
-            context.fillSlots('actionlabel', 'Login')            
-        for param, value in url.queryList():
-            goThereAfter = goThereAfter.add(param, value)
-        context.fillSlots('loginurl', str(goThereAfter))
-        return context.tag
+#     def render_loginurl(self, context, data):
+#         url = URL.fromContext(context)
+#         store current URL into  'goThereAfter' to be able to return here
+#         after login
+#         goThereAfter = URL(url.scheme, url.netloc, url.pathList())
+#         if self.maayId != ANONYMOUS_AVATARID:
+#            goThereAfter = URL(url.scheme, url.netloc,
+#                               ['logout'] + url.pathList())
+#            context.fillSlots('actionlabel', 'Logout')
+#         else:
+#            goThereAfter = URL(url.scheme, url.netloc,
+#                               ['login'] + url.pathList())
+#            context.fillSlots('actionlabel', 'Login')            
+#         for param, value in url.queryList():
+#            goThereAfter = goThereAfter.add(param, value)
+#         context.fillSlots('loginurl', str(goThereAfter))
+#         return context.tag
 
     def macro_body(self, context):
         return self.bodyFactory
@@ -102,50 +105,51 @@ class MaayPage(rend.Page):
         req.getSession().expire()
         req.redirect('/' + guard.LOGOUT_AVATAR)
 
-class LoginForm(MaayPage):
-    """a basic login form. This page is rendered until the user
-    is logged.
-    """
-    # addSlash = True
+# class LoginForm(MaayPage):
+#     """a basic login form. This page is rendered until the user
+#     is logged.
+#     """
+#     # addSlash = True
 
-    def path(self, context, data):
-        here = URL.fromContext(context)
-        # transform /login/somePathAndQuery into /__login__/somePathAndQuery
-        # to benefit from nevow.guard redirection magic
-        pathList = ['__login__'] + here.pathList()[1:]
-        goThereAfter = URL(here.scheme, here.netloc,
-                           pathList, here.queryList())
-        return str(goThereAfter)
+#     def path(self, context, data):
+#         here = URL.fromContext(context)
+#         # transform /login/somePathAndQuery into /__login__/somePathAndQuery
+#         # to benefit from nevow.guard redirection magic
+#         pathList = ['__login__'] + here.pathList()[1:]
+#         goThereAfter = URL(here.scheme, here.netloc,
+#                            pathList, here.queryList())
+#         return str(goThereAfter)
 
-    bodyFactory = loaders.stan(
-        tags.html[
-            tags.head[tags.title["Maay Login Page",],
-                      tags.link(rel='stylesheet', type='text/css', href='maay.css'),
-                      tags.link(rel='shortcut icon', href='images/maay.ico'),
-                      ],
+#     bodyFactory = loaders.stan(
+#         tags.html[
+#             tags.head[tags.title["Maay Login Page",],
+#                       tags.link(rel='stylesheet', type='text/css', href='maay.css'),
+#                       tags.link(rel='shortcut icon', href='images/maay.ico'),
+#                       ],
             
-            tags.body[
-                # tags.form(action='/'+guard.LOGIN_AVATAR, render=path, method='post')[
-                tags.form(action=path, method='post')[
-                    tags.table(_class="loginTable")[
-                        tags.tr[
-                            tags.td[ "Username:" ],
-                            tags.td[ tags.input(type='text', name='username') ],
-                            ],
-                        tags.tr[
-                            tags.td[ "Password:" ],
-                            tags.td[ tags.input(type='password', name='password') ],
-                            ]
-                        ],
-                    tags.input(type='submit'),
-                    tags.p,
-                    ]
-                ]
-            ]
-        )
+#             tags.body[
+#                 # tags.form(action='/'+guard.LOGIN_AVATAR, render=path, method='post')[
+#                 tags.form(action=path, method='post')[
+#                     tags.table(_class="loginTable")[
+#                         tags.tr[
+#                             tags.td[ "Username :" ],
+#                             tags.td[ tags.input(type='text', name='username') ],
+#                             ],
+#                         tags.tr[
+#                             tags.td[ "Password :" ],
+#                             tags.td[ tags.input(type='password', name='password') ],
+#                             ]
+#                         ],
+#                     tags.input(type='submit'),
+#                     tags.p,
+#                     ]
+#                 ]
+#             ]
+#         )
 
-    def childFactory(self, context, segments):
-        return LoginForm()
+#     def childFactory(self, context, segments):
+#         print " child factory"
+#         return LoginForm()
 
 class PeersList(MaayPage):
     """display list of registered peers"""
@@ -295,7 +299,7 @@ class MaayRealm:
                 if querier is None:
                     return inevow.IResource, LoginForm(), lambda: None
                 else:
-                    print "Building search form with", avatarId
+                    print "Building search form for", avatarId
                     resc = SearchForm(avatarId, querier)
                 return inevow.IResource, resc, resc.logout
             # if we wer asked for a querier
@@ -309,9 +313,9 @@ class MaayRealm:
     def _getQuerier(self, avatarId):
         try:
             querier = self._sessions[avatarId]
-            print "Querier for", avatarId, "was in the cache. Good."
+            print "Querier of type", type(querier), "for", avatarId, "was in the cache. Good."
         except KeyError:
-            print "No querier in cache far", avatarId, \
+            print "No querier in cache for", str(avatarId)+ \
                   ". What are we supposed to do ?"
             querier = None
         return querier
@@ -320,6 +324,7 @@ class MaayRealm:
 class MaayPortal(object, portal.Portal):
     """Portal for Maay authentication system"""
     def __init__(self, webappConfig):
+        print "Portal creation"
         realm = MaayRealm()
         checker = DBAuthChecker(realm, webappConfig.db_host,
                                 webappConfig.db_name)
@@ -329,10 +334,19 @@ class MaayPortal(object, portal.Portal):
         self.config = webappConfig
         # Create default anonymous querier, based on local configuration
         try:
-            anonymousQuerier = AnonymousQuerier(host=webappConfig.db_host,
-                                                database=webappConfig.db_name,
-                                                user=webappConfig.user,
-                                                password=webappConfig.password)
+            print "Credentials : "
+            print "  - host", webappConfig.db_host
+            print "  - db", webappConfig.db_name
+            print "  - user", webappConfig.user
+            print "  - pass", webappConfig.password
+            anonymousQuerier = MaayQuerier(host=webappConfig.db_host,
+                                           database=webappConfig.db_name,
+                                           user=webappConfig.user,
+                                           password=webappConfig.password)
+            #anonymousQuerier = AnonymousQuerier(host=webappConfig.db_host,
+            #                                    database=webappConfig.db_name,
+            #                                    user=webappConfig.user,
+            #                                    password=webappConfig.password)
         except Exception, exc:
             # unable to create an anonymous querier
             print "***"
@@ -389,11 +403,12 @@ class DBAuthChecker:
         self.dbname = dbname
     
     def requestAvatarId(self, creds):
+        print "Checking credentials for DB access"
         try:
             querier = MaayQuerier(host=self.dbhost, database=self.dbname,
                                   user=creds.username, password=creds.password)
         except MaayAuthenticationError:
-            print "Got Authentication Error !"
+            print "DBAuthChecker : Authentication Error"
             return failure.Failure(error.UnauthorizedLogin())
         self.realm.createUserSession(creds.username, querier)
         return defer.succeed(creds.username)
@@ -565,7 +580,7 @@ def run():
                                           maayPortal))
     reactor.listenTCP(webappConfig.webserver_port, website)
     reactor.listenTCP(webappConfig.rpcserver_port, rpcserver)
-    print "Go !"
+    print "In the mainloop ..."
     reactor.run()
 
 if __name__ == '__main__':

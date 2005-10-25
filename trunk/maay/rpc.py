@@ -39,9 +39,11 @@ class MaayRPCServer(XMLRPC):
 
     def __init__(self, nodeId, portal):
         XMLRPC.__init__(self)
+        print "init of MaayRPCServer, nodeId = ", nodeId
+        assert nodeId == portal.config.get_node_id ()
         self._sessions = {}
         self.portal = portal
-        self.nodeId = portal.config.get_node_id()
+        self.nodeId = portal.config.get_node_id() # hmmm ...
         self._sessions[ANONYMOUS_AVATARID] = portal.anonymousQuerier
         self._p2pQuerier = P2pQuerier(nodeId, portal.anonymousQuerier)
         
