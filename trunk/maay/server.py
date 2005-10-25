@@ -120,7 +120,7 @@ class LoginForm(MaayPage):
     bodyFactory = loaders.stan(
         tags.html[
             tags.head[tags.title["Maay Login Page",],
-                      tags.link(rel='stylesheet', type='text/css', href='maaycss'),
+                      tags.link(rel='stylesheet', type='text/css', href='maay.css'),
                       tags.link(rel='shortcut icon', href='images/maay.ico'),
                       ],
             
@@ -277,6 +277,7 @@ class MaayRealm:
     def createUserSession(self, avatarId, querier):
         """associate a querier to an avatarId.
         Use avatarId=None for the internal private database connection"""
+        print "Maay Realm : creating session for", avatarId
         self._sessions[avatarId] = querier
 
 
@@ -297,7 +298,7 @@ class MaayRealm:
                     print "Building search form with", avatarId
                     resc = SearchForm(avatarId, querier)
                 return inevow.IResource, resc, resc.logout
-            # if we wera asked for a querier
+            # if we wer asked for a querier
             elif iface is IQuerier:
                 querier = self._getQuerier(avatarId)
                 if querier is None:
@@ -308,9 +309,10 @@ class MaayRealm:
     def _getQuerier(self, avatarId):
         try:
             querier = self._sessions[avatarId]
-            print "Hit cache !"
+            print "Querier for", avatarId, "was in the cache. Good."
         except KeyError:
-            print "Ouch ! What am I supposed to do ?!!"
+            print "No querier in cache far", avatarId, \
+                  ". What are we supposed to do ?"
             querier = None
         return querier
 
