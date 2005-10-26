@@ -314,9 +314,6 @@ class IndexerConfiguration(Configuration):
         Configuration.__init__(self, name="Indexer")
 
 
-# XXX the purge starter should be factored back into a slightly
-#     more parametrable run. For now it's just a convenience thing.
-
 def purge():
     run(purge=True)
 
