@@ -401,18 +401,23 @@ class DBAuthChecker:
         self.realm = realm
         self.dbhost = dbhost
         self.dbname = dbname
-        self.querier = None # reusing the same querier has some benefits :)
+	# Keeping a cache of queriers reusing the same has some benefits :)
+        self.querierCache = {}
     
     def requestAvatarId(self, creds):
         print "DBAuthChecker : checking credentials for DB access"
         try:
-            if not self.querier:
-                self.querier = MaayQuerier(host=self.dbhost, database=self.dbname,
-                                        user=creds.username, password=creds.password)
+	    try:
+		querier = self.querierCache[creds]
+	    except KeyError:
+		querier = MaayQuerier(host=self.dbhost, database=self.dbname,
+				      user=creds.username,
+				      password=creds.password)
+		self.querierCache[creds] = querier
         except MaayAuthenticationError:
             print "DBAuthChecker : Authentication Error"
             return failure.Failure(error.UnauthorizedLogin())
-        self.realm.createUserSession(creds.username, self.querier)
+        self.realm.createUserSession(creds.username, querier)
         return defer.succeed(creds.username)
 
 
