@@ -38,30 +38,30 @@ from maay.dbentity import Document, FileInfo
 from maay.querier import MaayAuthenticationError
 from maay.texttool import removeControlChar
 
-# grabbed from nevow, but it doesn't work until you test it interactively ;-)
-mimetypes.types_map.update( 
-    {
-            '.conf':  'text/plain',
-            '.diff':  'text/plain',
-            '.exe':   'application/x-executable',
-            '.flac':  'audio/x-flac',
-            '.java':  'text/plain',
-            '.ogg':   'application/ogg',
-            '.oz':    'text/x-oz',
-            '.swf':   'application/x-shockwave-flash',
-            '.tgz':   'application/x-gtar',
-            '.wml':   'text/vnd.wap.wml',
-            '.xul':   'application/vnd.mozilla.xul+xml',
-            '.py':    'text/plain',
-            '.patch': 'text/plain',
-            '.c' :    'text/plain',
-            '.h':     'text/plain',
-            '.C':     'text/plain',
-            '.cpp':   'text/plain',
-            '.cc':    'text/plain',
-            '.c++':   'text/plain',
-        }
-    )
+# grabbed from nevow, but useless
+# mimetypes.types_map.update( 
+#     {
+#             '.conf':  'text/plain',
+#             '.diff':  'text/plain',
+#             '.exe':   'application/x-executable',
+#             '.flac':  'audio/x-flac',
+#             '.java':  'text/plain',
+#             '.ogg':   'application/ogg',
+#             '.oz':    'text/x-oz',
+#             '.swf':   'application/x-shockwave-flash',
+#             '.tgz':   'application/x-gtar',
+#             '.wml':   'text/vnd.wap.wml',
+#             '.xul':   'application/vnd.mozilla.xul+xml',
+#             '.py':    'text/plain',
+#             '.patch': 'text/plain',
+#             '.c' :    'text/plain',
+#             '.h':     'text/plain',
+#             '.C':     'text/plain',
+#             '.cpp':   'text/plain',
+#             '.cc':    'text/plain',
+#             '.c++':   'text/plain',
+#         }
+#     )
 
 
 def makeDocumentId(filename):
@@ -92,6 +92,7 @@ class Indexer:
         password = self.indexerConfig.password
         host = self.indexerConfig.host
         port = self.indexerConfig.port
+        print "Indexer connecting to server %s:%s" % (host, port)
         self.serverProxy = ServerProxy('http://%s:%s' % (host, port),
                                        allow_none=True,
                                        encoding='utf-8')
@@ -317,22 +318,9 @@ class IndexerConfiguration(Configuration):
 #     more parametrable run. For now it's just a convenience thing.
 
 def purge():
-    indexerConfig = IndexerConfiguration()
-    indexerConfig.load()
-    try:
-        try:
-            indexer = Indexer(indexerConfig)
-        except MaayAuthenticationError, exc:
-            print "AuthenticationError:", exc
-            sys.exit(1)
-        indexer._purgeEverything()
-    except socket.error, exc:
-        print "Cannot contact server:", exc
-        print "Check that the server is running on %s:%s" % \
-              (indexerConfig.host, indexerConfig.port)
-        sys.exit(1)
+    run(purge=True)
 
-def run():
+def run(purge=False):
     indexerConfig = IndexerConfiguration()
     indexerConfig.load()
     try:
@@ -341,7 +329,10 @@ def run():
         except MaayAuthenticationError, exc:
             print "AuthenticationError:", exc
             sys.exit(1)
-        indexer.start()
+        if not purge:
+            indexer.start()
+        else:
+            indexer._purgeEverything()
     except socket.error, exc:
         print "Cannot contact server:", exc
         print "Check that the server is running on %s:%s" % \
@@ -351,4 +342,4 @@ def run():
 if __name__ == '__main__':
     run()
 
-#print "PYTHON", mimetypes.types_map['.py']
+
