@@ -44,8 +44,8 @@ class MaayRPCServer(XMLRPC):
         self._sessions = {}
         self.portal = portal
         self.nodeId = portal.config.get_node_id() # hmmm ...
-        self._sessions[ANONYMOUS_AVATARID] = portal.anonymousQuerier
-        self._p2pQuerier = P2pQuerier(nodeId, portal.anonymousQuerier)
+        self._sessions[ANONYMOUS_AVATARID] = portal.webQuerier
+        self._p2pQuerier = P2pQuerier(nodeId, portal.webQuerier)
         
     def _attachUser(self, (interface, querier, logout), username, password):
         if interface is not IQuerier or querier is None:

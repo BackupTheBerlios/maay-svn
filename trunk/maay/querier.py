@@ -405,7 +405,7 @@ class MaayQuerier(AnonymousQuerier):
         node.last_seen_time = int(time.time())
         node.commit(cursor, update=True)
         cursor.close()
-        self._cnx.commit()        
+        self._cnx.commit()
         
     def _createDocument(self, cursor, content_hash, title, text, fileSize,
                         lastModifiedOn, filename, mime_type, state):

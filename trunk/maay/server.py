@@ -56,7 +56,7 @@ import MySQLdb
 
 from logilab.common.textutils import normalize_text
 
-from maay.querier import MaayQuerier, IQuerier, AnonymousQuerier, \
+from maay.querier import MaayQuerier, IQuerier, \
      MaayAuthenticationError, ANONYMOUS_AVATARID
 from maay.rpc import MaayRPCServer
 from maay.configuration import get_path_of, Configuration
@@ -281,7 +281,8 @@ class MaayRealm:
     def createUserSession(self, avatarId, querier):
         """associate a querier to an avatarId.
         Use avatarId=None for the internal private database connection"""
-        print "Maay Realm : creating session for", avatarId
+        print "Maay Realm : creating session for avatar", avatarId,
+        print "with a", type(querier), "querier."
         self._sessions[avatarId] = querier
 
 
@@ -313,7 +314,8 @@ class MaayRealm:
     def _getQuerier(self, avatarId):
         try:
             querier = self._sessions[avatarId]
-            print "Querier of type", type(querier), "for", avatarId, "was in the cache. Good."
+            print "Querier of type", type(querier), "for avatar",
+            print avatarId, "was in the cache. Good."
         except KeyError:
             print "No querier in cache for", str(avatarId)+ \
                   ". What are we supposed to do ?"
@@ -332,49 +334,45 @@ class MaayPortal(object, portal.Portal):
         self.anonymousChecker = MaayAnonymousChecker()
         self.registerChecker(self.anonymousChecker, IAnonymous)
         self.config = webappConfig
-        # Create default anonymous querier, based on local configuration
+        # Create default web querier, based on local configuration
         try:
             print "Credentials : "
             print "  - host", webappConfig.db_host
             print "  - db", webappConfig.db_name
             print "  - user", webappConfig.user
             print "  - pass", webappConfig.password
-            anonymousQuerier = MaayQuerier(host=webappConfig.db_host,
-                                           database=webappConfig.db_name,
-                                           user=webappConfig.user,
-                                           password=webappConfig.password)
-            #anonymousQuerier = AnonymousQuerier(host=webappConfig.db_host,
-            #                                    database=webappConfig.db_name,
-            #                                    user=webappConfig.user,
-            #                                    password=webappConfig.password)
+            webQuerier = MaayQuerier(host=webappConfig.db_host,
+                                     database=webappConfig.db_name,
+                                     user=webappConfig.user,
+                                     password=webappConfig.password)
         except Exception, exc:
-            # unable to create an anonymous querier
+            # unable to create a web querier
             print "***"
-            print "*** Could not create anonymous querier"
+            print "*** Could not create web querier"
             print "*** Got exception", exc
-            print "*** This will disable the P2P functionalities"
-            print "*** and force the user to login for local search"
+            print "*** This may hurt in unexpected ways"
             print "***"
-            anonymousQuerier = None
+            webQuerier = None
         else:
-            realm.createUserSession(ANONYMOUS_AVATARID, anonymousQuerier)
-            anonymousQuerier.registerNode(self.config.get_node_id(),
-                                          ip=socket.gethostbyname(socket.gethostname()),
-                                          port=webappConfig.rpcserver_port,
-                                          bandwidth=webappConfig.bandwidth)
-        self.anonymousQuerier = anonymousQuerier
+            realm.createUserSession(ANONYMOUS_AVATARID, webQuerier)
+            webQuerier.registerNode(self.config.get_node_id(),
+                                    ip=socket.gethostbyname(socket.gethostname()),
+                                    port=webappConfig.rpcserver_port,
+                                    bandwidth=webappConfig.bandwidth)
+        self.webQuerier = webQuerier
 
-    def getAnonymousQuerier(self):
-        return getattr(self, '_anonymousQuerier', None)
+    def getWebQuerier(self):
+        return getattr(self, '_webQuerier', None)
 
-    def setAnonymousQuerier(self, value):
+    def setWebQuerier(self, value):
         """used to set 'anonymousAllowed' flag in anonymous checker"""
+        #XXX: now, check this seriously
         if value is not None:
             self.anonymousChecker.anonymousAllowed = True
-        self._anonymousQuerier = value
+        self._webQuerier = value
 
-    anonymousQuerier = property(getAnonymousQuerier, setAnonymousQuerier,
-                                doc="anonymous querier")
+    webQuerier = property(getWebQuerier, setWebQuerier,
+                          doc="web querier")
 
 
 class MaayAnonymousChecker(AllowAnonymousAccess):
@@ -398,19 +396,23 @@ class DBAuthChecker:
     credentialInterfaces = (IUsernamePassword,)
     
     def __init__(self, realm, dbhost, dbname):
+        print "DBAuthChecker inits in realm", realm, "dbhost", dbhost,
+        print "and dbname", str(dbname)+"."
         self.realm = realm
         self.dbhost = dbhost
         self.dbname = dbname
+        self.querier = None # reusing the same querier has some benefits :)
     
     def requestAvatarId(self, creds):
-        print "Checking credentials for DB access"
+        print "DBAuthChecker : checking credentials for DB access"
         try:
-            querier = MaayQuerier(host=self.dbhost, database=self.dbname,
-                                  user=creds.username, password=creds.password)
+            if not self.querier:
+                self.querier = MaayQuerier(host=self.dbhost, database=self.dbname,
+                                        user=creds.username, password=creds.password)
         except MaayAuthenticationError:
             print "DBAuthChecker : Authentication Error"
             return failure.Failure(error.UnauthorizedLogin())
-        self.realm.createUserSession(creds.username, querier)
+        self.realm.createUserSession(creds.username, self.querier)
         return defer.succeed(creds.username)
 
 
@@ -569,7 +571,7 @@ def run():
     website.remember(webappConfig, IWebappConfiguration)
     registrationclient.login(reactor,
                              webappConfig.registration_host, webappConfig.registration_port,
-                             maayPortal.anonymousQuerier,
+                             maayPortal.webQuerier,
                              webappConfig.get_node_id(),
                              socket.gethostbyname(socket.gethostname()),
                              webappConfig.rpcserver_port,
