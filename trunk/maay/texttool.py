@@ -27,6 +27,8 @@ import mimetypes
 import gzip
 import bz2
 
+from maay.exif import get_ustring_from_exif
+
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
 MAX_STORED_SIZE = 65535
@@ -116,11 +118,12 @@ def universalOpen(filename, mode='rb', encoding='ascii', errors='strict'):
 
 class AbstractParser:
     """base-class for file parsers"""
+
     def parseFile(self, filepath, pristineFilename, encoding=None):
         """returns a 4-uple (title, normalized_text, links, offset)
         TODO: port original code from htmltotext
         :param encoding: if None, then need to be guessed
-
+        
         When a title cannot be computed from file content,
         the last component of the filepath is used instead
         """
@@ -199,8 +202,20 @@ class MaayHTMLParser(AbstractParser, HTMLParser):
 class ExifParser(AbstractParser):
     """A parser for Exif information found in image files"""
 
-    def parseString(self, source):
-        return u'', u'The image', [], 0
+    def parseFile(self, filepath, pristineFilename, encoding=None):
+        """returns a 4-uple (title, normalized_text, links, offset)
+        TODO: port original code from htmltotext
+        :param encoding: if None, then need to be guessed
+
+        When a title cannot be computed from file content,
+        the last component of the filepath is used instead
+        """
+        title = unicode(pristineFilename)
+        try:    
+            result = get_ustring_from_exif (filepath)
+            return title, result, [], 0
+        except:
+            return title, u'No EXIF information available', [], 0
 
         
 _table = {}
