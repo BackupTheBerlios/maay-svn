@@ -59,7 +59,7 @@ def get_string_from_exif(filepath):
     return res
 
 def get_ustring_from_exif(filepath):
-    """returns a well formed string from
+    """returns a well formed unicode string from
        exif attributes to values"""
     d = get_exif(filepath)
     res = u''
