@@ -64,14 +64,16 @@ from maay.texttool import makeAbstract, WORDS_RGX, normalizeText
 from maay import registrationclient
 from maay.query import Query
 
-ANONYMOUS_AVATARID = 'maay' # it's only a matter of definition after all ...
+ANONYMOUS_AVATARID = '__anonymous__'
+WEB_AVATARID = 'maay' 
+
 
 class MaayPage(rend.Page):
     docFactory = loaders.xmlfile(get_path_of('skeleton.html'))
     child_maaycss = static.File(get_path_of('maay.css'))
     child_images = static.File(get_path_of('images/'))
 
-    def __init__(self, maayId=ANONYMOUS_AVATARID):
+    def __init__(self, maayId=WEB_AVATARID):
         rend.Page.__init__(self)
         self.maayId = maayId
 
@@ -314,10 +316,10 @@ class MaayRealm:
     def _getQuerier(self, avatarId):
         try:
             querier = self._sessions[avatarId]
-            print "Querier of type", type(querier), "for avatar",
-            print avatarId, "was in the cache. Good."
+            print "MaayRealm : querier of type", type(querier), "for avatar",
+            print avatarId, "was in the cache."
         except KeyError:
-            print "No querier in cache for", str(avatarId)+ \
+            print "MaayRealm : no querier in cache for", str(avatarId)+ \
                   ". What are we supposed to do ?"
             querier = None
         return querier
@@ -354,7 +356,7 @@ class MaayPortal(object, portal.Portal):
             print "***"
             webQuerier = None
         else:
-            realm.createUserSession(ANONYMOUS_AVATARID, webQuerier)
+            realm.createUserSession(WEB_AVATARID, webQuerier)
             webQuerier.registerNode(self.config.get_node_id(),
                                     ip=socket.gethostbyname(socket.gethostname()),
                                     port=webappConfig.rpcserver_port,
@@ -407,16 +409,19 @@ class DBAuthChecker:
     def requestAvatarId(self, creds):
         print "DBAuthChecker : checking credentials for DB access"
         try:
-	    try:
-		querier = self.querierCache[creds]
-	    except KeyError:
-		querier = MaayQuerier(host=self.dbhost, database=self.dbname,
-				      user=creds.username,
-				      password=creds.password)
-		self.querierCache[creds] = querier
-        except MaayAuthenticationError:
-            print "DBAuthChecker : Authentication Error"
-            return failure.Failure(error.UnauthorizedLogin())
+            querier = self.querierCache[(creds.username, creds.password)]
+            print " querier was in the cache for",
+        except KeyError:
+            print " no querier in cache for",
+            try:
+                querier = MaayQuerier(host=self.dbhost, database=self.dbname,
+                                      user=creds.username,
+                                      password=creds.password)
+                self.querierCache[(creds.username, creds.password)] = querier
+            except MaayAuthenticationError:
+                print ; print "DBAuthChecker : Authentication Error"
+                return failure.Failure(error.UnauthorizedLogin())
+        print creds.username
         self.realm.createUserSession(creds.username, querier)
         return defer.succeed(creds.username)
 

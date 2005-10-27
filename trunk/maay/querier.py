@@ -38,7 +38,7 @@ from maay.texttool import normalizeText, WORDS_RGX, MAX_STORED_SIZE
 class MaayAuthenticationError(Exception):
     """raised on db authentication failure"""
 
-ANONYMOUS_AVATARID = '__anonymous__'
+ANONYMOUS_AVATARID = '__anonymous__' 
     
 class IQuerier(Interface):
     """defines the High-Level interface to Maay SQL database"""
@@ -132,6 +132,10 @@ class AnonymousQuerier:
 
     def close(self):
         self._cnx.close()
+
+    def __del__(self):
+        print self, "being GCed ..."
+        self.close()
 
     def findDocuments(self, query):
         """Find all indexed documents matching the query"""
