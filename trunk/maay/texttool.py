@@ -26,7 +26,7 @@ import re
 import mimetypes
 import gzip
 import bz2
-import StringIO
+from cStringIO import StringIO
 
 from maay.exif import get_ustring_from_exif
 
@@ -55,12 +55,12 @@ def normalizeHtmlEncoding(htmlEncoding):
 
 def guessEncoding(filename): #may throw IOError
     """try to guess encoding from a buffer
-        Bytes  	Encoding Form
-        00 00 FE FF 	UTF-32, big-endian
-        FF FE 00 00 	UTF-32, little-endian
-        FE FF 	        UTF-16, big-endian
-        FF FE 	        UTF-16, little-endian
-        EF BB BF 	UTF-8
+        Bytes           Encoding Form
+        00 00 FE FF     UTF-32, big-endian
+        FF FE 00 00     UTF-32, little-endian
+        FE FF           UTF-16, big-endian
+        FF FE           UTF-16, little-endian
+        EF BB BF        UTF-8
     """
     if filename.endswith(".gz"):
         stream = gzip.open(filename, 'rb')
@@ -305,15 +305,15 @@ del _table2
     
 def boldifyText(text, words):
     rgx = re.compile('|'.join(words), re.I)
-    s = StringIO.StringIO()
+    s = StringIO()
     lastStart = 0
     end = 0
     for occurence in rgx.finditer(text):
         wordFound = occurence.group(0)
         start, end = occurence.start(), occurence.end()
-	s.write(text[lastStart:start])
-	s.write("<b>%s</b>" % wordFound)
-	lastStart = end
+        s.write(text[lastStart:start])
+        s.write("<b>%s</b>" % wordFound)
+        lastStart = end
 
     s.write(text[end:])
     return s.getvalue()
@@ -336,8 +336,8 @@ def makeAbstract(text, words):
 
     for word in words:
         m = re.search(word, text, re.I)
-	if m:
-	        excerptPositions.append((word, m.start()))
+        if m:
+            excerptPositions.append((word, m.start()))
 
     if not excerptPositions:
         return text[:200]
@@ -345,7 +345,7 @@ def makeAbstract(text, words):
     # sort by position
     excerptPositions.sort(lambda x, y: x[1] - y [1])
 
-    s = StringIO.StringIO()
+    s = StringIO()
     start = -1
     last_position = -100
     last_word = 0
@@ -353,12 +353,13 @@ def makeAbstract(text, words):
     for word, position in excerptPositions:
         if position - last_position < 30:
             last_position = position
-	    last_word = word
-	    continue
-	    
-	if start !=-1:
+            last_word = word
+            continue
+            
+        if start !=-1:
             end = min(last_position + 30 + len(last_word), text_length - 1)
-            while not text[end].isspace(): end -= 1
+            while not text[end].isspace():
+                end -= 1
             s.write(" <b>...</b>")
             s.write(boldifyText(text[start:end], words))
             print "repl = %s" % str('|'.join(words))
@@ -370,7 +371,8 @@ def makeAbstract(text, words):
         last_word = word
 
     end = min(last_position + 30 + len(word), text_length - 1)
-    while not text[end].isspace(): end -= 1
+    while not text[end].isspace():
+        end -= 1
     s.write("<b>...</b>")
     s.write(boldifyText(text[start:end], words))
     s.write("<b>...</b>")
