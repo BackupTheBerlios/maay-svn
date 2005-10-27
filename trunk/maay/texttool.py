@@ -302,26 +302,76 @@ def removeControlChar(text, table= _table2):
     return text.translate(table)
 del _table2
     
-
-def makeAbstract(text, words):
-    """return the original text with HTML emphasis tags
-    around <words> occurences
-    XXX: this is a quick and dirty implementation
-    """
+def boldifyText(text, words):
     rgx = re.compile('|'.join(words), re.I)
-    text = untagText(text)
-    buf = []
-    size = 0
+    s = StringIO.StringIO()
+    lastStart = 0
     for occurence in rgx.finditer(text):
         wordFound = occurence.group(0)
         start, end = occurence.start(), occurence.end()
-        before = text[start-30:start-1]
-        after = text[end+1:end+30]
-        size += len(wordFound) + 60
-        buf.append('%s <b>%s</b> %s' % (before, wordFound, after))
-        if size >= 200:
-            break
-    else:
-        # case where we have less than 200 characters to display
+	s.write(text[lastStart:start])
+	s.write("<b>%s</b>" % wordFound)
+	lastStart = end
+
+    s.write(text[end:])
+    return s.getvalue()
+
+def makeAbstract(text, words):
+    """return excerpts of the original text surrounding the word occurrences
+    XXX: this is a less quick and dirty implementation
+    """
+
+    # To build the abstract, we only display the first occurrence of each
+    # word in the text.
+    # Each occurrence is shown in an excerpt (approx 60 caracters).
+    # If two excerpts are close, we merge them into one.
+
+    # excerptPositions = [(word,position)]
+    excerptPositions = []
+
+    text = untagText(text)
+    text_length = len(text)
+
+    for word in words:
+        m = re.search(word, text, re.I)
+	if m:
+	        excerptPositions.append((word, m.start()))
+
+    if not excerptPositions:
         return text[:200]
-    return u' <b>[...]</b> '.join(buf)
+
+    # sort by position
+    excerptPositions.sort(lambda x, y: x[1] - y [1])
+
+    s = StringIO.StringIO()
+    start = -1
+    last_position = -100
+    last_word = 0
+
+    for word, position in excerptPositions:
+        if position - last_position < 30:
+            last_position = position
+	    last_word = word
+	    continue
+	    
+	if start !=-1:
+            end = min(last_position + 30 + len(last_word), text_length - 1)
+            while not text[end].isspace(): end -= 1
+            s.write(" <b>...</b>")
+            s.write(boldifyText(text[start:end], words))
+            print "repl = %s" % str('|'.join(words))
+
+        start = max(0, position - 30)
+        while not text[start].isspace(): start += 1
+
+        last_position = position
+        last_word = word
+
+    end = min(last_position + 30 + len(word), text_length - 1)
+    while not text[end].isspace(): end -= 1
+    s.write("<b>...</b>")
+    s.write(boldifyText(text[start:end], words))
+    s.write("<b>...</b>")
+
+    return u"%s" % s.getvalue()
+
