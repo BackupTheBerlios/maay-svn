@@ -60,7 +60,7 @@ from maay.querier import MaayQuerier, IQuerier, \
      MaayAuthenticationError, ANONYMOUS_AVATARID, WEB_AVATARID
 from maay.rpc import MaayRPCServer
 from maay.configuration import get_path_of, Configuration
-from maay.texttool import makeAbstract, WORDS_RGX, normalizeText
+from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
 from maay import registrationclient
 from maay.query import Query
 
@@ -245,21 +245,22 @@ class ResultsPage(MaayPage):
     
     def render_row(self, context, data):
         document = data
-        context.fillSlots('doctitle',  document.title)
+	words = self.query.split()
+        context.fillSlots('doctitle', tags.xml(boldifyText(document.title, words)))
         # XXX abstract attribute should be a unicode string
         try:
-            abstract = makeAbstract(document.text, self.query.split())
+            abstract = makeAbstract(document.text, words)
             abstract = normalize_text(unicode(abstract))
         except Exception, exc:
             print exc
             abstract = u'No abstract available for this document [%s]' % exc
         context.fillSlots('abstract', tags.xml(abstract))
         context.fillSlots('docid', document.db_document_id)
-        context.fillSlots('docurl', document.url)
+        context.fillSlots('docurl', tags.xml(boldifyText(document.url, words)))
         context.fillSlots('words', self.query)
         context.fillSlots('readable_size', document.readable_size())
         date = datetime.fromtimestamp(document.publication_time)
-        context.fillSlots('publication_date', date.strftime('%d/%m/%Y'))
+        context.fillSlots('publication_date', date.strftime('%d %b %Y'))
         return context.tag
 
 ## nevow app/server setup ############################################

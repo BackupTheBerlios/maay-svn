@@ -1,3 +1,5 @@
+body,td,div,.p,a{font-family:arial,sans-serif }
+
 /** login page ********/
 table.loginTable {
   width: 100%;
@@ -36,7 +38,6 @@ a.docTitle {
 span.resultUrl {
   font-size: 90%;
   font-family: "New Century Schoolbook", serif;
-  font-weight: bold;
   color: green;
   text-decoration: none;
 }
@@ -66,3 +67,4 @@ table.peersTable th {
 table.peersTable td.nodeId {
   background: lightgrey;
 }
+

@@ -3,10 +3,14 @@
 <nevow:invisible xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
   <!-- <a nevow:render="loginurl"><nevow:attr name="href"><nevow:slot name="loginurl" /></nevow:attr><nevow:slot name="actionlabel" /></a> -->
   <div class="reSearch">
-    <img src="images/smallmaay.png" />
     <form action="search" accept-charset="utf-8">
-      <input type="text" name="words" nevow:render="searchfield"><nevow:attr name="value" ><nevow:slot name="words" /></nevow:attr></input>
-      <input type="submit" class="searchButton" value="search" />
+      <table>
+        <tr>
+          <td><img src="images/smallmaay.png" /></td>
+          <td><input type="text" name="words" nevow:render="searchfield"><nevow:attr name="value" ><nevow:slot name="words" /></nevow:attr></input></td>
+          <td><input type="submit" class="searchButton" value="search" /></td>
+	</tr>
+      </table>
     </form>      
   </div>
   <div class="message" nevow:render="title">Results for "<nevow:slot name="words" />"</div>

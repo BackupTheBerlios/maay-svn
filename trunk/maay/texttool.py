@@ -307,6 +307,7 @@ def boldifyText(text, words):
     rgx = re.compile('|'.join(words), re.I)
     s = StringIO.StringIO()
     lastStart = 0
+    end = 0
     for occurence in rgx.finditer(text):
         wordFound = occurence.group(0)
         start, end = occurence.start(), occurence.end()
