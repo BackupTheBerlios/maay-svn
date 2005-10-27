@@ -53,6 +53,19 @@ from maay.texttool import TextParser, ExifParser, MaayHTMLParser as HTMLParser, 
 # REGISTRY is a mimetype / converterList map
 REGISTRY = {}
 
+types_map.update ({
+    '.conf': 'text/plain',
+    '.flac':  'audio/x-flac',
+    '.diff': 'application/x-executable',
+    '.ogg':   'application/ogg',
+    '.swf':   'application/x-shockwave-flash',
+    '.tgz':   'application/x-gtar',
+    '.wml':   'text/vnd.wap.wml',
+    '.xul':   'application/vnd.mozilla.xul+xml',
+    '.patch': 'text/plain'
+    })
+
+
 class IndexationFailure(Exception):
     """raised when an indexation has failed"""
 
