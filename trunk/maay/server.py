@@ -56,7 +56,7 @@ import MySQLdb
 
 from logilab.common.textutils import normalize_text
 
-from maay.querier import MaayQuerier, IQuerier, \
+from maay.querier import MaayQuerier, IQuerier, AnonymousQuerier, \
      MaayAuthenticationError, ANONYMOUS_AVATARID, WEB_AVATARID
 from maay.rpc import MaayRPCServer
 from maay.configuration import get_path_of, Configuration
@@ -360,6 +360,11 @@ class MaayPortal(object, portal.Portal):
                                     port=webappConfig.rpcserver_port,
                                     bandwidth=webappConfig.bandwidth)
         self.webQuerier = webQuerier
+        self.anonymousQuerier = AnonymousQuerier(host=webappConfig.db_host,
+                                                 database=webappConfig.db_name,
+                                                 user=webappConfig.user,
+                                                 password=webappConfig.password)
+
 
     def getWebQuerier(self):
         return getattr(self, '_webQuerier', None)
