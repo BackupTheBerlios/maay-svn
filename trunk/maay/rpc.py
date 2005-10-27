@@ -44,10 +44,12 @@ class MaayRPCServer(XMLRPC):
         self._sessions = {}
         self.portal = portal
         self.nodeId = portal.config.get_node_id() 
-        self._sessions[WEB_AVATARID] = portal.webQuerier # update with WEB_AVATARID ?
+        self._sessions[WEB_AVATARID] = portal.webQuerier 
+        self._sessions[ANONYMOUS_AVATARID] = portal.anonymousQuerier
         self._p2pQuerier = P2pQuerier(nodeId, portal.webQuerier)
         
     def _attachUser(self, (interface, querier, logout), username, password):
+        print "MaayRPCServer _attachUser", username, type(querier)
         if interface is not IQuerier or querier is None:
             errmsg = "Could not get Querier for", username
             print errmsg
@@ -59,6 +61,7 @@ class MaayRPCServer(XMLRPC):
 
     def xmlrpc_authenticate(self, username, password):
         """server authentication method"""
+        print "MaayRPCServer xmlrpc_authenticate", username
         # anonymous login
         if (username, password) == ('', ''):
             creds = Anonymous()
@@ -93,6 +96,12 @@ class MaayRPCServer(XMLRPC):
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
             return querier.getIndexedFiles()
+        return []
+
+    def xmlrpc_findDocuments(self, cnxId, query):
+        if self.cnxIsValid(cnxId):
+            queryAsObj = Query.fromRawQuery(query)
+            return self._sessions[cnxId].findDocuments(queryAsObj)
         return []
         
     def xmlrpc_removeFileInfo(self, cnxId, filename):
@@ -149,5 +158,5 @@ class MaayRPCServer(XMLRPC):
     def cnxIsValid(self, cnxId):
         if cnxId in self._sessions:
             return True
-        print "We're under attack !"
+        print "MaayRPCServer cnxIsvalid Not !", cnxId
         return False
