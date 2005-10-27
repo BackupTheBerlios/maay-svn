@@ -26,6 +26,7 @@ import re
 import mimetypes
 import gzip
 import bz2
+import StringIO
 
 from maay.exif import get_ustring_from_exif
 
