@@ -57,14 +57,12 @@ import MySQLdb
 from logilab.common.textutils import normalize_text
 
 from maay.querier import MaayQuerier, IQuerier, \
-     MaayAuthenticationError, ANONYMOUS_AVATARID
+     MaayAuthenticationError, ANONYMOUS_AVATARID, WEB_AVATARID
 from maay.rpc import MaayRPCServer
 from maay.configuration import get_path_of, Configuration
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText
 from maay import registrationclient
 from maay.query import Query
-
-WEB_AVATARID = 'maay' 
 
 
 class MaayPage(rend.Page):

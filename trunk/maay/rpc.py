@@ -24,7 +24,7 @@ from twisted.cred.error import UnauthorizedLogin
 from twisted.internet import defer, reactor
 ## from twisted.python.failure import Failure
 
-from maay.querier import MaayQuerier, IQuerier, ANONYMOUS_AVATARID
+from maay.querier import MaayQuerier, IQuerier, ANONYMOUS_AVATARID, WEB_AVATARID
 from maay.dbentity import Document
 from maay.p2pquerier import P2pQuerier, P2pQuery
 from maay.query import Query
@@ -43,8 +43,8 @@ class MaayRPCServer(XMLRPC):
         assert nodeId == portal.config.get_node_id ()
         self._sessions = {}
         self.portal = portal
-        self.nodeId = portal.config.get_node_id() # hmmm ...
-        self._sessions[ANONYMOUS_AVATARID] = portal.webQuerier
+        self.nodeId = portal.config.get_node_id() 
+        self._sessions[WEB_AVATARID] = portal.webQuerier # update with WEB_AVATARID ?
         self._p2pQuerier = P2pQuerier(nodeId, portal.webQuerier)
         
     def _attachUser(self, (interface, querier, logout), username, password):

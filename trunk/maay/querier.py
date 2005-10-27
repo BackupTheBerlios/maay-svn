@@ -38,7 +38,8 @@ from maay.texttool import normalizeText, WORDS_RGX, MAX_STORED_SIZE
 class MaayAuthenticationError(Exception):
     """raised on db authentication failure"""
 
-ANONYMOUS_AVATARID = '__anonymous__' 
+ANONYMOUS_AVATARID = '__anonymous__'
+WEB_AVATARID = '__may__'
     
 class IQuerier(Interface):
     """defines the High-Level interface to Maay SQL database"""
@@ -305,7 +306,7 @@ class MaayQuerier(AnonymousQuerier):
         rows = cursor.execute('DELETE FROM files WHERE file_name = %s', filename)
         cursor.close()
         self._cnx.commit()
-        print "removed %s" % filename
+        #print "removed %s" % filename
         return rows
 
     def removeUnreferencedDocuments(self):
