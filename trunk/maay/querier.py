@@ -134,8 +134,9 @@ class AnonymousQuerier:
         self._cnx.close()
 
     def __del__(self):
-        print self, "being GCed ..."
-        self.close()
+        print "Querier", self, "is being GCed ... "
+        print " conection stats :", self._cnx.stat()
+        self.close ()
 
     def findDocuments(self, query):
         """Find all indexed documents matching the query"""
