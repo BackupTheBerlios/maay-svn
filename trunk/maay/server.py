@@ -64,7 +64,6 @@ from maay.texttool import makeAbstract, WORDS_RGX, normalizeText
 from maay import registrationclient
 from maay.query import Query
 
-ANONYMOUS_AVATARID = '__anonymous__'
 WEB_AVATARID = 'maay' 
 
 
@@ -283,7 +282,7 @@ class MaayRealm:
     def createUserSession(self, avatarId, querier):
         """associate a querier to an avatarId.
         Use avatarId=None for the internal private database connection"""
-        print "Maay Realm : creating session for avatar", avatarId,
+        print "MaayRealm : creating session for avatar", avatarId,
         print "with a", type(querier), "querier."
         self._sessions[avatarId] = querier
 
@@ -317,7 +316,7 @@ class MaayRealm:
         try:
             querier = self._sessions[avatarId]
             print "MaayRealm : querier of type", type(querier), "for avatar",
-            print avatarId, "was in the cache."
+            print avatarId, "was in the session cache."
         except KeyError:
             print "MaayRealm : no querier in cache for", str(avatarId)+ \
                   ". What are we supposed to do ?"
@@ -383,8 +382,9 @@ class MaayAnonymousChecker(AllowAnonymousAccess):
         self.anonymousAllowed = False
         
     def requestAvatarId(self, credentials):
+        print "AnonymousChecker : requestAvatarId", credentials
         if self.anonymousAllowed:
-            return ANONYMOUS_AVATARID
+            return WEB_AVATARID #XXX: FIXME
         else:
             return failure.Failure(error.UnauthorizedLogin(
                 "No anonymous querier available !"))
@@ -560,11 +560,12 @@ class MaaySessionWrapper(guard.SessionWrapper):
     def login(self, request, session, credentials, segments):
         # d = SessionWrapper.login()
         # d.addErrback(..)
+        print "MaaySessionWrapper login", credentials, session, request, segments
         mind = self.mindFactory(request, credentials)
         session.mind = mind
         d = self.portal.login(credentials, mind, self.credInterface)
         d.addCallback(self._cbLoginSuccess, session, segments)
-        d.addErrback(self._forceLoginPage)
+        #d.addErrback(self._forceLoginPage)
         return d
 
     def _forceLoginPage(self, *args):
