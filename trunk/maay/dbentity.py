@@ -212,8 +212,6 @@ class Document(DBEntity):
     abstract = property(get_abstract)
 
     def _selectContainingQuery(cls, words, mimetype=None, offset=0, allowPrivate=False):
-        if not words:
-            return ''
         words = [normalizeText(unicode(w))
                  for w in words
                  if WORD_MIN_LEN <= len(w) <= WORD_MAX_LEN]        
@@ -255,6 +253,8 @@ class Document(DBEntity):
     _selectContainingQuery = classmethod(_selectContainingQuery)
 
     def selectContaining(cls, cursor, words, mimetype=None, offset=0, allowPrivate=False):
+        if not words:
+            return []
         query, params = cls._selectContainingQuery(words, mimetype,
                                                    offset=offset,
                                                    allowPrivate=allowPrivate)
