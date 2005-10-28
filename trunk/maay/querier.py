@@ -108,10 +108,11 @@ class AnonymousQuerier:
             except dbapiMod.OperationalError:
                 raise MaayAuthenticationError("Failed to authenticate user %r"
                                               % user)
-            except Exception:
+            except Exception, e:
                 import traceback
                 traceback.print_exc()
-                raise
+                raise MaayAuthenticationError("Failed to authenticate user %r, cause is %s"
+                                              % (user, e))
         self._cnx = connection
 
     def _execute(self, query, args=None):
@@ -136,7 +137,8 @@ class AnonymousQuerier:
 
     def __del__(self):
         print "Querier", self, "is being GCed ... "
-        print " conection stats :", self._cnx.stat()
+        if self._cnx:
+            print " conection stats :", self._cnx.stat()
         self.close ()
 
     def findDocuments(self, query):
@@ -337,8 +339,7 @@ class MaayQuerier(AnonymousQuerier):
         # ourselves or if the indexer should do it and pass the values as an argument
         cursor = self._cnx.cursor()
         # insert or update in table file_info
-        fileinfo = FileInfo.selectWhere(cursor,
-                                        file_name=filename)
+        fileinfo = FileInfo.selectWhere(cursor, file_name=filename)
         # insert title into text to be able to find documents according
         # to their title (e.g: searching 'foo' should find 'foo.pdf')
         text = '%s %s' % (title, text)
