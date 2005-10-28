@@ -191,7 +191,7 @@ class MaayHTMLParser(AbstractParser, HTMLParser):
         try:
             self.feed(source)
         except HTMLParseError, exc:
-            print "Error parsing document: %s" % exc
+            print "MaayHTMLParser parseString : Error parsing document: %s" % exc
         result = u'\n'.join(self.textbuf)
         #XXX: wacky hack to get a correct title when we just processed
         #     a file from PDFTOHTML
@@ -359,7 +359,7 @@ def makeAbstract(text, words):
                 end -= 1
             s.write(" <b>...</b>")
             s.write(boldifyText(text[start:end], words))
-            print "repl = %s" % str('|'.join(words))
+            print "makeAbstract : repl = %s" % str('|'.join(words))
 
         start = max(0, position - 30)
         while not text[start].isspace(): start += 1
