@@ -407,7 +407,6 @@ class DBAuthChecker:
         self.realm = realm
         self.dbhost = dbhost
         self.dbname = dbname
-	# Keeping a cache of queriers reusing the same has some benefits :)
         self.querierCache = {}
     
     def requestAvatarId(self, creds):
