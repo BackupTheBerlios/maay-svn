@@ -123,7 +123,14 @@ class DBEntity:
                                       for attr in self.boundAttributes()]))
     def __repr__(self):
         return str(self)
-    
+
+
+class FutureDocument(DBEntity):
+    """Represents a Document before it gets fed to the database"""
+    attributes = ('filename', 'title', 'text', 'fileSize', 'lastModificationTime',
+                  'content_hash', 'mime_type', 'state', 'file_state')
+    key = ('content_hash',)
+
 class Document(DBEntity):
     """Represent a Document in the database
     A Document is different from a file, because several files can store

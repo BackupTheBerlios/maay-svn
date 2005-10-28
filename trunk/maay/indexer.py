@@ -34,7 +34,7 @@ import socket
 
 from maay import converter
 from maay.configuration import Configuration
-from maay.dbentity import Document, FileInfo
+from maay.dbentity import FutureDocument, Document, FileInfo
 from maay.querier import MaayAuthenticationError
 from maay.texttool import removeControlChar
 
@@ -142,9 +142,11 @@ class Indexer:
                 docId = makeDocumentId(filename)
                 mime_type = mimetypes.guess_type(filename)[0]
 
-                self.indexDocument(filename, title, text, fileSize,
-                                   lastModificationTime,
-                                   docId, mime_type, state)
+                self.indexDocument(FutureDocument(filename=filename, title=title, text=text,
+                                                  fileSize=fileSize,
+                                                  lastModificationTime=lastModificationTime,
+                                                  content_hash=docId, mime_type=mime_type,
+                                                  state=state))
         return existingFiles
         
     def getLastIndexationTimeAndState(self, filename):
@@ -154,26 +156,25 @@ class Indexer:
         lastTime, lastState = answer
         return lastTime, lastState
 
-    def indexDocument(self, filename, title, text, fileSize,
-                      lastModTime, content_hash, mime_type, state,
-                      file_state=FileInfo.CREATED_FILE_STATE):
+    def indexDocument(self, futureDoc):
+        futureDoc.file_state=FileInfo.CREATED_FILE_STATE
         if self.verbose:
-            print "Requesting indexation of %s" % filename,
+            print "Requesting indexation of %s" % futureDoc.filename,
         try:
-            title = removeControlChar(title) 
-            text = removeControlChar(text)
+            futureDoc.title = removeControlChar(futureDoc.title) 
+            futureDoc.text = removeControlChar(futureDoc.text)
             if self.verbose:
-                print u'('+title.encode('utf-8')+u')'
-            self.serverProxy.indexDocument(self.cnxId, filename, title, text,
-                                           fileSize, lastModTime, content_hash,
-                                           mime_type, state, file_state)
+                print u'('+futureDoc.title.encode('utf-8')+u')'
+            self.serverProxy.indexDocument(self.cnxId, futureDoc)
+
         except (Fault, ProtocolError), exc:
             if self.verbose:
-                print "An error occured on the server while indexing %s" % filename.encode('iso-8859-1')
+                print "An error occured on the server while indexing %s" % \
+                      futureDoc.filename.encode('iso-8859-1')
                 print exc
                 print "See server log for details"
             else:
-                print "Error indexing %s: %s" % (filename.encode('iso-8859-1'), exc)
+                print "Error indexing %s: %s" % (futureDoc.filename.encode('iso-8859-1'), exc)
         
     
      

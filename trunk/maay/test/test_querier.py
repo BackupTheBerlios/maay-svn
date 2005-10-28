@@ -22,7 +22,7 @@ import sha
 
 from logilab.common.testlib import MockConnection
 from logilab.common.db import get_connection
-from maay.querier import MaayQuerier, normalizeText, Document, FileInfo
+from maay.querier import MaayQuerier, normalizeText, FutureDocument, Document, FileInfo
 
 
 
@@ -60,16 +60,16 @@ Le petit chat est mort."""
         title = 'Le Tartuffe'
         matchingDocs = Document.selectWhere(cursor, document_id=digest)
         self.assertEquals(len(matchingDocs), 0)
-        self.querier.indexDocument('0'*40,
-                                   '/tmp/Tartuffe.txt',
-                                   title,
-                                   text,
-                                   len(text),
-                                   30000,
-                                   digest,
-                                   'text',
-                                   Document.PUBLISHED_STATE,
-                                   FileInfo.CREATED_FILE_STATE)
+        self.querier.indexDocument('0'*40, FutureDocument(
+            filename='/tmp/Tartuffe.txt',
+            title=title,
+            text=text,
+            fileSize=len(text),
+            lastModificationTime=30000,
+            content_hash=digest,
+            mime_type='text',
+            state=Document.PUBLISHED_STATE,
+            file_state=FileInfo.CREATED_FILE_STATE))
         matchingDocs = Document.selectWhere(cursor, document_id=digest)
         self.assertEquals(len(matchingDocs), 1)
         self.assertEquals(matchingDocs[0].text, '%s %s' % (title, text))
@@ -77,7 +77,6 @@ Le petit chat est mort."""
 
     def test_normalizeText(self):
         self.assertEquals(normalizeText(u"ÉtùïÄç"), "etuiac")
-
-
+        
 if __name__ == '__main__':
     unittest.main()

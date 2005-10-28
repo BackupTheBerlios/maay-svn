@@ -31,8 +31,8 @@ from zope.interface import Interface, implements
 
 from logilab.common.db import get_dbapi_compliant_module
 
-from maay.dbentity import Document, FileInfo, DocumentProvider, DocumentScore, \
-     Word, Node
+from maay.dbentity import FutureDocument, Document, FileInfo, DocumentProvider, \
+     DocumentScore, Word, Node
 from maay.texttool import normalizeText, WORDS_RGX, MAX_STORED_SIZE
 
 class MaayAuthenticationError(Exception):
@@ -56,8 +56,7 @@ class IQuerier(Interface):
         """returns a list of indexed file names as strings
         """
 
-    def indexDocument(nodeId, filename, title, text, fileSize, lastModifiedOn,
-                      content_hash, mime_type, state, file_state):
+    def indexDocument(nodeId, futureDoc):
         """Inserts or update information in table documents,
         file_info, document_score and word"""
 
@@ -331,45 +330,36 @@ class MaayQuerier(AnonymousQuerier):
         print "removed %d rows related to unreferenced documents" % rows
         return rows
 
-    def indexDocument(self, nodeId, filename, title, text, fileSize, lastModifiedOn,
-                      content_hash, mime_type, state, file_state):
+    def indexDocument(self, nodeId, futureDoc):
         """Inserts or update information in table documents,
         file_info, document_score and word"""
         # XXX Decide if we can compute the content_hash and mime_type
         # ourselves or if the indexer should do it and pass the values as an argument
         cursor = self._cnx.cursor()
         # insert or update in table file_info
-        fileinfo = FileInfo.selectWhere(cursor, file_name=filename)
+        fileinfo = FileInfo.selectWhere(cursor, file_name=futureDoc.filename)
         # insert title into text to be able to find documents according
         # to their title (e.g: searching 'foo' should find 'foo.pdf')
-        text = '%s %s' % (title, text)
+        futureDoc.text = '%s %s' % (futureDoc.title, futureDoc.text)
         if fileinfo:
             fileinfo = fileinfo[0]
-            fileinfo.file_time = lastModifiedOn
-            fileinfo.state = state
-            fileinfo.file_state = file_state
+            fileinfo.file_time = futureDoc.lastModificationTime
+            fileinfo.state = futureDoc.state
+            fileinfo.file_state = futureDoc.file_state
             doc = Document.selectWhere(cursor,
                                        db_document_id=fileinfo.db_document_id)
-            if not doc or doc[0].document_id!=content_hash :
+            if not doc or doc[0].document_id!=futureDoc.content_hash :
                 # no document was found or a document with another content
                 # in both case, we create a new Document in database
                 # (we don't want to modify the existing one, because it
                 # can be shared by several files)
-                doc = self._createDocument(cursor,
-                                           content_hash,
-                                           title,
-                                           text,
-                                           fileSize,
-                                           lastModifiedOn,
-                                           filename,
-                                           mime_type,
-                                           state)
+                doc = self._createDocument(cursor, futureDoc)
                 fileinfo.db_document_id = doc.db_document_id
             else:
                 # document has not changed
                 doc = doc[0]
-                if doc.state != state:
-                    doc.state = state
+                if doc.state != futureDoc.state:
+                    doc.state = futureDoc.state
                     doc.commit(cursor, update=True)
                 
             fileinfo.commit(cursor, update=True)
@@ -377,32 +367,24 @@ class MaayQuerier(AnonymousQuerier):
         else:
             # file unknown
             # try to find a Document with same hash value
-            doc = Document.selectWhere(cursor, document_id=content_hash)
+            doc = Document.selectWhere(cursor, document_id=futureDoc.content_hash)
             if doc:
                 doc = doc[0]
-                doc.state = state
-                doc.publication_time = max(doc.publication_time, lastModifiedOn)
+                doc.state = futureDoc.state
+                doc.publication_time = max(doc.publication_time, futureDoc.lastModificationTime)
                 doc.commit(cursor, update=True)
             else:
-                doc = self._createDocument(cursor,
-                                           content_hash,
-                                           title,
-                                           text,
-                                           fileSize,
-                                           lastModifiedOn,
-                                           filename,
-                                           mime_type,
-                                           state)
-                doc = Document.selectWhere(cursor, document_id=content_hash)[0]
+                doc = self._createDocument(cursor, futureDoc)
+                doc = Document.selectWhere(cursor, document_id=futureDoc.content_hash)[0]
 
             fileinfo = FileInfo(db_document_id=doc.db_document_id,
-                                 file_name=filename,
-                                 file_time=lastModifiedOn,
-                                 state=state,
-                                 file_state=file_state)
+                                file_name=futureDoc.filename,
+                                file_time=futureDoc.lastModificationTime,
+                                state=futureDoc.state,
+                                file_state=futureDoc.file_state)
             fileinfo.commit(cursor, update=False)
 
-        self._updateScores(cursor, doc.db_document_id, text)
+        self._updateScores(cursor, doc.db_document_id, futureDoc.text)
         provider = DocumentProvider.selectOrInsertWhere(cursor,
                                           db_document_id=doc.db_document_id,
                                           node_id=nodeId)[0]
@@ -414,21 +396,21 @@ class MaayQuerier(AnonymousQuerier):
         cursor.close()
         self._cnx.commit()
         
-    def _createDocument(self, cursor, content_hash, title, text, fileSize,
-                        lastModifiedOn, filename, mime_type, state):
-        doc = Document(document_id=content_hash,
-                       title=title,
-                       text=text[:MAX_STORED_SIZE],
-                       size=fileSize,
-                       publication_time=lastModifiedOn,
+    def _createDocument(self, cursor, futureDoc):
+
+        doc = Document(document_id=futureDoc.content_hash,
+                       title=futureDoc.title,
+                       text=futureDoc.text[:MAX_STORED_SIZE],
+                       size=futureDoc.fileSize,
+                       publication_time=futureDoc.lastModificationTime,
                        download_count=0.,
-                       url=filename,
-                       mime_type=mime_type,
+                       url=futureDoc.filename,
+                       mime_type=futureDoc.mime_type,
                        matching=0.,
                        indexed='1',
-                       state=state)
+                       state=futureDoc.state)
         doc.commit(cursor, update=False)
-        doc = Document.selectWhere(cursor, document_id=content_hash)[0]
+        doc = Document.selectWhere(cursor, document_id=futureDoc.content_hash)[0]
         return doc
 
 def hoeffding_deviation(occurence, confidence=0.9):

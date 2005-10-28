@@ -25,7 +25,7 @@ from twisted.internet import defer, reactor
 ## from twisted.python.failure import Failure
 
 from maay.querier import MaayQuerier, IQuerier, ANONYMOUS_AVATARID, WEB_AVATARID
-from maay.dbentity import Document
+from maay.dbentity import FutureDocument, Document
 from maay.p2pquerier import P2pQuerier, P2pQuery
 from maay.query import Query
 
@@ -116,27 +116,27 @@ class MaayRPCServer(XMLRPC):
             querier = self._sessions[cnxId]
             return querier.removeUnreferencedDocuments()
         return -1
-                    
-    def xmlrpc_indexDocument(self, cnxId, filename, title, text, fileSize,
-                             lastModifiedOn, content_hash, mime_type, state,
-                             file_state):
+
+    def xmlrpc_indexDocument(self, cnxId, futureDoc):
         """
         :type title: xmlrpclib.Binary
         :type text: xmlrpclib.Binary
         """
-        filename = unicode(filename)
-        title = unicode(title)
+        doc_dict = futureDoc
+        futureDoc = FutureDocument()
+        futureDoc.__dict__ = doc_dict
+        futureDoc.filename = unicode(futureDoc.filename)
+        futureDoc.title = unicode(futureDoc.title)
         try:
-            text = unicode(text)
+            futureDoc.text = unicode(futureDoc.text)
         except UnicodeError, exc:
             print exc
             print `text`
             return 1
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
-            querier.indexDocument(self.nodeId, filename, title, text, fileSize,
-                                  lastModifiedOn, content_hash, mime_type, state,
-                                  file_state)
+            querier.indexDocument(self.nodeId, futureDoc)
+
         return 0
 
     def xmlrpc_distributedQuery(self, queryId, sender, ttl, words, mime_type):
