@@ -207,9 +207,6 @@ class ExifParser(AbstractParser):
         """returns a 4-uple (title, normalized_text, links, offset)
         TODO: port original code from htmltotext
         :param encoding: if None, then need to be guessed
-
-        When a title cannot be computed from file content,
-        the last component of the filepath is used instead
         """
         title = unicode(pristineFilename)
         try:    
