@@ -29,7 +29,8 @@ import bz2
 from cStringIO import StringIO
 from sets import Set
 
-from maay.exif import get_ustring_from_exif
+from maay.image import get_ustring_from_exif, make_thumbnail, \
+     ImageConfiguration as ImConfig, NoThumbnailsDir
 
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
@@ -206,8 +207,17 @@ class MaayHTMLParser(AbstractParser, HTMLParser):
         return self.title, result, self.links, 0
 
 
+
 class ExifParser(AbstractParser):
     """A parser for Exif information found in image files"""
+
+    def __init__(self):
+        self.thumbnails_dir = None
+
+    def get_thumbnails_dir(self):
+        if not self.thumbnails_dir:
+            self.thumbnails_dir = ImConfig().get_thumbnails_dir()
+        return self.thumbnails_dir
 
     def parseFile(self, filepath, pristineFilename, encoding=None):
         """returns a 4-uple (title, normalized_text, links, offset)
@@ -215,11 +225,16 @@ class ExifParser(AbstractParser):
         :param encoding: if None, then need to be guessed
         """
         title = unicode(pristineFilename)
-        try:    
-            result = get_ustring_from_exif (filepath)
-            return title, result, [], 0
-        except:
-            return title, u'No EXIF information available', [], 0
+        try:
+            result = 'EXIF : ' + get_ustring_from_exif(filepath)
+            try:
+                thumb = make_thumbnail(filepath, self.get_thumbnails_dir())
+            except Exception, e:
+                print "Can't make thumbnail. Cause : %s", e
+            return title, result, [thumb], 0
+        except Exception, e:
+            print "No EXIF nor thumbnails. Cause : %s" % e
+        return title, u'No EXIF information available', [], 0
 
         
 _table = {}
@@ -394,7 +409,9 @@ def makeAbstract(text, words):
 
         excerptPositions.append((foundWord, start))
 
-        if len(wordOccurrences.keys()) >= MAX_EXCERPT or (len(wordOccurrences.keys()) == len(words) and len(excerptPositions) == MAX_EXCERPT):
+        if len(wordOccurrences.keys()) >= MAX_EXCERPT or \
+               (len(wordOccurrences.keys()) == len(words) and \
+                len(excerptPositions) == MAX_EXCERPT):
             break
 
     #
