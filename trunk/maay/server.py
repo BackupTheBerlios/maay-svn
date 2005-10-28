@@ -246,6 +246,7 @@ class ResultsPage(MaayPage):
     def render_row(self, context, data):
         document = data
 	words = self.query.split()
+        context.fillSlots('mime_type', re.sub("/", "_", document.mime_type))
         context.fillSlots('doctitle', tags.xml(boldifyText(document.title, words)))
         # XXX abstract attribute should be a unicode string
         try:

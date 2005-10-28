@@ -18,7 +18,7 @@
     <tr nevow:pattern="item" nevow:render="row">
       <td>
 	<div class="resultItem">
-	  <a class="docTitle"><nevow:attr name="href">/download?docid=<nevow:slot name="docid" />&amp;words=<nevow:slot name="words" /></nevow:attr><nevow:slot name="doctitle">DOC TITLE</nevow:slot></a>
+	  <table><tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type" /></nevow:attr></div></td><td><a class="docTitle"><nevow:attr name="href">/download?docid=<nevow:slot name="docid" />&amp;words=<nevow:slot name="words" /></nevow:attr><nevow:slot name="doctitle">DOC TITLE</nevow:slot></a></td></tr></table>
 	  <div class="resultDesc"><nevow:slot name="abstract" /></div>
 	  <span class="resultUrl"><nevow:attr name="href"><nevow:slot name="docurl" /></nevow:attr><nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
 	</div>

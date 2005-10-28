@@ -1,5 +1,10 @@
 body,td,div,.p,a{font-family:arial,sans-serif }
 
+h1 { font-family: arial,helvetica; font-size: 12pt; color: #000000; font-weight:bold }
+h2 {  font-family: Arial, Helvetica, sans-serif; font-size: 12pt; font-style:italic ; font-weight: bold ; color: #444444}
+h3 {  font-family: Arial, Helvetica, sans-serif; font-size: 10pt; font-weight: bold; color: #888888}
+
+
 /** login page ********/
 table.loginTable {
   width: 100%;
@@ -68,3 +73,21 @@ table.peersTable td.nodeId {
   background: lightgrey;
 }
 
+/** icon *******/
+div.text_html {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/html_icon.png);
+}
+
+div.text_plain {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/text_icon.png);
+}
