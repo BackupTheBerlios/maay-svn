@@ -27,11 +27,16 @@ import mimetypes
 import gzip
 import bz2
 from cStringIO import StringIO
+from sets import Set
 
 from maay.exif import get_ustring_from_exif
 
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
+
+MAX_EXCERPT = 3 
+EXCERPT_MAX_LEN = 70
+
 MAX_STORED_SIZE = 65535
 
 WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN)) 
@@ -62,6 +67,7 @@ def guessEncoding(filename): #may throw IOError
         FF FE           UTF-16, little-endian
         EF BB BF        UTF-8
     """
+
     if filename.endswith(".gz"):
         stream = gzip.open(filename, 'rb')
     elif filename.endswith(".bz2"):
@@ -128,8 +134,8 @@ class AbstractParser:
         When a title cannot be computed from file content,
         the last component of the filepath is used instead
         """
-        encoding = encoding or guessEncoding(filepath)
         try:
+            encoding = encoding or guessEncoding(filepath)
             stream = universalOpen(filepath, 'rb', encoding, errors='ignore')
         except LookupError:
             raise ParsingError('Unsupported document encoding %s' % encoding)
@@ -300,6 +306,27 @@ def removeControlChar(text, table= _table2):
     return text.translate(table)
 del _table2
     
+# function do not work with unicode, TODO: fix it...
+# (use for remove extra space in text before saving it in the database)
+# desactivated...
+def removeSpace(text):
+    return text
+    rgx = re.compile('\s+')
+    s = StringIO()
+    lastStart = 0
+    end = 0
+    for occurence in rgx.finditer(text):
+        wordFound = occurence.group(0)
+        start, end = occurence.start(), occurence.end()
+        if start > 0:
+            s.write(" ")
+        s.write("%s" % text[lastStart:start])
+        lastStart = end
+
+    s.write(text[end:])
+    return u"%s" % s.getvalue()
+
+
 def boldifyText(text, words):
     rgx = re.compile('|'.join(words), re.I)
     s = StringIO()
@@ -313,34 +340,74 @@ def boldifyText(text, words):
         lastStart = end
 
     s.write(text[end:])
-    return s.getvalue()
+    return u"%s" % s.getvalue()
 
 def makeAbstract(text, words):
     """return excerpts of the original text surrounding the word occurrences
     XXX: this is a less quick and dirty implementation
     """
 
-    # To build the abstract, we only display the first occurrence of each
-    # word in the text.
-    # Each occurrence is shown in an excerpt (approx 60 caracters).
-    # If two excerpts are close, we merge them into one.
+    text = untagText(text)
+    text_length = len(text)
+
+    EXCERPT_MAX_HALF_LEN = EXCERPT_MAX_LEN / 2
+
+    # quick and dirty regex...
+    rgx = re.compile('\W' + '\W|\W'.join(words) + '\W', re.I)
+
+    #
+    # Get the best excerpt for the abstract :
+    # - excerpt for most words of the query
+    # - first occurence of words
+    #
+
+    # wordOccurrences[word] = #nb of occurences
+    wordOccurrences = {}
 
     # excerptPositions = [(word,position)]
     excerptPositions = []
 
-    text = untagText(text)
-    text_length = len(text)
+    for occurence in rgx.finditer(text):
+        foundWord = occurence.group(0)
+        start, end = occurence.start(), occurence.end()
 
-    for word in words:
-        m = re.search(word, text, re.I)
-        if m:
-            excerptPositions.append((word, m.start()))
+        if len(excerptPositions) >= MAX_EXCERPT:
+            # remove one of excerpts which is the more frequent
+            max_occurence = 0
+            for word, occurence in wordOccurrences.items():
+                max_occurence = max(occurence, max_occurence)
+
+            if wordOccurrences.get(foundWord) == max_occurence:
+                continue
+                
+            for i in xrange(len(excerptPositions) - 1, 0, -1):
+                if wordOccurrences[excerptPositions[i][0]] == max_occurence:
+                    wordOccurrences[excerptPositions[i][0]] -= 1
+                    if wordOccurrences[excerptPositions[i][0]] == 0:
+                        del wordOccurrences[excerptPositions[i][0]]
+                    del excerptPositions[i]
+
+        if wordOccurrences.has_key(foundWord):
+            wordOccurrences[foundWord] += 1
+        else:
+            wordOccurrences[foundWord] = 1
+
+        excerptPositions.append((foundWord, start))
+
+        if len(wordOccurrences.keys()) >= MAX_EXCERPT or (len(wordOccurrences.keys()) == len(words) and len(excerptPositions) == MAX_EXCERPT):
+            break
+
+    #
+    # Build abstract
+    #
 
     if not excerptPositions:
-        return text[:200]
-
-    # sort by position
-    excerptPositions.sort(lambda x, y: x[1] - y [1])
+        if text_length >= 200:
+            end = 200
+            while text[end].isalpha(): end -= 1
+            return text[:end] + " <b>...</b>"
+        else:
+            return text
 
     s = StringIO()
     start = -1
@@ -348,31 +415,44 @@ def makeAbstract(text, words):
     last_word = 0
 
     for word, position in excerptPositions:
-        if position - last_position < 30:
+        if position - last_position < EXCERPT_MAX_LEN:
             last_position = position
             last_word = word
             continue
             
         if start !=-1:
-            end = min(last_position + 30 + len(last_word), text_length - 1)
-            while not text[end].isspace():
-                end -= 1
-            s.write(" <b>...</b>")
-            s.write(boldifyText(text[start:end], words))
-            print "makeAbstract : repl = %s" % str('|'.join(words))
+            end = last_position + EXCERPT_MAX_LEN + len(last_word)
+            if end >= text_length:
+                end = text_length
+            else:
+                while text[end].isalpha():
+                   end -= 1
 
-        start = max(0, position - 30)
-        while not text[start].isspace(): start += 1
+            if start > 0:
+                s.write(" <b>...</b> ")
+            s.write(boldifyText(text[start:end], words))
+
+        start = position - EXCERPT_MAX_HALF_LEN
+        if start < 0:
+            start = 0
+        else:
+            while text[start].isalpha(): start += 1
 
         last_position = position
         last_word = word
 
-    end = min(last_position + 30 + len(word), text_length - 1)
-    while not text[end].isspace():
-        end -= 1
-    s.write("<b>...</b>")
+    if start > 0:
+        s.write(" <b>...</b> ")
+    end = last_position + EXCERPT_MAX_HALF_LEN + len(word)
+    if end >= text_length:
+        end = text_length
+    else:
+        while text[end].isalpha():
+            end -= 1
     s.write(boldifyText(text[start:end], words))
-    s.write("<b>...</b>")
+
+    if end < text_length:
+        s.write(" <b>...</b>")
 
     return u"%s" % s.getvalue()
 
