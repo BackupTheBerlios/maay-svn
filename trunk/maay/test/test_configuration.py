@@ -75,9 +75,6 @@ if sys.platform == 'win32':
                 os.environ['PATH'] = oldpath
 else:
     print "****  Skipping Win32 tests on non-windows platforms"
-    print "****  (os.path.join(some_dir, 'c:\antiword') does not make"
-    print "****  sense on non-windows platform, and makes tests a lot "
-    print "****  more obfuscated and hard to read/maintain"
 
 if __name__ == '__main__':
     unittest.main()
