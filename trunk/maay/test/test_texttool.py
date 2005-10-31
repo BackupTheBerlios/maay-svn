@@ -182,23 +182,24 @@ class UtilitiesTC(unittest.TestCase):
         self.assertEquals(unicode, type(norm))
 
 class AbstractTC(unittest.TestCase):
-    def testMakeAbstract(self):
-        text = """This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA"""
+    text = "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA"
 
+    def testSimple(self):
         # Check excerpt at the beginning of the text
 
-        abstract = makeAbstract(text, [u"free"])
+        abstract = makeAbstract(self.text, [u"free"])
         self.assertEquals(u'This program is <b>free</b> software; you can redistribute it and/or modify it under the terms of <b>...</b>  Public License as published by the <b>Free</b> Software Foundation; either version 2 of the License, or (at your <b>...</b>  this program; if not, write to the <b>Free</b> Software Foundation, Inc., 51 <b>...</b>', abstract)
 
-        abstract = makeAbstract(text, [u"pUrPoSe"])
+    def testMixedCase(self):
+        abstract = makeAbstract(self.text, [u"pUrPoSe"])
         self.assertEquals(' <b>...</b>  or FITNESS FOR A PARTICULAR <b>PURPOSE</b>.  See the GNU General Public <b>...</b>', abstract)
 
-        # unknown word
-        abstract = makeAbstract(text, [u"FOOBAR"])
+    def testUnknownWord(self):
+        abstract = makeAbstract(self.text, [u"FOOBAR"])
         self.assertEquals('This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, <b>...</b>', abstract)
 
-        # word at the end of the text
-        abstract = makeAbstract(text, [u"Boston"])
+    def testWordAtEnd(self):
+        abstract = makeAbstract(self.text, [u"Boston"])
         self.assertEquals(' <b>...</b>  Inc., 51 Franklin St, Fifth Floor, <b>Boston</b>, MA  02110-1301 USA', abstract)
 
 
