@@ -137,7 +137,7 @@ class AnonymousQuerier:
     def __del__(self):
         print "Querier", self, "is being GCed ... "
         if self._cnx:
-            print " conection stats :", self._cnx.stat()
+            print " connection stats :", self._cnx.stat()
         self.close ()
 
     def findDocuments(self, query):
