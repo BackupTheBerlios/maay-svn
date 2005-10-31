@@ -41,7 +41,7 @@ class QuerierTC(unittest.TestCase):
                       'files', 'node_interests', 'nodes', 'words'):
             cursor.execute('DELETE FROM %s' % table)
         cursor.close()
-        self.cnx.close()
+        self.querier.close()
 
         
     def test_execute(self):
