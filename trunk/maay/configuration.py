@@ -103,7 +103,7 @@ class Configuration(BaseConfiguration):
     
 
     def get_config_dirs(self):
-        if sys.platform == "win32": # XXX: fix Win32 with self.config_dir attr
+        if sys.platform == "win32": # XXX: fix Win32 with self.config_name attr
             return [os.path.normpath(os.path.join(_get_data_dir(), '..'))]
         else:
             #XXX: should '.' really be an acceptable config dir ?
