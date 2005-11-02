@@ -106,6 +106,7 @@ class Configuration(BaseConfiguration):
         if sys.platform == "win32": # XXX: fix Win32 with self.config_dir attr
             return [os.path.normpath(os.path.join(_get_data_dir(), '..'))]
         else:
+            #XXX: should '.' really be an acceptable config dir ?
             return _filter_accessible_files([osp.join('/etc/', self.config_name),
                                              os.path.expanduser('~/.' + self.config_name),
                                             '.'])
