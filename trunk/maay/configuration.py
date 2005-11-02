@@ -76,10 +76,10 @@ def get_path_of(datafile):
     assert os.path.exists(path), "cannot find %s"%path
     return path
 
-def _filter_accessible_files(file_list):
+def _filter_files_with(file_list, access_criterium):
     res = []
     for file_obj in file_list:
-        if os.access(file_obj, os.R_OK):
+        if os.access(file_obj, access_criterium):
             res.append(file_obj)
     return res
 
@@ -113,9 +113,13 @@ class Configuration(BaseConfiguration):
             return [os.path.normpath(os.path.join(_get_data_dir(), '..'))]
         else:
             #XXX: should '.' really be an acceptable config dir ?
-            return _filter_accessible_files([osp.join('/etc/', self.config_name),
-                                             os.path.expanduser('~/.' + self.config_name),
-                                            '.'])
+            return _filter_files_with([osp.join('/etc/', self.config_name),
+                                       os.path.expanduser('~/.' + self.config_name),
+                                       '.'],
+                                      os.R_OK)
+
+    def get_writable_config_dirs(self):
+        return _filter_files_with(self.getconfig_dirs(), os.W_OK)
 
     def __getattr__(self, attrname):
         """delegate to self.config when accessing attr on

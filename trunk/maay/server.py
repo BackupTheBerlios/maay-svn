@@ -510,7 +510,7 @@ class WebappConfiguration(Configuration):
         return self.node_id
 
     def _read_node_id(self):
-        for directory in self.get_config_dirs():
+        for directory in self.get_writable_config_dirs():
             try:
                 filename = os.path.join(directory, self.nodeid_file)
                 f = open(filename,'r')
@@ -536,7 +536,7 @@ class WebappConfiguration(Configuration):
 
     def _write_node_id(self):
         node_id = self._generate_node_id()
-        for directory in self.get_config_dirs():
+        for directory in self.get_writable_config_dirs():
             try:
                 filename = os.path.join(directory, self.nodeid_file)
                 f = open(filename, 'w')
