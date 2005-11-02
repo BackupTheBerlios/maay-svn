@@ -119,7 +119,7 @@ class Configuration(BaseConfiguration):
                                       os.R_OK)
 
     def get_writable_config_dirs(self):
-        return _filter_files_with(self.getconfig_dirs(), os.W_OK)
+        return _filter_files_with(self.get_config_dirs(), os.W_OK)
 
     def __getattr__(self, attrname):
         """delegate to self.config when accessing attr on
