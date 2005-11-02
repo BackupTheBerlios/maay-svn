@@ -77,7 +77,7 @@ def get_path_of(datafile):
     return path
 
 def _filter_accessible_files(file_list):
-    res = [file_obj for file_obj in file_list]
+    res = []
     for file_obj in file_list:
         if os.access(file_obj, os.R_OK):
             res.append(file_obj)
