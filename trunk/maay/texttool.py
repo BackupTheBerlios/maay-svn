@@ -30,7 +30,7 @@ from cStringIO import StringIO
 from sets import Set
 
 from maay.image import get_ustring_from_exif, make_thumbnail, \
-     ImageConfiguration as ImConfig, NoThumbnailsDir
+     ImageConfiguration as ImConfig, NoThumbnailsDir, ThumbnailCreationError
 
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
@@ -230,7 +230,8 @@ class ExifParser(AbstractParser):
             try:
                 thumb = make_thumbnail(filepath, self.get_thumbnails_dir())
             except Exception, e:
-                print "Can't make thumbnail. Cause : %s", e
+                print "Can't make thumbnail. Cause : %s" % e
+                thumb = None
             return title, result, [thumb], 0
         except Exception, e:
             print "No EXIF nor thumbnails. Cause : %s" % e
