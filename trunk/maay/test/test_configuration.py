@@ -58,6 +58,10 @@ class WebappConfigTC(unittest.TestCase):
         self.assertEquals(config.db_host, 'truc')
         self.assertEquals(config.db_name, 'muche')
 
+    def testFilterAccessibleFiles(self): #XXX: what about Win32 ?
+        files = ['.', '/this/should/never/be/found/to/exist']
+        result = configuration._filter_accessible_files(files)
+        self.assertEquals(result, ['.'])
 
 if sys.platform == 'win32':
     class Win32ConfigTC(unittest.TestCase):

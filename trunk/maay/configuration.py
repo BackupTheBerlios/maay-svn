@@ -18,7 +18,7 @@
 
 __revision__ = '$Id$'
 
-import os
+import os, os.path as osp
 import sys
 
 from logilab.common.configuration import Configuration as BaseConfiguration
@@ -76,16 +76,22 @@ def get_path_of(datafile):
     assert os.path.exists(path), "cannot find %s"%path
     return path
 
-    
+def _filter_accessible_files(file_list):
+    res = [file_obj for file_obj in file_list]
+    for file_obj in file_list:
+        if os.access(file_obj, os.R_OK):
+            res.append(file_obj)
+    return res
 
 class Configuration(BaseConfiguration):
     options = []
     config_file = None
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, alternative_config_name=None):
         BaseConfiguration.__init__(self, options=self.options,
                                    config_file=self.config_file,
                                    name=name)
+        self.config_name = alternative_config_name or 'maay'
 
     def load(self):
         if self.config_file:
@@ -97,10 +103,12 @@ class Configuration(BaseConfiguration):
     
 
     def get_config_dirs(self):
-        if sys.platform == "win32":
+        if sys.platform == "win32": # XXX: fix Win32 with self.config_dir attr
             return [os.path.normpath(os.path.join(_get_data_dir(), '..'))]
         else:
-            return ['/etc/maay', os.path.expanduser('~/.maay'), '.']
+            return _filter_accessible_files([osp.join('/etc/', self.config_name),
+                                             os.path.expanduser('~/.' + self.config_name),
+                                            '.'])
 
     def __getattr__(self, attrname):
         """delegate to self.config when accessing attr on
