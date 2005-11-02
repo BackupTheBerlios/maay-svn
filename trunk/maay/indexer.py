@@ -77,6 +77,11 @@ class Indexer:
             if self.verbose:
                 print "Got failure from server:", errmsg
             raise MaayAuthenticationError("Failed to connect as '%s'" % username)
+        # we might be asked to purge everything and just exit
+        if indexerConfig['purge']:
+            self._purgeEverything()
+            sys.exit(0)
+            
         
     def getFileIterator(self, isPrivate=True):
         if isPrivate:
@@ -282,6 +287,12 @@ class IndexerConfiguration(Configuration):
           'help': 'enable verbose mode',
           "default": False,
           }),
+        ('purge',
+         {'type' : 'yn',
+          'help' : 'purge the set of indexed documents and returns immediately',
+          'metavar' : '<y or n>',
+          'default' : False,
+          }),
         ]
 
     config_file = 'indexer.ini'
@@ -290,10 +301,7 @@ class IndexerConfiguration(Configuration):
         Configuration.__init__(self, name="Indexer")
 
 
-def purge():
-    run(purge=True)
-
-def run(purge=False):
+def run():
     indexerConfig = IndexerConfiguration()
     indexerConfig.load()
     try:
@@ -302,10 +310,7 @@ def run(purge=False):
         except MaayAuthenticationError, exc:
             print "AuthenticationError:", exc
             sys.exit(1)
-        if not purge:
-            indexer.start()
-        else:
-            indexer._purgeEverything()
+        indexer.start()
     except socket.error, exc:
         print "Cannot contact server:", exc
         print "Check that the server is running on %s:%s" % \
