@@ -443,7 +443,7 @@ class IWebappConfiguration(Interface):
     """provide an interface in order to be able to remember webappconfig"""
 
 class WebappConfiguration(Configuration):
-    options = [
+    options = Configuration.options + [
         ('db-name',
          {'type' : "string", 'metavar' : "<dbname>", 'short' : "d",
           'help' : "name of the Maay database",
@@ -460,7 +460,6 @@ class WebappConfiguration(Configuration):
           'help': 'login of anonymous user to use to connect to the database',
           'default' : "maay",
           }),
-
         ('password',
          {'type': 'string',
           'metavar': '<password>', 'short' : "p",

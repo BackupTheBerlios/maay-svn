@@ -84,14 +84,20 @@ def _filter_accessible_files(file_list):
     return res
 
 class Configuration(BaseConfiguration):
-    options = []
+    options = [
+        ('config-name',
+         {'type' : "string", 'metavar' : "<config-name>", 'short' : "C",
+         'help' : "allow to specify a config directory name",
+          'default' : "maay",
+        })]
     config_file = None
 
-    def __init__(self, name=None, alternative_config_name=None):
+    def __init__(self, name=None):
         BaseConfiguration.__init__(self, options=self.options,
                                    config_file=self.config_file,
                                    name=name)
-        self.config_name = alternative_config_name or 'maay'
+        self.load_command_line_configuration()
+        self.config_name = self['config-name']
 
     def load(self):
         if self.config_file:
