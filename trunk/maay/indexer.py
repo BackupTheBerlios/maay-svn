@@ -226,7 +226,7 @@ class FileIterator:
 ## main() ##################################################
 
 class IndexerConfiguration(Configuration):
-    options = [
+    options = Configuration.options + [
         ('host',
          {'type' : "string", 'metavar' : "<host>", 'short' : "H",
           'help' : "where Maay node can be found",

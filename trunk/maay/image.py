@@ -28,7 +28,7 @@ class NoThumbnailsDir(Exception):
     pass
         
 class ImageConfiguration(Configuration):
-    options = [
+    options = Configuration.options + [
         ('thumbnails-dir',
          {'type' : "string", 'metavar' : "--thumbnailsdir", 'short' : "-thumbs",
           'help' : "Thumbnail files repository",
