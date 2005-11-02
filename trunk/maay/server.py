@@ -30,6 +30,7 @@ import time
 import os
 import re
 import socket
+from xmlrpclib import ServerProxy
 
 from zope.interface import implements, Interface
 
@@ -189,11 +190,38 @@ class SearchForm(MaayPage):
     def child_peers(self, context):
         return PeersList(self.maayId, self.querier)
 
+    def _harvest_peer_results(self, query, context):
+        results = []
+        webappConfig = IWebappConfiguration(context)
+        peers = self.querier.getActiveNeighbors(webappConfig.get_node_id(), 10)
+        print "SearchForm child_search peers = ", peers
+        for peer in peers:
+            server = ServerProxy('http://%s:%s' % (peer.ip, peer.port),
+                                 allow_none=True,
+                                 encoding='utf-8')
+            try:
+                cnxid, errmsg = server.authenticate('', '')
+            except Exception, e:
+                errmsg = "%s" % e
+            if errmsg:
+                print "For reason '%s', we couldn't authenticate with node %s:%s" \
+                      % (errmsg, peer.ip, peer.port)
+                continue # for whatever reason, we couldn't authenticate
+            try: #XXX: xmlrpc serialization problems arise here
+                results += server.findDocuments(cnxid, query)
+            except Exception, e:
+                print "SearchForm _harvest_peer_results pb : %s", e
+        return results
+
     def child_search(self, context):
         # query = unicode(context.arg('words'))        
         offset = int(context.arg('offset', 0))
-        query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'), offset)
-        results = self.querier.findDocuments(query)
+        rawQuery = unicode(context.arg('words'), 'utf-8')
+        query = Query.fromRawQuery(rawQuery, offset)
+        localResults = self.querier.findDocuments(query)
+        peerResults = self._harvest_peer_results(rawQuery, context)
+        print "Results from the peers :", peerResults
+        results = localResults + peerResults
         return ResultsPage(self.maayId, results, query)
 
     # XXX make sure that the requested document is really in the database
@@ -304,7 +332,7 @@ class MaayRealm:
                     print "Building search form for", avatarId
                     resc = SearchForm(avatarId, querier)
                 return inevow.IResource, resc, resc.logout
-            # if we wer asked for a querier
+            # if we were asked for a querier
             elif iface is IQuerier:
                 querier = self._getQuerier(avatarId)
                 if querier is None:
