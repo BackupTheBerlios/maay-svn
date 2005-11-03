@@ -27,9 +27,23 @@ from datetime import datetime
 from twisted.protocols.basic import LineReceiver
 
 class RegistrationServer(LineReceiver):
-    _registeredUsers = {}
+    #_registeredUsers = {} why class member ?
     # TODO: auto logout after a given time to save memory
-        
+
+    def __init__(self, autoExpirationDelayInSecs=3600):
+        self._autoExpirationDelayInSecs = autoExpirationDelayInSecs
+        self._registeredUsers = {}
+        self._ruTimestamp = {}
+
+    def _auto_logout_everybody(self):
+        """evicts registered nodes after some time
+        """
+        now = datetime.utcnow()
+        for nodeId, values in self._ruTimestamp.items():
+            dt = now - values
+            if dt.seconds > self._autoExpirationDelayInSecs:
+                del self._registeredUsers[nodeId]
+                del self._ruTimestamp[nodeId]
         
     def lineReceived(self, line):
         """received lines should match the following format :
@@ -50,21 +64,25 @@ class RegistrationServer(LineReceiver):
                     result = callback()
             else:
                 result = "received invalid action: <%s>" % action
+        self._auto_logout_everybody()
         
     def do_login(self, nodeId, ip, port, bandwidth):
         print "%s accepts %s" % (id(self), nodeId)
         if nodeId in self._registeredUsers:
             print "%s was already registered" % (nodeId,)
-        lastseen = datetime.utcnow().isoformat()
-        self._registeredUsers[nodeId] = (lastseen,
+        lastseen = datetime.utcnow()
+        self._ruTimestamp[nodeId] = lastseen
+        self._registeredUsers[nodeId] = (lastseen.isoformat(),
                                          nodeId,
                                          ip,
                                          port,
                                          bandwidth)
+        self._auto_logout_everybody()
 
     def do_logout(self, nodeId):
         try:
             del self._registeredUsers[nodeId]
+            del self._ruTimestamp[nodeId]
         except KeyError:
             print "%s was not registered" % (nodeId,)
 
