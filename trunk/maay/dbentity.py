@@ -125,11 +125,19 @@ class DBEntity(object):
         return str(self)
 
 
-class FutureDocument(DBEntity):
+class FutureDocument:
     """Represents a Document before it gets fed to the database"""
     attributes = ('filename', 'title', 'text', 'fileSize', 'lastModificationTime',
                   'content_hash', 'mime_type', 'state', 'file_state')
     key = ('content_hash',)
+
+    def __init__(self, **values):
+        for attrname, value in values.iteritems():
+            assert attrname in self.attributes, 'Unknown attribute %s' % attrname
+            setattr(self, attrname, value)
+        for keyattr in self.key:
+            assert keyattr in self.attributes, \
+                   "invalid value for key: %s" % keyattr
 
 class Document(DBEntity):
     """Represent a Document in the database
