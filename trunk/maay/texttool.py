@@ -36,7 +36,7 @@ WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
 
 MAX_EXCERPT = 5
-EXCERPT_MAX_LEN = 50
+EXCERPT_MAX_LEN = 70
 
 MAX_STORED_SIZE = 65535
 
@@ -361,13 +361,12 @@ def boldifyText(text, words):
     
 
 def computeExcerptPositions(text, words):
-    text = untagText(text)
     text_length = len(text)
 
 
 
     # quick and dirty regex...
-    rgx = re.compile('\W' + '\W|\W'.join(words) + '\W', re.I)
+    rgx = re.compile(r'\W' + r'\W|\W'.join(words) + r'\W', re.I)
 
     #
     # Get the best excerpt for the abstract :
@@ -384,7 +383,7 @@ def computeExcerptPositions(text, words):
 
     for occurence in rgx.finditer(text):
         foundWord = occurence.group(0)
-        start, end = occurence.start(), occurence.end()
+        start = occurence.start()
 
         if len(excerptPositions) >= MAX_EXCERPT:
             # remove one of excerpts which is the more frequent
@@ -394,12 +393,13 @@ def computeExcerptPositions(text, words):
 
             if wordOccurrences.get(foundWord) == max_occurence:
                 continue
-                
+                    
             for i in xrange(len(excerptPositions) - 1, 0, -1):
-                if wordOccurrences[excerptPositions[i][0]] == max_occurence:
-                    wordOccurrences[excerptPositions[i][0]] -= 1
-                    if wordOccurrences[excerptPositions[i][0]] == 0:
-                        del wordOccurrences[excerptPositions[i][0]]
+                word, position = excerptPositions[i]
+                if wordOccurrences[word] == max_occurence:
+                    wordOccurrences[word] -= 1
+                    if wordOccurrences[word] == 0:
+                        del wordOccurrences[word]
                     del excerptPositions[i]
 
         if wordOccurrences.has_key(foundWord):
@@ -409,8 +409,8 @@ def computeExcerptPositions(text, words):
 
         excerptPositions.append((foundWord, start))
 
-        if len(wordOccurrences.keys()) >= MAX_EXCERPT or \
-               (len(wordOccurrences.keys()) == len(words) and \
+        if len(wordOccurrences) >= MAX_EXCERPT or \
+               (len(wordOccurrences) == len(words) and \
                 len(excerptPositions) == MAX_EXCERPT):
             break
 
@@ -421,8 +421,11 @@ def makeAbstract(text, words):
     """return excerpts of the original text surrounding the word occurrences
     XXX: this is a less quick and dirty implementation
     """
+    text = untagText(text)
     excerptPositions = computeExcerptPositions(text, words)
+
     text_length = len(text)
+
     EXCERPT_MAX_HALF_LEN = EXCERPT_MAX_LEN / 2
 
     if not excerptPositions:
@@ -439,31 +442,35 @@ def makeAbstract(text, words):
     last_word = 0
 
     for word, position in excerptPositions:
-        if position - last_position < EXCERPT_MAX_LEN:
+        # merge snippets if they overlap
+        if position - last_position < EXCERPT_MAX_HALF_LEN:
             last_position = position
             last_word = word
             continue
-            
+
+        # in the general case (not first word)
         if start !=-1:
             end = last_position + EXCERPT_MAX_LEN + len(last_word)
-            if end >= text_length:
+            if end >= text_length: # address EOT
                 end = text_length
             else:
                 while text[end].isalpha():
-                   end -= 1
+                    end -= 1
 
             if start > 0:
                 s.write(" <b>...</b> ")
             s.write(boldifyText(text[start:end], words))
-
+            
         start = position - EXCERPT_MAX_HALF_LEN
-        if start < 0:
+        if start < 0: # address begining OT
             start = 0
         else:
-            while text[start].isalpha(): start += 1
+            while text[start].isalpha():
+                start += 1
 
         last_position = position
         last_word = word
+
 
     if start > 0:
         s.write(" <b>...</b> ")
@@ -479,4 +486,3 @@ def makeAbstract(text, words):
         s.write(" <b>...</b>")
 
     return u"%s" % s.getvalue()
-

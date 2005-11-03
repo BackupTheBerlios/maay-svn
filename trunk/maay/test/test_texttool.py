@@ -188,19 +188,23 @@ class AbstractTC(unittest.TestCase):
         # Check excerpt at the beginning of the text
 
         abstract = makeAbstract(self.text, [u"free"])
-        self.assertEquals(u'This program is <b>free</b> software; you can redistribute it and/or modify it under the terms of <b>...</b>  Public License as published by the <b>Free</b> Software Foundation; either version 2 of the License, or (at your <b>...</b>  this program; if not, write to the <b>Free</b> Software Foundation, Inc., 51 <b>...</b>', abstract)
+        expected = u'This program is <b>free</b> software; you can redistribute it and/or modify it under the terms of <b>...</b>  Public License as published by the <b>Free</b> Software Foundation; either version 2 of the License, or (at your <b>...</b>  this program; if not, write to the <b>Free</b> Software Foundation, Inc., 51 <b>...</b>'
+        self.assertEquals(expected, abstract)
 
     def testMixedCase(self):
         abstract = makeAbstract(self.text, [u"pUrPoSe"])
-        self.assertEquals(' <b>...</b>  or FITNESS FOR A PARTICULAR <b>PURPOSE</b>.  See the GNU General Public <b>...</b>', abstract)
+        expected = ' <b>...</b>  or FITNESS FOR A PARTICULAR <b>PURPOSE</b>.  See the GNU General Public <b>...</b>'
+        self.assertEquals(expected, abstract)
 
     def testUnknownWord(self):
         abstract = makeAbstract(self.text, [u"FOOBAR"])
-        self.assertEquals('This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, <b>...</b>', abstract)
+        expected = 'This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, <b>...</b>'
+        self.assertEquals(expected, abstract)
 
     def testWordAtEnd(self):
         abstract = makeAbstract(self.text, [u"Boston"])
-        self.assertEquals(' <b>...</b>  Inc., 51 Franklin St, Fifth Floor, <b>Boston</b>, MA  02110-1301 USA', abstract)
+        expected = ' <b>...</b>  Inc., 51 Franklin St, Fifth Floor, <b>Boston</b>, MA  02110-1301 USA'
+        self.assertEquals(expected, abstract)
 
 
 if __name__ == '__main__':
