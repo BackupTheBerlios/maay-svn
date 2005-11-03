@@ -56,81 +56,9 @@ class MaayPage(rend.Page):
         rend.Page.__init__(self)
         self.maayId = maayId
 
-#     def render_loginurl(self, context, data):
-#         url = URL.fromContext(context)
-#         store current URL into  'goThereAfter' to be able to return here
-#         after login
-#         goThereAfter = URL(url.scheme, url.netloc, url.pathList())
-#         if self.maayId != ANONYMOUS_AVATARID:
-#            goThereAfter = URL(url.scheme, url.netloc,
-#                               ['logout'] + url.pathList())
-#            context.fillSlots('actionlabel', 'Logout')
-#         else:
-#            goThereAfter = URL(url.scheme, url.netloc,
-#                               ['login'] + url.pathList())
-#            context.fillSlots('actionlabel', 'Login')            
-#         for param, value in url.queryList():
-#            goThereAfter = goThereAfter.add(param, value)
-#         context.fillSlots('loginurl', str(goThereAfter))
-#         return context.tag
-
     def macro_body(self, context):
         return self.bodyFactory
 
-#     def child_login(self, context):
-#         return LoginForm(self.maayId)
-
-#     def child_logout(self, context):
-#         print "sure we're not here ?"
-#         req = inevow.IRequest(context)
-#         req.getSession().expire()
-#         req.redirect('/' + guard.LOGOUT_AVATAR)
-
-class LoginForm(MaayPage):
-    """a basic login form. This page is rendered until the user
-    is logged.
-    """
-    # addSlash = True
-
-#     def path(self, context, data):
-#         here = URL.fromContext(context)
-#         # transform /login/somePathAndQuery into /__login__/somePathAndQuery
-#         # to benefit from nevow.guard redirection magic
-#         pathList = ['__login__'] + here.pathList()[1:]
-#         goThereAfter = URL(here.scheme, here.netloc,
-#                            pathList, here.queryList())
-#         return str(goThereAfter)
-
-#     bodyFactory = loaders.stan(
-#         tags.html[
-#             tags.head[tags.title["Maay Login Page",],
-#                       tags.link(rel='stylesheet', type='text/css', href='maay.css'),
-#                       tags.link(rel='shortcut icon', href='images/maay.ico'),
-#                       ],
-            
-#             tags.body[
-#                 # tags.form(action='/'+guard.LOGIN_AVATAR, render=path, method='post')[
-#                 tags.form(action=path, method='post')[
-#                     tags.table(_class="loginTable")[
-#                         tags.tr[
-#                             tags.td[ "Username :" ],
-#                             tags.td[ tags.input(type='text', name='username') ],
-#                             ],
-#                         tags.tr[
-#                             tags.td[ "Password :" ],
-#                             tags.td[ tags.input(type='password', name='password') ],
-#                             ]
-#                         ],
-#                     tags.input(type='submit'),
-#                     tags.p,
-#                     ]
-#                 ]
-#             ]
-#         )
-
-#     def childFactory(self, context, segments):
-#         print " child factory"
-#         return LoginForm()
 
 class PeersList(MaayPage):
     """display list of registered peers"""
