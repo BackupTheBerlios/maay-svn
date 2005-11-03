@@ -273,6 +273,12 @@ class AnonymousQuerier:
         node.commit(cursor, update=True)
         cursor.close()
 
+    def getRegisteredNeighbors(self, nodeId, nbNodes):
+        cursor = self._cnx.cursor() 
+        nodes = Node.selectRegistered(cursor, nodeId, nbNodes) 
+        cursor.close()
+        return nodes
+
     def getActiveNeighbors(self, nodeId, nbNodes):
         cursor = self._cnx.cursor() 
         nodes = Node.selectActive(cursor, nodeId, nbNodes) 
