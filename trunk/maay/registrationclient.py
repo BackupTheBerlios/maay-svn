@@ -62,7 +62,7 @@ def login(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidt
         d.addCallback(RegistrationClient.login, nodeId, nodeIP, xmlrpcPort, bandwidth)
         d.addCallback(RegistrationClient.who)
     else:
-        print "No querier found => no registration / no P2P"
+        print "Login : no querier found => no registration / no P2P"
 
 
 def logout(reactor, regIp, regPort, nodeId):
