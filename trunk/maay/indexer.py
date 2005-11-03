@@ -210,11 +210,13 @@ class FileIterator:
                     except UnicodeError:
                         dirpath = unicode(dirpath, 'iso-8859-1')
                     for filename in filenames:
+                    # FIXME: ugly patch to check if the filename should be encoded in utf-8 or iso-8859-1. A better solution is welcome...
+                        try:
+                            os.access(os.path.join(dirpath, unicode(filename, 'utf-8')), os.R_OK)
+                            filename = unicode(filename, 'utf-8')
+                        except UnicodeError:
+                            filename = unicode(filename, 'iso-8859-1')
                         if os.access(os.path.join(dirpath, filename), os.R_OK): # Can we open it ?
-                            try:
-                                filename = unicode(filename, 'utf-8')
-                            except UnicodeError:
-                                filename = unicode(filename, 'iso-8859-1')
                             yield os.path.join(dirpath, filename)
                     
     def _removeSkippedDirnames(self, dirpath, dirnames):
