@@ -88,11 +88,8 @@ class MaayRealm:
             # if we were asked for a web resource
             if iface is inevow.IResource:
                 querier = self._getQuerier(avatarId)
-                if querier is None:
-                    return inevow.IResource, LoginForm(), lambda: None
-                else:
-                    print "Building search form for", avatarId
-                    resc = SearchForm(avatarId, querier)
+                print "Building search form for", avatarId
+                resc = SearchForm(avatarId, querier)
                 return inevow.IResource, resc, resc.logout
             # if we were asked for a querier
             elif iface is IQuerier:
@@ -381,7 +378,8 @@ def run():
         reactor.run()
     finally:
         print "-----------Shutting down Server----------"
-        
+        # the following can't work : the reactor is dead when we want to logout
+        # for a fix, have a look at addSystemEventTrigger (twisted internet interfaces)
         registrationclient.logout(reactor,
                                   webappConfig.registration_host,
                                   webappConfig.registration_port,
