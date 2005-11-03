@@ -402,20 +402,25 @@ class Node(DBEntity):
                   'claim_count', 'affinity', 'bandwidth')
     key = ('node_id',)
 
-    def _selectActiveQuery(cls):
+    def _selectRegisteredNodesQuery(cls):
         query = cls._selectQuery()
         query += " WHERE node_id != %s ORDER BY last_seen_time DESC LIMIT %s"
         return query
     
-    _selectActiveQuery = classmethod(_selectActiveQuery)
+    _selectRegisteredNodesQuery = classmethod(_selectRegisteredNodesQuery)
 
-    def selectActive(cls, cursor, currentNodeId, maxResults):
-        query = cls._selectActiveQuery()
+    def selectRegistered(cls, cursor, currentNodeId, maxResults):
+        query = cls._selectRegisteredNodesQuery()
         cursor.execute(query, (currentNodeId, maxResults))
         results = cursor.fetchall()
         return [cls(**dict(zip(cls.attributes, row))) for row in results]
+    selectRegistered = classmethod(selectRegistered)
+
+    def selectActive(cls, cursor, currentNodeId, maxResults):
+        registered = cls.selectRegistered(cursor, currentNodeId, maxResults)
+        print "Node selectActive active :", registered
+        return registered
     selectActive = classmethod(selectActive)
-        
 
     def getRpcUrl(self):
         return 'http://%s:%s' % (self.ip, self.port)
