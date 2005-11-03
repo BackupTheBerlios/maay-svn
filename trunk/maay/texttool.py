@@ -375,7 +375,8 @@ def makeAbstract(text, words):
     # Get the best excerpt for the abstract :
     # - excerpt for most words of the query
     # - first occurence of words
-    #
+    #   - would be even better : enough occurences (if available)
+    #     to fill a handful of lines
 
     # wordOccurrences[word] = #nb of occurences
     wordOccurrences = {}
