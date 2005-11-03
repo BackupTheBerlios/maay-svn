@@ -23,7 +23,7 @@ import os.path as osp
 import re
 
 from maay import configuration
-from maay.server import WebappConfiguration
+from maay.server import ServerConfiguration
 
 class WebappConfigTC(unittest.TestCase):
 
@@ -34,7 +34,7 @@ class WebappConfigTC(unittest.TestCase):
                 ('maay --db-host foo --db-name maille', ('foo', 'maille')),
                 ]
         for cmdLine, (expectedHost, expectedDatabase) in data:
-            config = WebappConfiguration()
+            config = ServerConfiguration()
             sys.argv = cmdLine.split()
             config.load()
             self.assertEquals(config.db_host, expectedHost)
@@ -44,14 +44,14 @@ class WebappConfigTC(unittest.TestCase):
     #      this test needs to be run first. This is a BUG that I
     #      could not fix easily.
     def test0FromConfigFile(self):
-        config = WebappConfiguration()
+        config = ServerConfiguration()
         config.config_file = osp.join(osp.dirname(__file__), 'data', 'webapp1.ini')
         config.load()
         self.assertEquals(config.db_host, 'eusebius')
         self.assertEquals(config.db_name, 'maay')
 
     def testFromBoth(self):
-        config = WebappConfiguration()
+        config = ServerConfiguration()
         sys.argv = 'maay --db-host truc'.split()
         config.config_file = osp.join(osp.dirname(__file__), 'data', 'webapp2.ini')
         config.load()

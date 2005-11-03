@@ -35,7 +35,7 @@ from twisted.python.failure import Failure
 from maay import rpc
 from maay.dbentity import Document
 from maay.querier import MaayQuerier, AnonymousQuerier, ANONYMOUS_AVATARID
-from maay.server import MaayPortal, WebappConfiguration
+from maay.server import MaayPortal, ServerConfiguration
 
 class FakeConnection:
     def cursor(self):
@@ -72,7 +72,7 @@ rpc.make_uid = lambda username, password: username+password
 
 class RPCServerTC(unittest.TestCase):
     def setUp(self):
-        portal = MaayPortal(WebappConfiguration())
+        portal = MaayPortal(ServerConfiguration())
         portal.registerChecker(FakeChecker(portal.realm))
         self.portal = portal
         rpcserver = server.Site(rpc.MaayRPCServer(None, portal))

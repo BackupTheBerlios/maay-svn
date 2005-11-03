@@ -18,11 +18,6 @@
 
 __revision__ = '$Id$'
 
-from datetime import datetime
-import warnings
-warnings.filterwarnings("ignore", ".*", DeprecationWarning, "nevow.static")
-warnings.filterwarnings("ignore", ".*", DeprecationWarning, "twisted.python.reflect")
-warnings.filterwarnings("ignore", ".*", DeprecationWarning, "twisted.web.woven")
 
 import platform
 import sha
@@ -30,21 +25,17 @@ import time
 import os
 import re
 import socket
-from xmlrpclib import ServerProxy
 
-from zope.interface import implements, Interface
+from zope.interface import implements
 
-from twisted.cred import portal, checkers, error
-from twisted.cred.checkers import ANONYMOUS, AllowAnonymousAccess, \
+from twisted.cred import portal, error
+from twisted.cred.checkers import AllowAnonymousAccess, \
      ICredentialsChecker
 from twisted.cred.credentials import IAnonymous, IUsernamePassword
 from twisted.internet import reactor, defer
 from twisted.web import server
-from twisted.web import static
 from twisted.python import failure
-
-from nevow import inevow, rend, tags, guard, loaders, appserver
-from nevow.url import URL
+from nevow import inevow, appserver, guard
 
 # These imports are not used, but they help py2exe tremendously.
 # Do not remove them (that is, unless we change the database backend
@@ -55,244 +46,13 @@ import twisted.web.woven.guard
 import MySQLdb
 # end of py2exe helping imports
 
-from logilab.common.textutils import normalize_text
-
 from maay.querier import MaayQuerier, IQuerier, AnonymousQuerier, \
-     MaayAuthenticationError, ANONYMOUS_AVATARID, WEB_AVATARID
+     MaayAuthenticationError, WEB_AVATARID
 from maay.rpc import MaayRPCServer
-from maay.configuration import get_path_of, Configuration
-from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
+from maay.configuration import Configuration
 from maay import registrationclient
-from maay.query import Query
+from maay.webapplication import Maay404, IServerConfiguration, SearchForm
 
-
-class MaayPage(rend.Page):
-    docFactory = loaders.xmlfile(get_path_of('skeleton.html'))
-    child_maaycss = static.File(get_path_of('maay.css'))
-    child_images = static.File(get_path_of('images/'))
-
-    def __init__(self, maayId=WEB_AVATARID):
-        rend.Page.__init__(self)
-        self.maayId = maayId
-
-#     def render_loginurl(self, context, data):
-#         url = URL.fromContext(context)
-#         store current URL into  'goThereAfter' to be able to return here
-#         after login
-#         goThereAfter = URL(url.scheme, url.netloc, url.pathList())
-#         if self.maayId != ANONYMOUS_AVATARID:
-#            goThereAfter = URL(url.scheme, url.netloc,
-#                               ['logout'] + url.pathList())
-#            context.fillSlots('actionlabel', 'Logout')
-#         else:
-#            goThereAfter = URL(url.scheme, url.netloc,
-#                               ['login'] + url.pathList())
-#            context.fillSlots('actionlabel', 'Login')            
-#         for param, value in url.queryList():
-#            goThereAfter = goThereAfter.add(param, value)
-#         context.fillSlots('loginurl', str(goThereAfter))
-#         return context.tag
-
-    def macro_body(self, context):
-        return self.bodyFactory
-
-    def child_login(self, context):
-        return LoginForm(self.maayId)
-
-    def child_logout(self, context):
-        print "sure we're not here ?"
-        req = inevow.IRequest(context)
-        req.getSession().expire()
-        req.redirect('/' + guard.LOGOUT_AVATAR)
-
-# class LoginForm(MaayPage):
-#     """a basic login form. This page is rendered until the user
-#     is logged.
-#     """
-#     # addSlash = True
-
-#     def path(self, context, data):
-#         here = URL.fromContext(context)
-#         # transform /login/somePathAndQuery into /__login__/somePathAndQuery
-#         # to benefit from nevow.guard redirection magic
-#         pathList = ['__login__'] + here.pathList()[1:]
-#         goThereAfter = URL(here.scheme, here.netloc,
-#                            pathList, here.queryList())
-#         return str(goThereAfter)
-
-#     bodyFactory = loaders.stan(
-#         tags.html[
-#             tags.head[tags.title["Maay Login Page",],
-#                       tags.link(rel='stylesheet', type='text/css', href='maay.css'),
-#                       tags.link(rel='shortcut icon', href='images/maay.ico'),
-#                       ],
-            
-#             tags.body[
-#                 # tags.form(action='/'+guard.LOGIN_AVATAR, render=path, method='post')[
-#                 tags.form(action=path, method='post')[
-#                     tags.table(_class="loginTable")[
-#                         tags.tr[
-#                             tags.td[ "Username :" ],
-#                             tags.td[ tags.input(type='text', name='username') ],
-#                             ],
-#                         tags.tr[
-#                             tags.td[ "Password :" ],
-#                             tags.td[ tags.input(type='password', name='password') ],
-#                             ]
-#                         ],
-#                     tags.input(type='submit'),
-#                     tags.p,
-#                     ]
-#                 ]
-#             ]
-#         )
-
-#     def childFactory(self, context, segments):
-#         print " child factory"
-#         return LoginForm()
-
-class PeersList(MaayPage):
-    """display list of registered peers"""
-    bodyFactory = loaders.xmlfile(get_path_of('peers.html'))
-    addSlash = True
-
-    def __init__(self, maayId, querier):
-        MaayPage.__init__(self, maayId)
-        self.querier = querier
-
-    def data_peers(self, context, data):
-        webappConfig = IWebappConfiguration(context)
-        myNodeId = webappConfig.get_node_id()
-        print "PeerList data_peers : my_node_id =", myNodeId
-        peers = self.querier.getActiveNeighbors(myNodeId, 10)
-        return peers
-    
-    def render_peer(self, context, peerNode):
-        # Note: might be convenient to register a special flattener for
-        #       Node objects
-        for attrname in ('node_id', 'ip', 'port', 'last_seen_time',
-                         'claim_count', 'affinity', 'bandwidth'):
-            context.fillSlots(attrname, getattr(peerNode, attrname, 'N/A'))
-        return context.tag
-                    
-class SearchForm(MaayPage):
-    """default search form"""
-    bodyFactory = loaders.xmlfile(get_path_of('searchform.html'))
-    addSlash = True
-
-    def __init__(self, maayId, querier):
-        MaayPage.__init__(self, maayId)
-        self.querier = querier
-
-    def logout(self):
-        print "Bye %s !" % (self.maayId,)
-        # XXX: logout message should be forwarded to registration server
-        return None
-
-    def child_peers(self, context):
-        return PeersList(self.maayId, self.querier)
-
-    def _harvest_peer_results(self, query, context):
-        results = []
-        webappConfig = IWebappConfiguration(context)
-        peers = self.querier.getActiveNeighbors(webappConfig.get_node_id(), 10)
-        print "SearchForm child_search peers = ", peers
-        for peer in peers:
-            server = ServerProxy('http://%s:%s' % (peer.ip, peer.port),
-                                 allow_none=True,
-                                 encoding='utf-8')
-            try:
-                cnxid, errmsg = server.authenticate('', '')
-            except Exception, e:
-                errmsg = "%s" % e
-            if errmsg:
-                print "For reason '%s', we couldn't authenticate with node %s:%s" \
-                      % (errmsg, peer.ip, peer.port)
-                continue # for whatever reason, we couldn't authenticate
-            try: #XXX: xmlrpc serialization problems arise here
-                results += server.findDocuments(cnxid, query)
-            except Exception, e:
-                print "SearchForm _harvest_peer_results pb : %s", e
-        return results
-
-    def child_search(self, context):
-        # query = unicode(context.arg('words'))        
-        offset = int(context.arg('offset', 0))
-        rawQuery = unicode(context.arg('words'), 'utf-8')
-        query = Query.fromRawQuery(rawQuery, offset)
-        localResults = self.querier.findDocuments(query)
-        peerResults = self._harvest_peer_results(rawQuery, context)
-        print "Results from the peers :", peerResults
-        results = localResults + peerResults
-        return ResultsPage(self.maayId, results, query)
-
-    # XXX make sure that the requested document is really in the database
-    # XXX don't forget to update the download statistics of the document
-    def child_download(self, context):
-        docid = context.arg('docid')
-        # query = unicode(context.arg('words'))
-        query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'))
-        docurl = self.querier.notifyDownload(docid, query.words)
-        if docurl:
-            return static.File(docurl)
-        else:
-            return Maay404()
-
-
-class ResultsPage(MaayPage):
-    """default results page"""
-    bodyFactory = loaders.xmlfile(get_path_of('resultpage.html'))
-    addSlash = False
-    
-    def __init__(self, maayId, results, query):
-        MaayPage.__init__(self, maayId)
-        self.results = results
-        self.query = query.words # unicode(query)
-
-    def data_results(self, context, data):
-        return self.results
-
-    def render_title(self, context, data):
-        context.fillSlots('words', self.query)
-        return context.tag
-
-    def render_searchfield(self, context, data):
-        context.fillSlots('words', self.query)
-        return context.tag
-
-    def render_prevset_url(self, context, data):
-        words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'), 'utf-8')))
-        offset = int(context.arg('offset', 0))
-        if offset:
-            offset -= 15
-        return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
-
-    def render_nextset_url(self, context, data):
-        words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'), 'utf-8')))
-        offset = int(context.arg('offset', 0)) + 15
-        return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
-
-    
-    def render_row(self, context, data):
-        document = data
-	words = self.query.split()
-        context.fillSlots('mime_type', re.sub("/", "_", document.mime_type))
-        context.fillSlots('doctitle', tags.xml(boldifyText(document.title, words)))
-        # XXX abstract attribute should be a unicode string
-        try:
-            abstract = makeAbstract(document.text, words)
-            abstract = normalize_text(unicode(abstract))
-        except Exception, exc:
-            print exc
-            abstract = u'No abstract available for this document [%s]' % exc
-        context.fillSlots('abstract', tags.xml(abstract))
-        context.fillSlots('docid', document.db_document_id)
-        context.fillSlots('docurl', tags.xml(boldifyText(document.url, words)))
-        context.fillSlots('words', self.query)
-        context.fillSlots('readable_size', document.readable_size())
-        date = datetime.fromtimestamp(document.publication_time)
-        context.fillSlots('publication_date', date.strftime('%d %b %Y'))
-        return context.tag
 
 ## nevow app/server setup ############################################
 
@@ -460,19 +220,9 @@ class DBAuthChecker:
         return defer.succeed(creds.username)
 
 
-class Maay404(rend.FourOhFour):
-    """Maay specific resource for 404 errors"""
-    loader = loaders.xmlfile(get_path_of('notfound.html'))
 
-    def renderHTTP_notFound(self, context):
-        """Render a not found message to the given request.
-        """
-        return self.loader.load(context)[0]
 
-class IWebappConfiguration(Interface):
-    """provide an interface in order to be able to remember webappconfig"""
-
-class WebappConfiguration(Configuration):
+class ServerConfiguration(Configuration):
     options = Configuration.options + [
         ('db-name',
          {'type' : "string", 'metavar' : "<dbname>", 'short' : "d",
@@ -606,13 +356,13 @@ class MaaySessionWrapper(guard.SessionWrapper):
     
     
 def run():
-    webappConfig = WebappConfiguration()
+    webappConfig = ServerConfiguration()
     webappConfig.load()
     maayPortal = MaayPortal(webappConfig)
     website = appserver.NevowSite(MaaySessionWrapper(maayPortal,
                                                      mindFactory=MaayMindFactory))
     website.remember(Maay404(), inevow.ICanHandleNotFound)
-    website.remember(webappConfig, IWebappConfiguration)
+    website.remember(webappConfig, IServerConfiguration)
     registrationclient.login(reactor,
                              webappConfig.registration_host, webappConfig.registration_port,
                              maayPortal.webQuerier,
@@ -631,10 +381,13 @@ def run():
         reactor.run()
     finally:
         print "-----------Shutting down Server----------"
+        
         registrationclient.logout(reactor,
                                   webappConfig.registration_host,
                                   webappConfig.registration_port,
                                   webappConfig.get_node_id())
+        
+        
 
 if __name__ == '__main__':
     run()
