@@ -261,24 +261,28 @@ class IndexerConfiguration(Configuration):
         ('private-index-dir',
          {'type': 'csv',
           'metavar': '<csv>', 'short': 'i',
-          'help': 'index this directory with the private indexer'
+          'help': 'index this directory with the private indexer',
+          'default' : []
           }),
          
         ('private-skip-dir',
          {'type': 'csv',
           'metavar': '<csv>', 'short': 's',
-          'help': 'the private indexer will skip this directory'
+          'help': 'the private indexer will skip this directory',
+          'default' : []
           }),
         ('public-index-dir',
          {'type': 'csv',
           'metavar': '<csv>', 'short': 'I',
-          'help': 'index this directory with the public indexer'
+          'help': 'index this directory with the public indexer',
+          'default' : []
           }),
          
         ('public-skip-dir',
          {'type': 'csv',
           'metavar': '<csv>', 'short': 'S',
-          'help': 'the public indexer will skip this directory'
+          'help': 'the public indexer will skip this directory',
+          'default' : []
           }),
 
         ('verbose',
