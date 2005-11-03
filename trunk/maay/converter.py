@@ -175,8 +175,11 @@ class CommandBasedConverter(BaseConverter):
         try:
             if errcode == 0: # OK
                 parser = self.getParser()
-                return parser.parseFile(outputFile, osp.basename(filepath),
+                try:
+                    return parser.parseFile(outputFile, osp.basename(filepath),
                                         self.OUTPUT_ENCODING)
+                except IOError:
+                    raise IndexationFailure('Unable to index %r' % filepath)
             else:
                 raise IndexationFailure('Unable to index %r' % filepath)
         finally:
