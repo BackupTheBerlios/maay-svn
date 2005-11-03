@@ -460,6 +460,7 @@ def makeAbstract(text, words):
             if start > 0:
                 s.write(" <b>...</b> ")
             s.write(boldifyText(text[start:end], words))
+            s.write(" <b>...</b><br> ")
             
         start = position - EXCERPT_MAX_HALF_LEN
         if start < 0: # address begining OT
