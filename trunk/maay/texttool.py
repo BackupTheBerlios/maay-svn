@@ -35,8 +35,8 @@ from maay.image import get_ustring_from_exif, make_thumbnail, \
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
 
-MAX_EXCERPT = 3 
-EXCERPT_MAX_LEN = 70
+MAX_EXCERPT = 5
+EXCERPT_MAX_LEN = 50
 
 MAX_STORED_SIZE = 65535
 
@@ -358,15 +358,13 @@ def boldifyText(text, words):
     s.write(text[end:])
     return u"%s" % s.getvalue()
 
-def makeAbstract(text, words):
-    """return excerpts of the original text surrounding the word occurrences
-    XXX: this is a less quick and dirty implementation
-    """
+    
 
+def computeExcerptPositions(text, words):
     text = untagText(text)
     text_length = len(text)
 
-    EXCERPT_MAX_HALF_LEN = EXCERPT_MAX_LEN / 2
+
 
     # quick and dirty regex...
     rgx = re.compile('\W' + '\W|\W'.join(words) + '\W', re.I)
@@ -416,9 +414,16 @@ def makeAbstract(text, words):
                 len(excerptPositions) == MAX_EXCERPT):
             break
 
-    #
-    # Build abstract
-    #
+    return excerptPositions
+
+
+def makeAbstract(text, words):
+    """return excerpts of the original text surrounding the word occurrences
+    XXX: this is a less quick and dirty implementation
+    """
+    excerptPositions = computeExcerptPositions(text, words)
+    text_length = len(text)
+    EXCERPT_MAX_HALF_LEN = EXCERPT_MAX_LEN / 2
 
     if not excerptPositions:
         if text_length >= 200:
