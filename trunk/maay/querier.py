@@ -139,7 +139,7 @@ class AnonymousQuerier:
         print "Querier", self, "is being GCed ... "
         if self._cnx:
             print " connection stats :", self._cnx.stat()
-        self.close()
+            self.close()
 
     def findDocuments(self, query):
         """Find all indexed documents matching the query"""
@@ -256,6 +256,7 @@ class AnonymousQuerier:
 
 
     def registerNode(self, nodeId, ip, port, bandwidth, lastSeenTime=None):
+        print "AnonymousQuerier registerNode %s %s:%s" % (nodeId, ip, port)
         lastSeenTime = lastSeenTime or int(time.time())
         cursor = self._cnx.cursor()
         node = Node.selectOrInsertWhere(cursor, node_id=nodeId)[0]
