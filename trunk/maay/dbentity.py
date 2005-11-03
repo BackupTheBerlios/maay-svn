@@ -417,10 +417,26 @@ class Node(DBEntity):
     selectRegistered = classmethod(selectRegistered)
 
     def selectActive(cls, cursor, currentNodeId, maxResults):
+        """idea : filter the registered Nodes to get only truly active ones
+           we should profit from this to also ask the registration server
+           about the Nodes it knows (the importance of the reg. server
+           shall decay in the future, when the network of live maay
+           peers will be vast enough so as to avoid its fragmentation into
+           small unconnected groups of Nodes)
+        """
         registered = cls.selectRegistered(cursor, currentNodeId, maxResults)
         print "Node selectActive active :", registered
-        return registered
+        active = []
+        for node in registered:
+            if node.isAlive():
+                active.append(node)
+        return active
     selectActive = classmethod(selectActive)
+
+    def isAlive(self):
+        """instant liveness check of a distant Node (stub)
+        """
+        return True
 
     def getRpcUrl(self):
         return 'http://%s:%s' % (self.ip, self.port)
