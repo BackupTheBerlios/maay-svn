@@ -624,8 +624,11 @@ def run():
                                           maayPortal))
     reactor.listenTCP(webappConfig.webserver_port, website)
     reactor.listenTCP(webappConfig.rpcserver_port, rpcserver)
-    print "In the mainloop ..."
-    reactor.run()
+    try:
+        print "-------------Server mainloop-------------"
+        reactor.run()
+    finally:
+        print "-----------Shutting down Server----------"
 
 if __name__ == '__main__':
     run()
