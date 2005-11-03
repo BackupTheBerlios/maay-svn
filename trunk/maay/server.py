@@ -162,7 +162,9 @@ class PeersList(MaayPage):
 
     def data_peers(self, context, data):
         webappConfig = IWebappConfiguration(context)
-        peers = self.querier.getActiveNeighbors(webappConfig.get_node_id(), 10)
+        myNodeId = webappConfig.get_node_id()
+        print "PeerList data_peers : my_node_id =", myNodeId
+        peers = self.querier.getActiveNeighbors(myNodeId, 10)
         return peers
     
     def render_peer(self, context, peerNode):
@@ -629,6 +631,10 @@ def run():
         reactor.run()
     finally:
         print "-----------Shutting down Server----------"
+        registrationclient.logout(reactor,
+                                  webappConfig.registration_host,
+                                  webappConfig.registration_port,
+                                  webappConfig.get_node_id())
 
 if __name__ == '__main__':
     run()
