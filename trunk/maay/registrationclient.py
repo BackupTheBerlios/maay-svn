@@ -24,12 +24,13 @@ class RegistrationClient(LineReceiver):
         self.__callback = nodeRegistrationCallback
         
     def login(self, nodeId, ip, port, bandwidth) :
-        print "login to registration server"
+        print "login to registration server (node %s at %s:%s)" % (nodeId, ip, port)
         self.transport.write('login:%s:%s:%s:%s\r\n' % (nodeId, ip,
                                                      port, bandwidth))
         return self
 
     def logout(self, nodeId):
+        print "logout from registration server (node %s)" % nodeId
         self.transport.write('logout:%s\r\n' % nodeId)
         self.transport.loseConnection()
 
@@ -66,7 +67,7 @@ def login(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidt
 
 
 def logout(reactor, regIp, regPort, nodeId):
+    print "Registration@%s:%s (node %s) wants to log out." % (regIp, regPort, nodeId)
     c = ClientCreator(reactor, RegistrationClient, None)
-    d = c.connectTCP(regIP, regPort)
+    d = c.connectTCP(regIp, regPort)
     d.addCallback(RegistrationClient.logout)
-
