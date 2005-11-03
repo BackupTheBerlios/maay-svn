@@ -67,7 +67,7 @@ def login(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidt
 
 
 def logout(reactor, regIp, regPort, nodeId):
-    print "Registration@%s:%s (node %s) wants to log out." % (regIp, regPort, nodeId)
+    print "Registrator@%s:%s node %s wants to log out." % (regIp, regPort, nodeId)
     c = ClientCreator(reactor, RegistrationClient, None)
     d = c.connectTCP(regIp, regPort)
     d.addCallback(RegistrationClient.logout)

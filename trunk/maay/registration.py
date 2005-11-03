@@ -80,6 +80,7 @@ class RegistrationServer(LineReceiver):
         self._auto_logout_everybody()
 
     def do_logout(self, nodeId):
+        print "logout request from node %s" % nodeId
         try:
             del self._registeredUsers[nodeId]
             del self._ruTimestamp[nodeId]
