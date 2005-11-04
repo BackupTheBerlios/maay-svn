@@ -100,7 +100,9 @@ class BaseConverter:
             return parser.parseFile(filepath, osp.basename(filepath),
                                     self.OUTPUT_ENCODING)
         except ParsingError, exc:
-            raise IndexationFailure("Cannot index document %s (%s)" % (filepath, exc))
+            raise IndexationFailure("Cannot parse document %s (because %s)" % (filepath, exc))
+        except IOError, exc:
+            raise IndexationFailure("Cannot read document %s (because %s)" % (filepath, exc))
 
 
 class RawTextConverter(BaseConverter):
