@@ -27,12 +27,13 @@ from datetime import datetime
 from twisted.protocols.basic import LineReceiver
 
 class RegistrationServer(LineReceiver):
-    #_registeredUsers = {} why class member ?
+    # define this as a static class member since a new instance of the class
+    # is created after each request
+    _registeredUsers = {} 
     # TODO: auto logout after a given time to save memory
 
     def __init__(self, autoExpirationDelayInSecs=3600):
         self._autoExpirationDelayInSecs = autoExpirationDelayInSecs
-        self._registeredUsers = {}
         self._ruTimestamp = {}
 
     def _auto_logout_everybody(self):
@@ -42,7 +43,7 @@ class RegistrationServer(LineReceiver):
         for nodeId, values in self._ruTimestamp.items():
             dt = now - values
             if dt.seconds > self._autoExpirationDelayInSecs:
-                del self._registeredUsers[nodeId]
+                del RegistrationServer._registeredUsers[nodeId]
                 del self._ruTimestamp[nodeId]
         
     def lineReceived(self, line):
@@ -68,11 +69,11 @@ class RegistrationServer(LineReceiver):
         
     def do_login(self, nodeId, ip, port, bandwidth):
         print "%s accepts %s" % (id(self), nodeId)
-        if nodeId in self._registeredUsers:
+        if nodeId in RegistrationServer._registeredUsers:
             print "%s was already registered" % (nodeId,)
         lastseen = datetime.utcnow()
         self._ruTimestamp[nodeId] = lastseen
-        self._registeredUsers[nodeId] = (lastseen.isoformat(),
+        RegistrationServer._registeredUsers[nodeId] = (lastseen.isoformat(),
                                          nodeId,
                                          ip,
                                          port,
@@ -82,14 +83,14 @@ class RegistrationServer(LineReceiver):
     def do_logout(self, nodeId):
         print "logout request from node %s" % nodeId
         try:
-            del self._registeredUsers[nodeId]
+            del RegistrationServer._registeredUsers[nodeId]
             del self._ruTimestamp[nodeId]
         except KeyError:
             print "%s was not registered" % (nodeId,)
 
     def do_who(self):
         """returns the list of logged in nodes"""
-        nodes = self._registeredUsers.values()
+        nodes = RegistrationServer._registeredUsers.values()
         nodes.sort()
         nodes.reverse()
         for nodeinfo in nodes:
