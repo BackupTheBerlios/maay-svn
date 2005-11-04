@@ -6,7 +6,7 @@
 #B   _ ajouter d'autres convertisseurs (XML, code source) (2005.09.30)
 #B   X traiter les changements d'état des fichiers indexés (en particulier suppression) (2005.09.27)
 #B   X Faire fonctionner le xmlrpc avec utf-8 (2005.09.27)
-#B   X vérifier qu'on utiliser de l'UTF-8 partout (2005.09.27)
+#B   X vérifier qu'on utilise de l'UTF-8 partout (2005.09.27)
 #B   X gérer les documents compressés (2005.09.28)
 #B   X Regarder la conversion pdf->html (2005.09.28)
 #B   _ utiliser des macros pour gérer l'aspect commun de toutes les pages (2005.10.18)
