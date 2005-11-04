@@ -81,13 +81,14 @@ class P2pQuerier:
     """
     _queries = {} 
     
-    def __init__(self, nodeId, querier):  # about those ? 
+    def __init__(self, nodeId, querier):
         self.nodeId = nodeId  
         self.querier = querier
 
     def sendQuery(self, query):
         for neighbor in self._selectTargetNeighbors(query):
             proxy = Proxy(neighbor.getRpcUrl())
+            # below : returns a deferred
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
             print "sent %s to %s" % (query, neighbor)
@@ -117,7 +118,7 @@ class P2pQuerier:
         
         for document in answer.documents:
             # TODO: record answer in database if local is False
-            if query.isKnown(document):
+            if not query.isKnown(document):
                 self.query.addMatch(document)
                 toSend.append(document.asDictionnary())
         
@@ -136,7 +137,7 @@ class P2pQuerier:
     def _selectTargetNeighbors(self, query):
         """return a list of nodes to which the query will be sent.
         """
-        nbNodes = 2**(max(0, 5-query.ttl))
+        nbNodes = 2**(max(5, query.ttl))
         # TODO: use the neighbors' profiles to route requests
         return self.querier.getActiveNeighbors(self.nodeId, nbNodes)
         
