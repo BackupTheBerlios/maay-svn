@@ -72,6 +72,9 @@ class ConvertersTC(unittest.TestCase):
     def testIndexationFailure(self):
         self.assertRaises(converter.IndexationFailure, converter.extractWordsFromFile,
                           'AUTHORS')
+        self.assertRaises(converter.IndexationFailure, converter.extractWordsFromFile,
+                          'bogus.txt.gz')
+
 
 if __name__ == '__main__':
     unittest.main()

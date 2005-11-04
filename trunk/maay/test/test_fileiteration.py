@@ -115,7 +115,14 @@ class FileIterationTC(unittest.TestCase):
                         abspath(join(DATADIR, 'b', 'c', 'e', 'foobar')),
                         ])
         self.assertEquals(Set(it), expected)
-        
+
+    def testDontChokeOnWeirdFilename(self):
+        """we should iter without pain on everything in DATADIR, including
+           the file whose name begins with an &acirc;
+        """
+        it = FileIterator(DATADIR)
+        for filename in it:
+            pass
         
 if __name__ == '__main__':
     unittest.main()
