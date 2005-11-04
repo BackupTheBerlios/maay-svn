@@ -422,29 +422,7 @@ class Node(DBEntity):
     selectRegistered = classmethod(selectRegistered)
 
     def selectActive(cls, cursor, currentNodeId, maxResults):
-        """idea : filter the registered Nodes to get only truly active ones
-           we should profit from this to also ask the registration server
-           about the Nodes it knows (the importance of the reg. server
-           shall decay in the future, when the network of live maay
-           peers will be vast enough so as to avoid its fragmentation into
-           small unconnected groups of Nodes)
-           how to proceed : it would be nice to ask the registrar and ping
-           all registered nodes at once, then wait until everybody has answered
-           (in short : use futures) ... even nicer, add a timeout constraint,
-           especially on the 'ping registered nodes' part
-        """
-        registered = cls.selectRegistered(cursor, currentNodeId, maxResults)
-        active = []
-        for node in registered:
-            if node.isAlive():
-                active.append(node)
-        return active
-    selectActive = classmethod(selectActive)
-
-    def isAlive(self):
-        """instant liveness check of a distant Node (stub)
-        """
-        return True
+        return cls.selectRegistered(cursor, currentNodeId, maxResults)
 
     def getRpcUrl(self):
         return 'http://%s:%s' % (self.ip, self.port)
