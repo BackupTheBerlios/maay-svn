@@ -378,13 +378,6 @@ def run():
         reactor.run()
     finally:
         print "-----------Shutting down Server----------"
-        # the following can't work : the reactor is dead when we want to logout
-        # for a fix, have a look at addSystemEventTrigger (twisted internet interfaces)
-        registrationclient.logout(reactor,
-                                  webappConfig.registration_host,
-                                  webappConfig.registration_port,
-                                  webappConfig.get_node_id())
-        
         
 
 if __name__ == '__main__':
