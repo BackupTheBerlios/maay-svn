@@ -97,12 +97,6 @@ class MaayRPCServer(XMLRPC):
             querier = self._sessions[cnxId]
             return querier.getIndexedFiles()
         return []
-
-    def xmlrpc_findDocuments(self, cnxId, query):
-        if self.cnxIsValid(cnxId):
-            queryAsObj = Query.fromRawQuery(query)
-            return self._sessions[cnxId].findDocuments(queryAsObj)
-        return []
         
     def xmlrpc_removeFileInfo(self, cnxId, filename):
         if self.cnxIsValid(cnxId):
@@ -150,7 +144,7 @@ class MaayRPCServer(XMLRPC):
         return self.nodeId
 
     def xmlrpc_distributedQueryAnswer(self, queryId, senderId, documents):
-        answer = P2pAnswer()
+        answer = P2pAnswer() # FIXME: fill in objects
         d = reactor.callLater(.01, self._p2pQuerier.receiveAnswer,answer)
         return self.nodeId
                          
