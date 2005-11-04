@@ -428,9 +428,12 @@ class Node(DBEntity):
            shall decay in the future, when the network of live maay
            peers will be vast enough so as to avoid its fragmentation into
            small unconnected groups of Nodes)
+           how to proceed : it would be nice to ask the registrar and ping
+           all registered nodes at once, then wait until everybody has answered
+           (in short : use futures) ... even nicer, add a timeout constraint,
+           especially on the 'ping registered nodes' part
         """
         registered = cls.selectRegistered(cursor, currentNodeId, maxResults)
-        print "Node selectActive active :", registered
         active = []
         for node in registered:
             if node.isAlive():
