@@ -4,8 +4,11 @@
 """
 
 #XXX: robustify this against missing PIL
-import Image
-    
+try:
+    import Image
+except:
+    print "Python Imaging Library not installed for your version of Python.",
+    print "EXIF support will not work."
     
 # Mapping from number to (descriptor, type)
 exif_dict = {

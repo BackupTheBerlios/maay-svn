@@ -1,6 +1,11 @@
 """Some utilities to manipulate images"""
 
-import Image
+try:
+    import Image
+except:
+    print "Python Imaging Library not installed for your version of Python.",
+    print "Thumbnail support will not work."
+
 from tempfile import mkdtemp
 import stat, os, os.path as osp
 from maay.exif import *
