@@ -256,7 +256,8 @@ class AnonymousQuerier:
 
 
     def registerNode(self, nodeId, ip, port, bandwidth, lastSeenTime=None):
-        print "AnonymousQuerier registerNode %s %s:%s" % (nodeId, ip, port)
+        """this will be used as a callback in registrationclient/login"""
+        print "AnonymousQuerier registerNode (callback) %s %s:%s" % (nodeId, ip, port)
         lastSeenTime = lastSeenTime or int(time.time())
         cursor = self._cnx.cursor()
         node = Node.selectOrInsertWhere(cursor, node_id=nodeId)[0]
