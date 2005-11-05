@@ -120,9 +120,7 @@ class FileIterationTC(unittest.TestCase):
         """we should iter without pain on everything in DATADIR, including
            the file whose name begins with an &acirc;
         """
-        it = FileIterator(DATADIR)
-        for filename in it:
-            pass
+        l = list(FileIterator(DATADIR))
         
 if __name__ == '__main__':
     unittest.main()

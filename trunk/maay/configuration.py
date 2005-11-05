@@ -77,11 +77,8 @@ def get_path_of(datafile):
     return path
 
 def _filter_files_with(file_list, access_criterium):
-    res = []
-    for file_obj in file_list:
-        if os.access(file_obj, access_criterium):
-            res.append(file_obj)
-    return res
+    return [file_obj for file_obj in file_list
+            if os.access(file_obj, access_criterium)]
 
 class Configuration(BaseConfiguration):
     options = [
