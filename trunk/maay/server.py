@@ -360,14 +360,14 @@ def run():
                                                      mindFactory=MaayMindFactory))
     website.remember(Maay404(), inevow.ICanHandleNotFound)
     website.remember(webappConfig, IServerConfiguration)
-    presenceclient.login(reactor,
-                             webappConfig.registration_host, webappConfig.registration_port,
-                             maayPortal.webQuerier,
-                             webappConfig.get_node_id(),
-                             socket.gethostbyname(socket.gethostname()),
-                             webappConfig.rpcserver_port,
-                             webappConfig.bandwidth)
-                                                  
+    presenceclient.notify(reactor,
+                          webappConfig.registration_host, webappConfig.registration_port,
+                          maayPortal.webQuerier,
+                          webappConfig.get_node_id(),
+                          socket.gethostbyname(socket.gethostname()),
+                          webappConfig.rpcserver_port,
+                          webappConfig.bandwidth)
+    
                              
     rpcserver = server.Site(MaayRPCServer(webappConfig.get_node_id(),
                                           maayPortal))
