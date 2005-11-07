@@ -39,7 +39,7 @@ Windows (échec si Maay est en cours d'exécution, fichiers de la base
 de données MySQL encore présents sur le disque après la
 désinstallation).
 
-L'installeur windows doit configurer automatiquement les répertoires
+L'installeur Windows doit configurer automatiquement les répertoires
 indexés :
 
  * répertoire public : "bureau\Maay Documents" (à créer lors de
@@ -50,7 +50,7 @@ indexés :
 Requêtes distribuées
 --------------------
 
-Keller demande ce qui se passe si un Noeud Maay pervertit le protocol,
+Keller demande ce qui se passe si un Noeud Maay pervertit le protocole,
 par exemple en ne fermant pas une connexion réseau suite à un appel
 xmlrpc. Fayolle répond que la réponse n'est pas connue. Il est conclu
 de noter ce problème mais de ne pas le traiter pour le moment.
@@ -66,7 +66,7 @@ Pour ce qui est des réponses à une requête distribuée :
  * ne renvoyer que les 10 documents les plus récents
 
 L'affichage des résultats doit se faire par un mécanisme de
-rafraîchissement de l'affichage par le navigateur web: premier
+rafraîchissement de l'affichage par le navigateur web : premier
 affichage 1,5 secondes après l'envoi de la requête distribuée,
 deuxième affichage 5 secondes plus tard, troisième et dernier
 affichage 15 secondes plus tard. Veiller à ne pas réémettre la requête
@@ -101,7 +101,7 @@ FTRD s'occupe de transformer le serveur d'enregistrement en serveur de
 présence. 
 
 Les questions concernant les installeurs seront traitées une fois que
-les précents points auront été résolus.
+les précédents points auront été résolus.
 
 La prochaine réunion aura lieu par téléphone le 9 Nov. à 14h30.
 
