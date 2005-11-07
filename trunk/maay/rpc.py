@@ -134,6 +134,8 @@ class MaayRPCServer(XMLRPC):
         return 0
 
     def xmlrpc_distributedQuery(self, queryId, sender, ttl, words, mime_type):
+        print "MaayRPCServer distributedQuery : %s %s %s %s %s" % \
+              (queryId, sender, ttl, words, mime_type)
         query = P2pQuery(queryId,
                          sender,
                          ttl,
@@ -144,6 +146,8 @@ class MaayRPCServer(XMLRPC):
         return self.nodeId
 
     def xmlrpc_distributedQueryAnswer(self, queryId, senderId, documents):
+        print "MaayRPCServer distributedQueryAnswer : %s %s %s" % \
+              (queryId, senderId, documents)
         answer = P2pAnswer() # FIXME: fill in objects
         d = reactor.callLater(.01, self._p2pQuerier.receiveAnswer,answer)
         return self.nodeId
