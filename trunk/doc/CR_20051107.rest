@@ -1,0 +1,110 @@
+=========================================
+Compte rendu de la réunion du 7 Nov. 2005
+=========================================
+
+Participants
+~~~~~~~~~~~~
+
+Joaquin Keller (FTRD)
+Frédéric Dang Ngoc (FTRD)
+Alexandre Fayolle (Logilab)
+
+But de la réunion
+~~~~~~~~~~~~~~~~~
+
+Dang NGoc a du temps pour travailler sur le code de Maay. La réunion
+vise a identifier les tâches et à les répartir entre FTRD et Logilab.
+
+Échéances
+~~~~~~~~~~
+
+Démonstration publique le 30 Nov. 
+
+On a besoin d'une version distribuable le 15 Nov.
+
+Points abordés
+~~~~~~~~~~~~~~
+
+Installeurs
+----------
+
+Keller a installé Maay récemment sur une machine RedHat Fedora. Il a
+trouvé la tâche ardue en raison des dépendances requises dans des
+versions récentes. 
+
+Fayolle mentionne un travail en cours sur des paquets Debian.
+
+Keller note certains problèmes avec la désinstallation de Maay sous
+Windows (échec si Maay est en cours d'exécution, fichiers de la base
+de données MySQL encore présents sur le disque après la
+désinstallation).
+
+L'installeur windows doit configurer automatiquement les répertoires
+indexés :
+
+ * répertoire public : "bureau\Maay Documents" (à créer lors de
+   l'installation)
+
+ * répertoires privés : bureau de l'utilisateur, "Mes Documents"
+
+Requêtes distribuées
+--------------------
+
+Keller demande ce qui se passe si un Noeud Maay pervertit le protocol,
+par exemple en ne fermant pas une connexion réseau suite à un appel
+xmlrpc. Fayolle répond que la réponse n'est pas connue. Il est conclu
+de noter ce problème mais de ne pas le traiter pour le moment.
+
+Il faut s'assurer que l'échec de connexion à un noeud est traité
+correctement.
+
+Pour ce qui est des réponses à une requête distribuée :
+
+ * ne renvoyer que le texte correspondant au contexte de la requête et
+   pas tout le texte du document stocké en base
+
+ * ne renvoyer que les 10 documents les plus récents
+
+L'affichage des résultats doit se faire par un mécanisme de
+rafraîchissement de l'affichage par le navigateur web: premier
+affichage 1,5 secondes après l'envoi de la requête distribuée,
+deuxième affichage 5 secondes plus tard, troisième et dernier
+affichage 15 secondes plus tard. Veiller à ne pas réémettre la requête
+lors des demandes de rafraîchissement.
+
+Les documents affichés sur l'interface web doivent être triés par
+date, les plus récents étant affichés en premier (à défaut de
+ranking).
+
+Serveur d'enregistrement
+-------------------
+
+Keller dit que le serveur d'enregistrement devrait être un serveur de
+présence. L'idée qu'un noeud se désenregistre est abandonnée. Par
+contre chaque noeud devra envoyer un message de présence toutes les
+heures, et le serveur d'enregistrement nettoiera les noeuds inactifs
+depuis plus d'une heure.
+
+Divers
+------
+
+Il faudrait changer les endroits où l'on parle de serveur (server)
+pour utiliser le terme noeud (node). 
+
+Conclusion de la réunion
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Logilab s'occupe des requêtes distribuées et du renommage de server en
+node.
+
+FTRD s'occupe de transformer le serveur d'enregistrement en serveur de
+présence. 
+
+Les questions concernant les installeurs seront traitées une fois que
+les précents points auront été résolus.
+
+La prochaine réunion aura lieu par téléphone le 9 Nov. à 14h30.
+
+ -- Alexandre Fayolle <alexandre.fayolle@logilab.fr>  Mon,  7 Nov 2005 11:53:09 +0100
+
+
