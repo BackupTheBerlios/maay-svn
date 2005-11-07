@@ -26,7 +26,7 @@ Points abordés
 ~~~~~~~~~~~~~~
 
 Installeurs
-----------
+-----------
 
 Keller a installé Maay récemment sur une machine RedHat Fedora. Il a
 trouvé la tâche ardue en raison des dépendances requises dans des
