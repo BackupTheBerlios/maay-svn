@@ -19,9 +19,9 @@
 from twisted.application import service, internet
 from twisted.internet.protocol import ServerFactory
 
-from maay.registration import RegistrationServer
+from maay.presenceserver import PresenceServer
 
-application = service.Application("registrationServer")
+application = service.Application("presenceServer")
 factory = ServerFactory()
-factory.protocol = RegistrationServer
+factory.protocol = PresenceServer
 internet.TCPServer(2345, factory, interface='').setServiceParent(application)
