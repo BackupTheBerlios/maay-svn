@@ -48,12 +48,31 @@ class FileIterationTC(unittest.TestCase):
             for filename in filenames:
                 touch(join(realpath, filename))
 
+        f = open(join(DATADIR, '\xe2\x99\xaa\xe2\x99\xac'), 'w')
+        f.write("""After
+% kbd_mode -u
+% echo -e '\033%8'
+% loadkeys
+control shift keycode 59 = U+266a
+control shift keycode 60 = U+266C
+%
+I typed this file and called it by the two-symbol name
+ctrl-shift-F1 ctrl-shift-F2.
+
+In order to tell `ls' not to be afraid, give it the `-N' flag.
+Give `less' the `-r' flag.
+""")
+        f.close()
+        
+
+        
     def tearDown(self):
         for dirpath, filenames in self.pathList:
             realpath = join(DATADIR, dirpath)
             for filename in filenames:
                 os.remove(join(realpath, filename))
             os.removedirs(realpath)
+        os.remove(join(DATADIR, '\xe2\x99\xaa\xe2\x99\xac'))
 
     def testDirCreation(self):
         """make sure all paths in pathList have been created"""
@@ -121,6 +140,7 @@ class FileIterationTC(unittest.TestCase):
            the file whose name begins with an &acirc;
         """
         l = list(FileIterator(DATADIR))
+        self.assertEquals(l, [])
         
 if __name__ == '__main__':
     unittest.main()
