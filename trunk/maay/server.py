@@ -50,7 +50,7 @@ from maay.querier import MaayQuerier, IQuerier, AnonymousQuerier, \
      MaayAuthenticationError, WEB_AVATARID
 from maay.rpc import MaayRPCServer
 from maay.configuration import Configuration
-from maay import registrationclient
+from maay import presenceclient
 from maay.webapplication import Maay404, IServerConfiguration, SearchForm
 
 
@@ -360,7 +360,7 @@ def run():
                                                      mindFactory=MaayMindFactory))
     website.remember(Maay404(), inevow.ICanHandleNotFound)
     website.remember(webappConfig, IServerConfiguration)
-    registrationclient.login(reactor,
+    presenceclient.login(reactor,
                              webappConfig.registration_host, webappConfig.registration_port,
                              maayPortal.webQuerier,
                              webappConfig.get_node_id(),
