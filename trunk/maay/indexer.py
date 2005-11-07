@@ -185,8 +185,8 @@ class Indexer:
 class FileIterator:
     """provide a simple way to walk through indexed dirs"""
     def __init__(self, indexed, skipped=[]):
-        assert((type(indexed)==list or type(indexed)==tuple) and \
-               (type(skipped)==list or type(skipped)==tuple))
+        assert((type(indexed) in (list, tuple)) and
+               (type(skipped) in (list,tuple)))
         self.indexed = [os.path.abspath(os.path.expanduser(p)) for p in indexed]
         self.skipped = [os.path.abspath(os.path.expanduser(p)) for p in skipped]
         self.skipped = [self.normalizeCase(p) for p in self.skipped]

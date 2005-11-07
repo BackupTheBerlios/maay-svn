@@ -143,6 +143,13 @@ Give `less' the `-r' flag.
             l = list(FileIterator([DATADIR]))
         except:
             self.fail("Exception while iterating on %s"%DATADIR)
+
+    def testValidateFileIteratorTypeCheckOnInit(self):
+        """FileIterator.__init__ type checks ints indexed and skipped
+           parameters : ensure it does
+        """
+        ofBogusType = "foo"
+        self.assertRaises(AssertionError, FileIterator, ofBogusType)
         
 if __name__ == '__main__':
     unittest.main()
