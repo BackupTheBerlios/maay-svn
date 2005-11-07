@@ -19,29 +19,28 @@ from twisted.internet.protocol import ClientCreator
 from twisted.protocols.basic import LineReceiver
 from time import mktime
 
-class RegistrationClient(LineReceiver):
-    """Client-side stuff to ask/request things from the registration server.
-       Tightly coupled with registration.py
+class PresenceClient(LineReceiver):
+    """Client-side stuff to ask/request things from the presence server.
+       Tightly coupled with presenceserver.py
     """
-    
-    def __init__(self, nodeRegistrationCallback):
-        self._callback = nodeRegistrationCallback
+ 
+    def __init__(self, nodePresenceCallback):
+        self.__callback = nodePresenceCallback
         self._lineCount = 0
         
-    def login(self, nodeId, ip, port, bandwidth) :
-        print "RegistrationClient login to registration server (node %s at %s:%s)" \
-              % (nodeId, ip, port)
-        self.transport.write('login:%s:%s:%s:%s\r\n' \
-                             % (nodeId, ip, port, bandwidth))
+    def notify(self, nodeId, ip, port, bandwidth) :
+        print "notify to presence server (node %s at %s:%s)" % (nodeId, ip, port)
+        self.transport.write('notify:%s:%s:%s:%s\r\n' % (nodeId, ip,
+                                                     port, bandwidth))
         return self
 
     def logout(self, nodeId):
-        print "RegistrationClient logout from registration server (node %s)" % nodeId
+        print "logout from presence server (node %s)" % nodeId
         self.transport.write('logout:%s\r\n' % nodeId)
         self.transport.loseConnection()
 
     def who(self):
-        print "RegistrationClient who"
+        print "PresenceClient who"
         self.transport.write('who:\r\n')
 
     def lineReceived(self, data):
@@ -54,7 +53,7 @@ class RegistrationClient(LineReceiver):
            """
         self._lineCount += 1
         data = data.strip()
-        print "RegistrationClient lineReceived (%s) said %s" % (self._lineCount, data)
+        print "PresenceClient lineReceived (%s) said %s" % (self._lineCount, data)
         if data.startswith('EOT'):
             self.transport.loseConnection()
             return
@@ -70,16 +69,16 @@ def parseTime(isodatetime):
     return mktime(tuple(date+time+[0,0,0]))
 
 
-def login(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidth):
+def notify(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidth):
     """registers and transmits the node catalog to querier.registerNode
     """
     if querier is not None:
-        c = ClientCreator(reactor, RegistrationClient, querier.registerNode)
+        c = ClientCreator(reactor, PresenceClient, querier.registerNode)
         d = c.connectTCP(regIP, regPort)
-        d.addCallback(RegistrationClient.login, nodeId, nodeIP, xmlrpcPort, bandwidth)
-        d.addCallback(RegistrationClient.who)
+        d.addCallback(PresenceClient.notify, nodeId, nodeIP, xmlrpcPort, bandwidth)
+        d.addCallback(PresenceClient.who)
     else:
-        print "Login : no querier found => no registration / no P2P"
+        print "Login : no querier found => no presence / no P2P"
 
 def askWho(reactor, regIp, regPort, callback):
     """transmits node catalog to the callback"""
@@ -88,7 +87,7 @@ def askWho(reactor, regIp, regPort, callback):
     d.addCallback(RegistrationClient.who)
 
 def logout(reactor, regIp, regPort, nodeId):
-    print "Registrator@%s:%s node %s wants to log out." % (regIp, regPort, nodeId)
-    c = ClientCreator(reactor, RegistrationClient, None)
+    print "PresenceClient@%s:%s node %s wants to log out." % (regIp, regPort, nodeId)
+    c = ClientCreator(reactor, PresenceClient, None)
     d = c.connectTCP(regIp, regPort)
-    d.addCallback(RegistrationClient.logout)
+    d.addCallback(PresenceClient.logout)
