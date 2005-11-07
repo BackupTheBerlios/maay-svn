@@ -139,8 +139,10 @@ Give `less' the `-r' flag.
         """we should iter without pain on everything in DATADIR, including
            the file whose name begins with an &acirc;
         """
-        l = list(FileIterator(DATADIR))
-        self.assertEquals(l, [])
+        try:
+            l = list(FileIterator([DATADIR]))
+        except:
+            self.fail("Exception while iterating on %s"%DATADIR)
         
 if __name__ == '__main__':
     unittest.main()
