@@ -423,6 +423,7 @@ class Node(DBEntity):
 
     def selectActive(cls, cursor, currentNodeId, maxResults):
         return cls.selectRegistered(cursor, currentNodeId, maxResults)
+    selectActive = classmethod(selectActive)
 
     def getRpcUrl(self):
         return 'http://%s:%s' % (self.ip, self.port)
