@@ -35,7 +35,7 @@ class PresenceServer(LineReceiver):
     _ruTimestamp = {}
     # TODO: auto logout after a given time to save memory
 
-    def __init__(self, autoExpirationDelayInSecs=3600):
+    def __init__(self, autoExpirationDelayInSecs=3600*24):
         self._autoExpirationDelayInSecs = autoExpirationDelayInSecs
 
     def _auto_logout_everybody(self):
@@ -82,9 +82,6 @@ class PresenceServer(LineReceiver):
         # private IP address, use those from the TCP socket
         # - the presence server tries to connect to the client to test
         # the information...
-        h = self.transport.getHost()
-        ip = h.host
-        port = str(h.port)
         if verbose:
            print "Notification from %s:%s (id:%s)" % (ip, port, nodeId)
         if nodeId in PresenceServer._registeredUsers:
