@@ -72,6 +72,7 @@ def parseTime(isodatetime):
 def notify(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidth):
     """registers and transmits the node catalog to querier.registerNode
     """
+    print "PresenceClient notify %s %s" % (nodeIP, xmlrpcPort)
     if querier is not None:
         c = ClientCreator(reactor, PresenceClient, querier.registerNode)
         d = c.connectTCP(regIP, regPort)
