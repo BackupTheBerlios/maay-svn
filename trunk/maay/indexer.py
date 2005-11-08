@@ -32,12 +32,13 @@ from xmlrpclib import ServerProxy, Binary, Fault, ProtocolError
 import mimetypes
 import socket
 
+import maay.indexer
 from maay import converter
 from maay.configuration import Configuration
 from maay.dbentity import FutureDocument, Document, FileInfo
 from maay.querier import MaayAuthenticationError
 from maay.texttool import removeControlChar
-
+from thread import start_new_thread
 
 def makeDocumentId(filename):
     """return the SHA hash value from of the contents of the file"""
@@ -312,6 +313,21 @@ def run():
         print "Check that the server is running on %s:%s" % \
               (indexerConfig.host, indexerConfig.port)
         sys.exit(1)
+
+running = False
+
+def _run_thread():
+    maay.indexer.running = True
+    try:
+        run()
+    finally:    
+        maay.indexer.running = False
+
+def start_as_thread():
+    if maay.indexer.running:
+        print "Indexer already running"
+        return
+    start_new_thread(_run_thread, ())
 
 if __name__ == '__main__':
     run()

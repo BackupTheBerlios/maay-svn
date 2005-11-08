@@ -34,6 +34,7 @@ from maay.configuration import get_path_of
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
 from maay.query import Query
 from maay.p2pquerier import P2pQuerier, P2pQuery
+import maay.indexer
 
 class IServerConfiguration(Interface):
     """provide an interface in order to be able to remember webappconfig"""
@@ -103,6 +104,22 @@ class SearchForm(MaayPage):
     def child_peers(self, context):
         return PeersList(self.maayId, self.querier)
 
+    def child_indexation(self, context):
+        start = int(context.arg('start', 0))
+        if start == 0:
+            if maay.indexer.running:
+                msg = "Indexer running"
+            else:
+                msg = "Indexer not running"
+        else:
+            if maay.indexer.running:    
+                msg = "Indexer already running"
+            else:
+                msg = "Indexer started"
+                maay.indexer.start_as_thread()
+
+        return IndexationPage(msg)
+
     def _askForPeerResults(self, query, context):
         """Launches a P2P cascade of queries
            The result of this shall be used ~ 5 and 15 secs. later
@@ -137,6 +154,20 @@ class SearchForm(MaayPage):
         else:
             return Maay404()
 
+
+class IndexationPage(MaayPage):
+    # just for the demo. Should be moved to a adminpanel interface later.
+    """index page"""
+    bodyFactory = loaders.xmlfile(get_path_of('indexationpage.html'))
+    addSlash = False
+    
+    def __init__(self, msg = "No message"):
+        MaayPage.__init__(self)
+        self.__msg = msg
+
+    def render_message(self, context, data):
+        context.fillSlots('msg', self.__msg)
+        return context.tag
 
 class ResultsPage(MaayPage):
     """default results page"""
