@@ -65,6 +65,11 @@ class P2pAnswer:
         self.queryId = queryId
         self.documents = documents
 
+def sendQueryProblem(*args):
+    """Politely displays any problem (bug, unavailability) related
+       to an attempt to send a query.
+    """
+    print " ... problem sending the query : %s" % args
 
 class P2pQuerier:
     """The P2pQuerier class is responsible for managing P2P queries.
@@ -93,11 +98,13 @@ class P2pQuerier:
             # below : returns a deferred
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
+            d.addErrback(sendQueryProblem)
             print " ... sent to %s" % neighbor
 
     def receiveQuery(self, query):
         print "P2pQuerier receiveQuery : %s" % query
-        if query.id in self._queries: 
+        if query.id in self._queries:
+            print " ... we already know this query"
             return
         
         self._queries[query.id] = query 
@@ -107,13 +114,13 @@ class P2pQuerier:
             self.sendQuery(query)
 
         documents = self.querier.findDocuments(query.query)
-        self.receiveAnswer(P2pAnswer(query.id, documents))
+        self.sendAnswer(P2pAnswer(query.id, documents))
 
-    def receiveAnswer(self, answer, local=False):
-        print "P2pQuerier receiveAnswer : %s" % answer
+    def sendAnswer(self, answer, local=False): # local still unused
         """record and forward answers to a query.
         If local is True, then the answers come from a local query,
         and thus must not be recorded in the database"""
+        print "P2pQuerier sendAnswer : %s" % answer
         query = self._queries.get(answer.queryId)
         if query is None: # would be a bug or something nasty
             return
@@ -129,7 +136,9 @@ class P2pQuerier:
         if query.sender != self.nodeId: 
             try:
                 # getNodeUrl seems not to exist yet
-                senderUrl = self.querier.getNodeUrl(query.sender)
+                #senderUrl = self.querier.getNodeUrl(query.sender)
+                senderUrl = 'http://%s:%s' % (query.sender.ip,
+                                              query.sender.port)
                 proxy = Proxy(senderUrl)
                 d = proxy.callRemote('distributedQueryAnswer',
                                      query.id,
