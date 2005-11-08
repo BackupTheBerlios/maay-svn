@@ -212,7 +212,7 @@ class RTFConverter(CommandBasedConverter, RawTextConverter):
     OUTPUT_TYPE = 'html'
     MIME_TYPES = ('text/rtf',)
 
-class MSWordConverter(CommandBasedConverter):
+class MSWordConverter(CommandBasedConverter, RawTextConverter):
     COMMAND = 'antiword "%(input)s" > "%(output)s"'
     MIME_TYPES = ('application/msword',)
 
