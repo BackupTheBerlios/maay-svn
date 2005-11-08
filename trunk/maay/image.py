@@ -50,8 +50,7 @@ class ImageConfiguration(Configuration):
                         self.get('thumbnails-dir'))
         if not os.access(path, os.W_OK):
             try:
-                os.makedirs(path, os.W_OK)
-                os.chmod(path, stat.S_IRWXG)
+                os.makedirs(path, stat.S_IRWXU)
             except Exception, e:
                 raise NoThumbnailsDir("Impossible to access or create %s. "
                                       "Cause : %e" % (path, e))
