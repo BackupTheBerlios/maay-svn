@@ -59,7 +59,7 @@ class PresenceClient(LineReceiver):
             return
         time, nodeId, nodeIP, nodePort, nodeBandwidth = data.split('\t')
         lastSeenTime = parseTime(time)
-        self._callback(nodeId, nodeIP, nodePort, nodeBandwidth, lastSeenTime)
+        self.__callback(nodeId, nodeIP, nodePort, nodeBandwidth, lastSeenTime)
         
 
 def parseTime(isodatetime):
