@@ -38,7 +38,7 @@ class P2pQueryTC(unittest.TestCase):
     def testAddMatch(self):
         doc = Document(document_id = '0'*40)
         self.query.addMatch(doc)
-        self.failUnless('0'*40 in self.query.documents)
+        self.failUnless('0'*40 in self.query.documents_ids)
 
     def testIsKnown(self):
         doc = Document(document_id = '0'*40)

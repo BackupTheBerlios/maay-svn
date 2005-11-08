@@ -28,9 +28,9 @@ from maay.querier import MaayQuerier, normalizeText, FutureDocument, Document, F
 
 class QuerierTC(unittest.TestCase):
     def setUp(self):
-        self.cnx = get_connection(driver='mysql', host='crater',
-                                  database='maay_test', user='adim',
-                                  password='adim')
+        self.cnx = get_connection(driver='mysql', host='localhost',
+                                  database='maay_test', user='maay',
+                                  password='maay')
         self.querier = MaayQuerier(connection=self.cnx)
         self.nodeId = '0'*40
         self.querier.registerNode(self.nodeId, "127.0.0.1", 6789, 10)
