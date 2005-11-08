@@ -34,17 +34,17 @@ class P2pQuery:
         self.sender = sender
         self.ttl = ttl
         self.query = query
-        self.query.searchtype = 'p2p'
-        self.documents = set()
+        #self.query.searchtype = 'p2p'
+        self.documents_ids = set()
 
     def hop(self):
         self.ttl -= 1
 
     def addMatch(self, document):
-        self.documents.add(document.document_id)
+        self.documents_ids.add(document.document_id)
 
     def isKnown(self, document):
-        return document.document_id in self.documents
+        return document.document_id in self.documents_ids
  
     def asKwargs(self):
         """return a dictionnary of arguments suitable for use as a
@@ -64,6 +64,7 @@ class P2pAnswer:
     def __init__(self, queryId, documents):
         self.queryId = queryId
         self.documents = documents
+
 
 class P2pQuerier:
     """The P2pQuerier class is responsible for managing P2P queries.
@@ -86,14 +87,16 @@ class P2pQuerier:
         self.querier = querier
 
     def sendQuery(self, query):
+        print "P2pQuerier sendQuery : %s" % query
         for neighbor in self._selectTargetNeighbors(query):
-            proxy = Proxy(neighbor.getRpcUrl())
+            proxy = Proxy(str(neighbor.getRpcUrl())) # chokes on unicode
             # below : returns a deferred
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
-            print "sent %s to %s" % (query, neighbor)
+            print " ... sent to %s" % neighbor
 
     def receiveQuery(self, query):
+        print "P2pQuerier receiveQuery : %s" % query
         if query.id in self._queries: 
             return
         
@@ -107,11 +110,12 @@ class P2pQuerier:
         self.receiveAnswer(P2pAnswer(query.id, documents))
 
     def receiveAnswer(self, answer, local=False):
+        print "P2pQuerier receiveAnswer : %s" % answer
         """record and forward answers to a query.
         If local is True, then the answers come from a local query,
         and thus must not be recorded in the database"""
         query = self._queries.get(answer.queryId)
-        if query is None:
+        if query is None: # would be a bug or something nasty
             return
         
         toSend = []
@@ -122,8 +126,9 @@ class P2pQuerier:
                 self.query.addMatch(document)
                 toSend.append(document.asDictionnary())
         
-        if query.sender != self.nodeId:
+        if query.sender != self.nodeId: 
             try:
+                # getNodeUrl seems not to exist yet
                 senderUrl = self.querier.getNodeUrl(query.sender)
                 proxy = Proxy(senderUrl)
                 d = proxy.callRemote('distributedQueryAnswer',
