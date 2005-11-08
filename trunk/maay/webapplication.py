@@ -33,6 +33,7 @@ from maay.querier import WEB_AVATARID
 from maay.configuration import get_path_of
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
 from maay.query import Query
+from maay.p2pquerier import P2pQuerier, P2pQuery
 
 class IServerConfiguration(Interface):
     """provide an interface in order to be able to remember webappconfig"""
@@ -92,6 +93,7 @@ class SearchForm(MaayPage):
     def __init__(self, maayId, querier):
         MaayPage.__init__(self, maayId)
         self.querier = querier
+        self.p2pquerier = None # no webappconfig yet to get our node_id
 
     def logout(self):
         print "Bye %s !" % (self.maayId,)
@@ -101,28 +103,17 @@ class SearchForm(MaayPage):
     def child_peers(self, context):
         return PeersList(self.maayId, self.querier)
 
-    def _harvest_peer_results(self, query, context):
-        results = []
+    def _askForPeerResults(self, query, context):
+        """Launches a P2P cascade of queries
+           The result of this shall be used ~ 5 and 15 secs. later
+           by the ResultPage
+        """
         webappConfig = IServerConfiguration(context)
-        peers = self.querier.getActiveNeighbors(webappConfig.get_node_id(), 10)
-        print "SearchForm child_search peers = ", peers
-        for peer in peers:
-            server = ServerProxy('http://%s:%s' % (peer.ip, peer.port),
-                                 allow_none=True,
-                                 encoding='utf-8')
-            try:
-                cnxid, errmsg = server.authenticate('', '')
-            except Exception, e:
-                errmsg = "%s" % e
-            if errmsg:
-                print "For reason '%s', we couldn't authenticate with node %s:%s" \
-                      % (errmsg, peer.ip, peer.port)
-                continue # for whatever reason, we couldn't authenticate
-            try: #XXX: xmlrpc serialization problems arise here
-                results += server.findDocuments(cnxid, query)
-            except Exception, e:
-                print "SearchForm _harvest_peer_results pb : %s", e
-        return results
+        nodeId = webappConfig.get_node_id()
+        if not self.p2pquerier:
+            self.p2pquerier = P2pQuerier(nodeId, self.querier)
+        theDistributedQuery = P2pQuery(123, nodeId, 3, query)
+        self.p2pquerier.sendQuery(theDistributedQuery)
 
     def child_search(self, context):
         # query = unicode(context.arg('words'))        
@@ -130,10 +121,8 @@ class SearchForm(MaayPage):
         rawQuery = unicode(context.arg('words'), 'utf-8')
         query = Query.fromRawQuery(rawQuery, offset)
         localResults = self.querier.findDocuments(query)
-        peerResults = self._harvest_peer_results(rawQuery, context)
-        print "Results from the peers :", peerResults
-        results = localResults + peerResults
-        return ResultsPage(self.maayId, results, query)
+        self._askForPeerResults(query, context)
+        return ResultsPage(self.maayId, localResults, query)
 
     # XXX make sure that the requested document is really in the database
     # XXX don't forget to update the download statistics of the document
@@ -152,6 +141,7 @@ class ResultsPage(MaayPage):
     """default results page"""
     bodyFactory = loaders.xmlfile(get_path_of('resultpage.html'))
     addSlash = False
+    
     
     def __init__(self, maayId, results, query):
         MaayPage.__init__(self, maayId)
