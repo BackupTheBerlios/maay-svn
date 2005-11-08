@@ -4,7 +4,6 @@ h1 { font-family: arial,helvetica; font-size: 12pt; color: #000000; font-weight:
 h2 {  font-family: Arial, Helvetica, sans-serif; font-size: 12pt; font-style:italic ; font-weight: bold ; color: #444444}
 h3 {  font-family: Arial, Helvetica, sans-serif; font-size: 10pt; font-weight: bold; color: #888888}
 
-
 /** login page ********/
 table.loginTable {
   width: 100%;
@@ -49,6 +48,7 @@ span.resultUrl {
 
 div.prevnext {
   width: 100%;
+  font-size: 10px;
 }
 
 div.prevnext a {
@@ -71,6 +71,10 @@ table.peersTable th {
 
 table.peersTable td.nodeId {
   background: lightgrey;
+}
+
+image{
+  border: 0px;
 }
 
 /** icon *******/
