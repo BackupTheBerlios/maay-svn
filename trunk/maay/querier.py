@@ -144,7 +144,7 @@ class AnonymousQuerier:
     def findDocuments(self, query):
         """Find all indexed documents matching the query"""
         # TODO: order results using document_scores information
-        words = WORDS_RGX.findall(normalizeText(query.words))
+        words = WORDS_RGX.findall(normalizeText(unicode(query.words)))
         self._updateQueryStatistics(words)
         try:
             cursor = self._cnx.cursor()
