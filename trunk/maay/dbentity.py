@@ -25,7 +25,7 @@ from sets import Set
 
 from maay.texttool import normalizeText, WORD_MIN_LEN, WORD_MAX_LEN
 
-class DBEntity(object):
+class DBEntity:
     attributes = []
     tableName = None
     key = (None, )
