@@ -28,6 +28,9 @@ from maay.server import ServerConfiguration
 class WebappConfigTC(unittest.TestCase):
 
     def testFromCommandLine(self):
+        """For this test to not fail, the configuration file must
+           define the database as being 'maay'
+        """
         data = [('maay', ('localhost', 'maay')),
                 ('maay --db-name maille', ('localhost', 'maille')),
                 ('maay --db-host foo', ('foo', 'maay')),
