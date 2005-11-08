@@ -84,12 +84,13 @@ class MaayRealm:
 
         Both kind of avatars rely on a querier instance
         """
+        print "MaayRealm requestAvatar %s" % avatarId
         for iface in interfaces:
             # if we were asked for a web resource
             if iface is inevow.IResource:
                 querier = self._getQuerier(avatarId)
-                print "Building search form for", avatarId
-                resc = SearchForm(avatarId, querier)
+                assert(MaayRPCServer.theP2pQuerier is not None)
+                resc = SearchForm(avatarId, querier, MaayRPCServer.theP2pQuerier)
                 return inevow.IResource, resc, resc.logout
             # if we were asked for a querier
             elif iface is IQuerier:

@@ -36,17 +36,23 @@ def make_uid(username, password):
 
 
 class MaayRPCServer(XMLRPC):
+    theP2pQuerier = None
 
     def __init__(self, nodeId, portal):
         XMLRPC.__init__(self)
-        print "init of MaayRPCServer, nodeId = ", nodeId
+        print "MaayRPCServer init %s %s" % (nodeId, portal)
         assert nodeId == portal.config.get_node_id ()
         self._sessions = {}
         self.portal = portal
         self.nodeId = portal.config.get_node_id() 
         self._sessions[WEB_AVATARID] = portal.webQuerier 
         self._sessions[ANONYMOUS_AVATARID] = portal.anonymousQuerier
-        self._p2pQuerier = P2pQuerier(nodeId, portal.webQuerier)
+        #self._p2pQuerier = P2pQuerier(nodeId, portal.webQuerier)
+        MaayRPCServer.theP2pQuerier = P2pQuerier(nodeId, portal.webQuerier)
+
+    def getP2pQuerier(self):
+        assert (MaayRPCServer.theP2pQuerier) is not None
+        return MaayRPCServer.theP2pQuerier
         
     def _attachUser(self, (interface, querier, logout), username, password):
         print "MaayRPCServer _attachUser", username, type(querier)
@@ -55,7 +61,7 @@ class MaayRPCServer(XMLRPC):
             print errmsg
             return '',  errmsg # raise UnauthorizedLogin()
         digest = make_uid(username, password)
-        print "Registering querier for %s (digest=%s)" % (username, digest)
+        print " ... registering querier for %s (digest=%s)" % (username, digest)
         self._sessions[digest] = querier
         return digest, ''
 
@@ -133,23 +139,23 @@ class MaayRPCServer(XMLRPC):
 
         return 0
 
-    def xmlrpc_distributedQuery(self, queryId, sender, ttl, words, mime_type):
-        print "MaayRPCServer distributedQuery : %s %s %s %s %s" % \
-              (queryId, sender, ttl, words, mime_type)
-        query = P2pQuery(queryId,
-                         sender,
-                         ttl,
-                         Query(words, filetype=mime_type))
+    #def xmlrpc_distributedQuery(self, queryId, sender, ttl, words, mime_type):
+    def xmlrpc_distributedQuery(self, queryDict):
+        print "MaayRPCServer distributedQuery : %s " % queryDict
+        query = P2pQuery(queryDict['id'],
+                         queryDict['sender'],
+                         queryDict['ttl'],
+                         Query(queryDict['words'], filetype=queryDict['mime_type']))
         # schedule the query for later processing and return immediately
         # this enables the sender to query several nodes in a row
-        d = reactor.callLater(.01, self._p2pQuerier.receiveQuery, query)
+        d = reactor.callLater(.01, self.getP2pQuerier().receiveQuery, query)
         return self.nodeId
 
     def xmlrpc_distributedQueryAnswer(self, queryId, senderId, documents):
         print "MaayRPCServer distributedQueryAnswer : %s %s %s" % \
               (queryId, senderId, documents)
-        answer = P2pAnswer() # FIXME: fill in objects
-        d = reactor.callLater(.01, self._p2pQuerier.receiveAnswer,answer)
+        answer = P2pAnswer(queryId, documents)
+        d = reactor.callLater(.01, self.getP2pQuerier().sendAnswer, answer)
         return self.nodeId
                          
     

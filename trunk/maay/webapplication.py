@@ -90,10 +90,10 @@ class SearchForm(MaayPage):
     bodyFactory = loaders.xmlfile(get_path_of('searchform.html'))
     addSlash = True
 
-    def __init__(self, maayId, querier):
+    def __init__(self, maayId, querier, p2pquerier=None):
         MaayPage.__init__(self, maayId)
         self.querier = querier
-        self.p2pquerier = None # no webappconfig yet to get our node_id
+        self.p2pquerier = p2pquerier
 
     def logout(self):
         print "Bye %s !" % (self.maayId,)
@@ -111,7 +111,8 @@ class SearchForm(MaayPage):
         webappConfig = IServerConfiguration(context)
         nodeId = webappConfig.get_node_id()
         if not self.p2pquerier:
-            self.p2pquerier = P2pQuerier(nodeId, self.querier)
+            print "BUG ? We don't have a P2pQuerier"
+            return
         theDistributedQuery = P2pQuery(123, nodeId, 3, query)
         self.p2pquerier.sendQuery(theDistributedQuery)
 
