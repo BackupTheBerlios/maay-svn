@@ -85,6 +85,7 @@ class PeersList(MaayPage):
                          'claim_count', 'affinity', 'bandwidth'):
             context.fillSlots(attrname, getattr(peerNode, attrname, 'N/A'))
         return context.tag
+
                     
 class SearchForm(MaayPage):
     """default search form"""
@@ -125,22 +126,32 @@ class SearchForm(MaayPage):
            The result of this shall be used ~ 5 and 15 secs. later
            by the ResultPage
         """
-        webappConfig = IServerConfiguration(context)
-        nodeId = webappConfig.get_node_id()
         if not self.p2pquerier:
             print "BUG ? We don't have a P2pQuerier"
             return
-        theDistributedQuery = P2pQuery(123, nodeId, 3, query)
+        webappConfig = IServerConfiguration(context)
+        theDistributedQuery = P2pQuery(webappConfig.get_node_id(),
+                                       webappConfig.rpcserver_port,
+                                       query)
         self.p2pquerier.sendQuery(theDistributedQuery)
+        self.p2pquerier.addAnswerCallback(self.newStuff)
+        self.oldContext = context
 
-    def child_search(self, context):
+    def newStuff(self, results):
+        print "newStuff, great !"
+        self.child_search(oldContext, results)
+
+    def child_search(self, context, results=None):
         # query = unicode(context.arg('words'))        
         offset = int(context.arg('offset', 0))
-        rawQuery = unicode(context.arg('words'), 'utf-8')
-        query = Query.fromRawQuery(rawQuery, offset)
-        localResults = self.querier.findDocuments(query)
-        self._askForPeerResults(query, context)
-        return ResultsPage(self.maayId, localResults, query)
+        if not results:
+            rawQuery = unicode(context.arg('words'), 'utf-8')
+            query = Query.fromRawQuery(rawQuery, offset)
+            localResults = self.querier.findDocuments(query)
+            self._askForPeerResults(query, context)
+            return ResultsPage(self.maayId, localResults, query)
+        else:
+            return ResultsPage(self.maayId, results, query)
 
     # XXX make sure that the requested document is really in the database
     # XXX don't forget to update the download statistics of the document

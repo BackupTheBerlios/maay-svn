@@ -23,18 +23,41 @@ from logilab.common.compat import set
 
 from twisted.web.xmlrpc import Proxy
 
+#TODO: add test for this
+SEQ_DICT = {}
+
+def incrementSequence(item):
+    """Returns a growing monotone value for the
+       associated item (starting from 0 when
+       item is seen first)
+    """
+    if not SEQ_DICT.has_key(item):
+        SEQ_DICT[item] = 0
+    count = SEQ_DICT[item]
+    SEQ_DICT[item] = count + 1
+    return count
+
+
 # XXX should P2pQuery derive from query.Query?
 class P2pQuery:
-    def __init__(self, queryId, sender, ttl, query):
+    def __init__(self, sender, port, query, ttl=5, qid=None):
         """
+        :param sender: really a nodeId
+        :type sender: str
+        :param port: the originator rpc port
+        :type port: int
         :param query: the query to wrap
         :type query: `maay.query.Query`
+
         """
-        self.id = queryId
+        if qid:
+            self.qid = qid
+        else:
+            self.qid = incrementSequence(sender.__hash__)
         self.sender = sender
+        self.port = port
         self.ttl = ttl
         self.query = query
-        #self.query.searchtype = 'p2p'
         self.documents_ids = set()
 
     def hop(self):
@@ -53,8 +76,9 @@ class P2pQuery:
         #       None can't be sent via XMLRPC.
         #       (Well, it can be in Twisted, but then I guess that
         #       we have to restrict to Twisted and Python world)
-        return {'id':self.id,
+        return {'qid':self.qid,
                 'sender':self.sender,
+                'port':self.port,
                 'ttl':self.ttl,
                 'words': self.query.words,
                 'mime_type': self.query.filetype or '',
@@ -65,11 +89,11 @@ class P2pAnswer:
         self.queryId = queryId
         self.documents = documents
 
-def sendQueryProblem(*args):
+def sendQueryProblem(self, *args):
     """Politely displays any problem (bug, unavailability) related
-       to an attempt to send a query.
+    to an attempt to send a query.
     """
-    print " ... problem sending the query : %s" % args
+    print " ... problem sending the query :", args
 
 class P2pQuerier:
     """The P2pQuerier class is responsible for managing P2P queries.
@@ -85,68 +109,93 @@ class P2pQuerier:
     the statistical information available about the neighbors'
     documents.
     """
-    _queries = {} 
+    _receivedQueries = {} # key : queryId, val : query
+    _sentQueries = {}     
+    _answerCallbacks = []
     
     def __init__(self, nodeId, querier):
         self.nodeId = nodeId  
         self.querier = querier
 
     def sendQuery(self, query):
+        """
+        :type query: `maay.p2pquerier.P2pQuery`
+        """        
         print "P2pQuerier sendQuery : %s" % query
         for neighbor in self._selectTargetNeighbors(query):
-            proxy = Proxy(str(neighbor.getRpcUrl())) # chokes on unicode
-            # below : returns a deferred
+            proxy = Proxy(str(neighbor.getRpcUrl())) 
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
             d.addErrback(sendQueryProblem)
+            self._sentQueries[query.qid] = query
             print " ... sent to %s" % neighbor
 
+    def addAnswerCallback(self, callback):
+        P2pQuerier._answerCallbacks.append(callback)
+
+    def _notifyAnswerCallbacks(self, results):
+        for cb in P2pQuerier._answerCallbacks:
+            apply(cb, results)
+
     def receiveQuery(self, query):
+        """
+        :type query: `maay.p2pquerier.P2pQuery`
+        """
         print "P2pQuerier receiveQuery : %s" % query
-        if query.id in self._queries:
-            print " ... we already know this query"
+        if query.qid in self._receivedQueries or \
+           query.qid in self._sentQueries:
+            print " ... we already know this query, this ends the trip"
             return
         
-        self._queries[query.id] = query 
+        self._receivedQueries[query.qid] = query 
 
         query.hop()        
         if query.ttl > 0:
             self.sendQuery(query)
 
         documents = self.querier.findDocuments(query.query)
-        self.sendAnswer(P2pAnswer(query.id, documents))
+        self.relayAnswer(P2pAnswer(query.qid, documents))
 
-    def sendAnswer(self, answer, local=False): # local still unused
+    def relayAnswer(self, answer, local=False): # local still unused
         """record and forward answers to a query.
         If local is True, then the answers come from a local query,
         and thus must not be recorded in the database"""
-        print "P2pQuerier sendAnswer : %s" % answer
-        query = self._queries.get(answer.queryId)
-        if query is None: # would be a bug or something nasty
+        print "P2pQuerier relayAnswer : %s documents" % len(answer.documents)
+        query = self._receivedQueries.get(answer.queryId)
+        if query is None: 
+            print " ... bailing out : we had no query for this answer"
             return
         
         toSend = []
         
         for document in answer.documents:
             # TODO: record answer in database if local is False
+            # auc : to cache them ?
             if not query.isKnown(document):
-                self.query.addMatch(document)
-                toSend.append(document.asDictionnary())
+                query.addMatch(document)
+                #toSend.append(document.asDictionnary())
+                # above was meant to be like .asKwargs() ?
+                # anyway, this stuff is xmlrpc-serializable (auc)
+                toSend.append(document)
         
         if query.sender != self.nodeId: 
             try:
                 # getNodeUrl seems not to exist yet
                 #senderUrl = self.querier.getNodeUrl(query.sender)
-                senderUrl = 'http://%s:%s' % (query.sender.ip,
-                                              query.sender.port)
+                host = query.host 
+                port = query.port
+                print " ... will send answer to %s:%s" % (host, port)
+                senderUrl = 'http://%s:%s' % (host, port)
                 proxy = Proxy(senderUrl)
                 d = proxy.callRemote('distributedQueryAnswer',
-                                     query.id,
+                                     query.qid,
                                      self.nodeId,
                                      toSend)
                 d.addCallback(self.querier.registerNodeActivity)
             except ValueError:
                 print "unknown node %s" % query.sender
+        else: # local would be true ? don't waste the answers ...
+            self._notifyAnswerCallbacks(toSend)
     
     def _selectTargetNeighbors(self, query):
         """return a list of nodes to which the query will be sent.

@@ -26,7 +26,7 @@ from twisted.internet import defer, reactor
 
 from maay.querier import MaayQuerier, IQuerier, ANONYMOUS_AVATARID, WEB_AVATARID
 from maay.dbentity import FutureDocument, Document
-from maay.p2pquerier import P2pQuerier, P2pQuery
+from maay.p2pquerier import P2pQuerier, P2pQuery, P2pAnswer
 from maay.query import Query
 
 def make_uid(username, password):
@@ -36,6 +36,8 @@ def make_uid(username, password):
 
 
 class MaayRPCServer(XMLRPC):
+    #XXX: should be in instance, but this simplifies greatly
+    #     access from webapplication (who can't see the instance)
     theP2pQuerier = None
 
     def __init__(self, nodeId, portal):
@@ -47,8 +49,13 @@ class MaayRPCServer(XMLRPC):
         self.nodeId = portal.config.get_node_id() 
         self._sessions[WEB_AVATARID] = portal.webQuerier 
         self._sessions[ANONYMOUS_AVATARID] = portal.anonymousQuerier
+        self._lastClient = None
         #self._p2pQuerier = P2pQuerier(nodeId, portal.webQuerier)
         MaayRPCServer.theP2pQuerier = P2pQuerier(nodeId, portal.webQuerier)
+
+    def render(self, request):
+        self._lastClient = request.transport.getPeer()
+        return XMLRPC.render(self, request)
 
     def getP2pQuerier(self):
         assert (MaayRPCServer.theP2pQuerier) is not None
@@ -142,10 +149,12 @@ class MaayRPCServer(XMLRPC):
     #def xmlrpc_distributedQuery(self, queryId, sender, ttl, words, mime_type):
     def xmlrpc_distributedQuery(self, queryDict):
         print "MaayRPCServer distributedQuery : %s " % queryDict
-        query = P2pQuery(queryDict['id'],
-                         queryDict['sender'],
+        query = P2pQuery(queryDict['sender'],
+                         queryDict['port'],
+                         Query(queryDict['words'], filetype=queryDict['mime_type']),
                          queryDict['ttl'],
-                         Query(queryDict['words'], filetype=queryDict['mime_type']))
+                         queryDict['qid'])
+        query.host = self._lastClient.host
         # schedule the query for later processing and return immediately
         # this enables the sender to query several nodes in a row
         d = reactor.callLater(.01, self.getP2pQuerier().receiveQuery, query)
@@ -155,7 +164,7 @@ class MaayRPCServer(XMLRPC):
         print "MaayRPCServer distributedQueryAnswer : %s %s %s" % \
               (queryId, senderId, documents)
         answer = P2pAnswer(queryId, documents)
-        d = reactor.callLater(.01, self.getP2pQuerier().sendAnswer, answer)
+        d = reactor.callLater(.01, self.getP2pQuerier().relayAnswer, answer)
         return self.nodeId
                          
     
