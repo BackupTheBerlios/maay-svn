@@ -169,7 +169,7 @@ class Indexer:
             futureDoc.title = removeControlChar(futureDoc.title) 
             futureDoc.text = removeControlChar(futureDoc.text)
             if self.verbose:
-                print u'('+futureDoc.title.encode('utf-8')+u')'
+                print '('+futureDoc.title.encode('utf-8')+')'
             self.serverProxy.indexDocument(self.cnxId, futureDoc)
 
         except (Fault, ProtocolError), exc:
@@ -203,7 +203,7 @@ class FileIterator:
             # test path not in self.skipped (dummy config files)
             if path not in self.skipped:
                 for dirpath, dirnames, filenames in os.walk(path):
-                    # print "looking in", dirpath
+##                     print "looking in", dirpath
                     self._removeSkippedDirnames(dirpath, dirnames)
                     for filename in filenames:
                         if os.access(os.path.join(dirpath, filename), os.R_OK): # Can we open it ?
