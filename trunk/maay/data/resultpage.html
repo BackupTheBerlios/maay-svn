@@ -13,7 +13,7 @@
       </table>
     </form>      
   </div>
-  <div class="message" nevow:render="title">Results for "<nevow:slot name="words" />"</div>
+  <div class="message" nevow:render="title">Results <nevow:slot name="start_result" /> - <nevow:slot name="end_result" /> for <b><nevow:slot name="words" /></b>.</div>
   <table class="results" nevow:render="sequence" nevow:data="results">
     <tr nevow:pattern="item" nevow:render="row">
       <td>

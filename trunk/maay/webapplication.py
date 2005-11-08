@@ -149,9 +149,9 @@ class SearchForm(MaayPage):
             query = Query.fromRawQuery(rawQuery, offset)
             localResults = self.querier.findDocuments(query)
             self._askForPeerResults(query, context)
-            return ResultsPage(self.maayId, localResults, query)
+            return ResultsPage(self.maayId, localResults, query, offset)
         else:
-            return ResultsPage(self.maayId, results, query)
+            return ResultsPage(self.maayId, results, query, offset)
 
     # XXX make sure that the requested document is really in the database
     # XXX don't forget to update the download statistics of the document
@@ -186,16 +186,19 @@ class ResultsPage(MaayPage):
     addSlash = False
     
     
-    def __init__(self, maayId, results, query):
+    def __init__(self, maayId, results, query, offset):
         MaayPage.__init__(self, maayId)
         self.results = results
         self.query = query.words # unicode(query)
+        self.offset = offset
 
     def data_results(self, context, data):
         return self.results
 
     def render_title(self, context, data):
         context.fillSlots('words', self.query)
+        context.fillSlots('start_result', min(len(self.results), self.offset + 1))
+        context.fillSlots('end_result', self.offset + len(self.results))
         return context.tag
 
     def render_searchfield(self, context, data):
