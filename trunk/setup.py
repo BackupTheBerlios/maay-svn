@@ -54,13 +54,19 @@ updateConfig = Target(description = "Configuration update program",
 			    script = 'maay/updateconfig.py',
 			    dest_base = "updateconfig")
 
+maay_service = Target(description = "The Maay service",
+                      modules = ["maayservice"],
+                      dest_base = "Maay")
+
 if sys.platform == 'win32':
 	import py2exe
         if len(sys.argv) == 1:
             sys.argv.append('py2exe')
             
         
-	setup(console = [maay_server, maay_indexer, createdb, updateConfig],
+	setup(console = [maay_server, maay_indexer,
+                         createdb, updateConfig],
+              service = [maay_service],
 		name = name,
 		version = version,
 		description = description,

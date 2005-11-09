@@ -58,16 +58,16 @@ Filename: "{app}\mysql\bin\mysqld-max-nt.exe"; Parameters:"--install MySQL --def
 Filename: "NET"; Parameters:"start MySQL"; StatusMsg: "Starting MySQL server"; WorkingDir:"{app}\mysql"; Flags:runhidden
 Filename: "{app}\createdb.exe"; StatusMsg: "Installing database"; WorkingDir:"{app}"; Flags:runhidden
 Filename: "{app}\updateconfig.exe"; Parameters:"""{userdesktop}"" ""{userdocs}"""; WorkingDir:"{app}"; Flags:runhidden
-;Filename: "{app}\maay_server.exe"; Parameters:"--install Maay"; StatusMsg: "Registering Maay as a service"; WorkingDir:"{app}"; Flags:runhidden
-;Filename: "NET"; Parameters: "start Maay"; StatusMsg: "Starting Maay node"; Flags:runhidden
-Filename: "{app}\maay_server.exe"; StatusMsg: "Launching maay server"; WorkingDir:"{app}"; Flags:postinstall nowait
+Filename: "{app}\maay.exe"; Parameters:"-install"; StatusMsg: "Registering Maay as a service"; WorkingDir:"{app}"; Flags:runhidden
+Filename: "NET"; Parameters: "start Maay"; StatusMsg: "Starting Maay node"; Flags:runhidden
+;Filename: "{app}\maay_server.exe"; StatusMsg: "Launching maay server"; WorkingDir:"{app}"; Flags:postinstall nowait
 
 
 [UninstallRun]
 Filename: "NET"; Parameters: "stop MySQL"; StatusMsg: "Stopping MySQL database"; Flags:runhidden
-;Filename: "NET"; Parameters: "stop Maay"; StatusMsg: "Stopping Maay node"; Flags:runhidden
+Filename: "NET"; Parameters: "stop Maay"; StatusMsg: "Stopping Maay node"; Flags:runhidden
 Filename: "{app}\mysql\bin\mysqld-max-nt.exe"; Parameters:"--remove MySQL"; StatusMsg: "Unregistering MySQL as a service"; WorkingDir:"{app}\mysql"; Flags:runhidden
-;Filename: "{app}\maay_server.exe"; Parameters:"--remove Maay"; StatusMsg: "Unregistering Maay as a service"; WorkingDir:"{app}\mysql"; Flags:runhidden
+Filename: "{app}\maay.exe"; Parameters:"-remove"; StatusMsg: "Unregistering Maay as a service"; WorkingDir:"{app}\mysql"; Flags:runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: {app}\mysql\
