@@ -210,7 +210,7 @@ class P2pQuerier:
                 # above was meant to be like .asKwargs() ?
                 # anyway, this stuff is xmlrpc-serializable (auc)
                 toSend.append(document)
-                if len(toSend) > MAX_P2P_ANSWER_LENGTH:
+                if len(toSend) >= MAX_P2P_ANSWER_LENGTH:
                     break
         
         if query.sender != self.nodeId: 
