@@ -22,9 +22,10 @@ __revision__ = '$Id$'
 from logilab.common.compat import set
 
 from twisted.web.xmlrpc import Proxy
-
+from maay.texttool import makeAbstract, removeSpace, untagText
 #TODO: add test for this
 SEQ_DICT = {}
+MAX_P2P_ANSWER_LENGTH = 15
 
 def incrementSequence(item):
     """Returns a growing monotone value for the
@@ -94,6 +95,10 @@ class P2pQuery:
                 'words': self.query.words,
                 'mime_type': self.query.filetype or '',
                 }
+
+    def getWords(self):
+        return self.query.words.split()
+
 
 class P2pAnswer:
     def __init__(self, queryId, documents):
@@ -198,11 +203,15 @@ class P2pQuerier:
             # TODO: record answer in database if local is False
             # auc : to cache them ?
             if not query.isKnown(document):
+                abstract = makeAbstract(document.text, query.getWords())
+                document.text = untagText(removeSpace(abstract))
                 query.addMatch(document)
                 #toSend.append(document.asDictionnary())
                 # above was meant to be like .asKwargs() ?
                 # anyway, this stuff is xmlrpc-serializable (auc)
                 toSend.append(document)
+                if len(toSend) > MAX_P2P_ANSWER_LENGTH:
+                    break
         
         if query.sender != self.nodeId: 
             try:
