@@ -258,6 +258,7 @@ class Document(DBEntity):
                  " %s "
                  "GROUP BY DS.db_document_id "
                  "HAVING count(DS.db_document_id) = %%s "
+                 "ORDER BY D.publication_time DESC "
                  "LIMIT 15 OFFSET %s" % \
                  (', '.join(['%s'] * len(words)), restriction, offset))
         return query, words + restrictionParams + [len(words)]
