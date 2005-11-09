@@ -18,7 +18,7 @@
 """Helper script to display how many rows are stored in the various maay tables on localhost"""
 
 from MySQLdb import connect
-from Scientific.Statistics.Histogram import Histogram
+from pylab import hist, show
 
 cnx = connect(user='maay', passwd='maay', use_unicode=True, db='maay')
 cursor = cnx.cursor()
@@ -32,14 +32,12 @@ for table  in tables:
     size[table] = nbRows
     print "Table %s: %d rows" % (table, nbRows)
 
-r = """SELECT count(word) from document_scores group by word"""
+r = """SELECT count(word) FROM document_scores GROUP BY word LIMIT 10000"""
 cursor.execute(r)
-h = Histogram(cursor.fetchall(), 10)
-
-for i in range(10):
-    print h[i]
-
-
+data = [int(e[0]) for e in cursor.fetchall() if int(e[0])!=1]
+print data
+h = hist(data, 1000)
+show()
 
 cnx.close()
     
