@@ -28,13 +28,9 @@ from logilab.common.compat import set
 from twisted.web.xmlrpc import Proxy
 from maay.texttool import makeAbstract, removeSpace, untagText
 
-def hashIt(item):
-    """Returns a growing monotone value for the
-       associated item (starting from 0 when
-       item is seen first)
-    """
+def hashIt(item, uname=''.join(platform.uname())):
     hasher = sha.sha()
-    hasher.update(''.join(platform.uname()))
+    hasher.update(uname)
     hasher.update('%s' % id(item))
     hasher.update('%s' % time.time())
     return hasher.hexdigest()
