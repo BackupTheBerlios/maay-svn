@@ -152,6 +152,7 @@ class SearchForm(MaayPage):
             return ResultsPage(self.maayId, localResults, query, offset)
         else:
             return ResultsPage(self.maayId, results, query, offset)
+        # return FACTORY.clientFactory(context, self.maayId, results, query)
 
     # XXX make sure that the requested document is really in the database
     # XXX don't forget to update the download statistics of the document
@@ -180,17 +181,18 @@ class IndexationPage(MaayPage):
         context.fillSlots('msg', self.__msg)
         return context.tag
 
+
 class ResultsPage(MaayPage):
     """default results page"""
     bodyFactory = loaders.xmlfile(get_path_of('resultpage.html'))
-    addSlash = False
-    
+    addSlash = False    
     
     def __init__(self, maayId, results, query, offset):
         MaayPage.__init__(self, maayId)
         self.results = results
         self.query = query.words # unicode(query)
         self.offset = offset
+
 
     def data_results(self, context, data):
         return self.results
@@ -240,3 +242,107 @@ class ResultsPage(MaayPage):
         context.fillSlots('publication_date', date.strftime('%d %b %Y'))
         return context.tag
 
+
+
+## from twisted.internet import reactor
+## from nevow import athena
+## class ResultsPage(athena.LivePage):
+##     """default results page"""
+##     child_maaycss = static.File(get_path_of('maay.css'))
+##     child_images = static.File(get_path_of('images/'))
+##     docFactory = loaders.xmlfile(get_path_of('liveresults.html'))
+##     addSlash = False
+    
+##     def __init__(self, maayId, results, query, offset):
+##         athena.LivePage.__init__(self)
+##         self.maayId = maayId
+##         self.results = results
+##         self.offset = offset
+##         self.query = query.words # unicode(query)
+##         reactor.callLater(5, self.updatePage)
+
+
+##     def data_results(self, context, data):
+##         return self.results
+
+##     def render_title(self, context, data):
+##         context.fillSlots('words', self.query)
+##         context.fillSlots('start_result', min(len(self.results), self.offset + 1))
+##         context.fillSlots('end_result', self.offset + len(self.results))
+##         return context.tag
+
+##     def render_searchfield(self, context, data):
+##         context.fillSlots('words', self.query)
+##         return context.tag
+
+##     def render_prevset_url(self, context, data):
+##         words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'), 'utf-8')))
+##         offset = int(context.arg('offset', 0))
+##         if offset:
+##             offset -= 15
+##         return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
+
+##     def render_nextset_url(self, context, data):
+##         words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'), 'utf-8')))
+##         offset = int(context.arg('offset', 0)) + 15
+##         return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
+
+    
+##     def render_row(self, context, data):
+##         document = data
+##         words = self.query.split()
+##         context.fillSlots('mime_type', re.sub("/", "_", document.mime_type))
+##         context.fillSlots('doctitle',
+##                           tags.xml(boldifyText(document.title, words)))
+##         # XXX abstract attribute should be a unicode string
+##         try:
+##             abstract = makeAbstract(document.text, words)
+##             abstract = normalize_text(unicode(abstract))
+##         except Exception, exc:
+##             print exc
+##             abstract = u'No abstract available for this document [%s]' % exc
+##         context.fillSlots('abstract', tags.xml(abstract))
+##         context.fillSlots('docid', document.db_document_id)
+##         context.fillSlots('docurl', tags.xml(boldifyText(document.url, words)))
+##         context.fillSlots('words', self.query)
+##         context.fillSlots('readable_size', document.readable_size())
+##         date = datetime.fromtimestamp(document.publication_time)
+##         context.fillSlots('publication_date', date.strftime('%d %b %Y'))
+##         return context.tag
+
+
+##     def updatePage(self):
+##         print "ZOUuuuuuuuuuuuuuuuuuuuuuuuuuuu"
+##         source = u"<h3>YO !!!!!!</h3>"
+##         self.callRemote('updateResults', source)
+
+##     def xmlrpc_foo(self):
+##         print "le client m'appelle !!"
+##         return 0
+
+
+## class ResultsPageFactory(athena.LivePageFactory):
+##     def clientFactory(self, context, maayId, results, query):
+##         livepageId = inevow.IRequest(context).getHeader('Livepage-Id')
+##         if livepageId is not None:
+##             livepage = self.clients.get(livepageId)
+##             if livepage is not None:
+##                 # A returning, known client.  Give them their page.
+##                 return livepage
+##             else:
+##                 # A really old, expired client.  Or maybe an evil
+##                 # hax0r.  Give them a fresh new page and log the
+##                 # occurrence.
+##                 if self.noisy:
+##                     log.msg("Unknown Livepage-Id: %r" % (livepageId,))
+##                 return self._manufactureClient(maayId, results, query)
+##         else:
+##             # A brand new client.  Give them a brand new page!
+##             return self._manufactureClient(maayId, results, query)
+
+##     def _manufactureClient(self, maayId, results, query):
+##         cl = self._pageFactory(maayId, results, query)
+##         cl.factory = self
+##         return cl
+
+## FACTORY = ResultsPageFactory(ResultsPage)
