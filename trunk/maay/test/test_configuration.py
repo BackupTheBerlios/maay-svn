@@ -23,7 +23,7 @@ import os.path as osp
 import re
 
 from maay import configuration
-from maay.server import ServerConfiguration
+from maay.configuration import WebappConfiguration
 
 class WebappConfigTC(unittest.TestCase):
 

@@ -34,7 +34,7 @@ import socket
 
 import maay.indexer
 from maay import converter
-from maay.configuration import Configuration
+from maay.configuration import IndexerConfiguration
 from maay.dbentity import FutureDocument, Document, FileInfo
 from maay.querier import MaayAuthenticationError
 from maay.texttool import removeControlChar
@@ -224,85 +224,7 @@ class FileIterator:
                 # print "skipping", dirname
                 dirnames.remove(dirname)
 
-
-
-
 ## main() ##################################################
-
-class IndexerConfiguration(Configuration):
-    options = Configuration.options + [
-        ('host',
-         {'type' : "string", 'metavar' : "<host>", 'short' : "H",
-          'help' : "where Maay node can be found",
-          'default' : "localhost",
-          }),
-
-        ('port',
-         {'type' : "int", 'metavar' : "<int>", 'short' : "P",
-          'help' : "which port to use",
-          'default' : 6789,
-        }),
-
-        ('user',
-         {'type': 'string',
-          'metavar': '<userid>', 'short': 'u',
-          'help': 'identifier to use to connect to the database',
-          'default' : "maay",
-          }),
-
-        ('password',
-         {'type': 'string',
-          'metavar': '<password>', 'short' : "p",
-          'help': 'password to use to connect to the database',
-          'default' : "maay",
-          }),
-
-        ('private-index-dir',
-         {'type': 'csv',
-          'metavar': '<csv>', 'short': 'i',
-          'help': 'index this directory with the private indexer',
-          'default' : []
-          }),
-         
-        ('private-skip-dir',
-         {'type': 'csv',
-          'metavar': '<csv>', 'short': 's',
-          'help': 'the private indexer will skip this directory',
-          'default' : []
-          }),
-        ('public-index-dir',
-         {'type': 'csv',
-          'metavar': '<csv>', 'short': 'I',
-          'help': 'index this directory with the public indexer',
-          'default' : []
-          }),
-         
-        ('public-skip-dir',
-         {'type': 'csv',
-          'metavar': '<csv>', 'short': 'S',
-          'help': 'the public indexer will skip this directory',
-          'default' : []
-          }),
-
-        ('verbose',
-         {'type': 'yn',
-          'metavar': '<y or n>', 'short': 'v',
-          'help': 'enable verbose mode',
-          "default": False,
-          }),
-        ('purge',
-         {'type' : 'yn',
-          'help' : 'purge the set of indexed documents and returns immediately',
-          'metavar' : '<y or n>',
-          'default' : False,
-          }),
-        ]
-
-    config_file = 'indexer.ini'
-
-    def __init__(self):
-        Configuration.__init__(self, name="Indexer")
-
 
 def run():
     indexerConfig = IndexerConfiguration()

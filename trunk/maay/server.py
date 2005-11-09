@@ -23,7 +23,6 @@ import platform
 import sha
 import time
 import os
-import re
 import socket
 
 from zope.interface import implements
@@ -49,7 +48,7 @@ import MySQLdb
 from maay.querier import MaayQuerier, IQuerier, AnonymousQuerier, \
      MaayAuthenticationError, WEB_AVATARID
 from maay.rpc import MaayRPCServer
-from maay.configuration import Configuration
+from maay.configuration import WebappConfiguration
 from maay import presenceclient
 from maay.webapplication import Maay404, IServerConfiguration, SearchForm
 
@@ -218,120 +217,6 @@ class DBAuthChecker:
         return defer.succeed(creds.username)
 
 
-
-
-class ServerConfiguration(Configuration):
-    options = Configuration.options + [
-        ('db-name',
-         {'type' : "string", 'metavar' : "<dbname>", 'short' : "d",
-          'help' : "name of the Maay database",
-          'default' : "maay",
-          }),
-        ('db-host',
-         {'type' : "string", 'metavar' : "<dbhost>", 'short' : "H",
-          'help' : "which server hosts the database",
-          'default' : "localhost",
-          }),
-        ('user',
-         {'type': 'string',
-          'metavar': '<userid>', 'short': 'u',
-          'help': 'login of anonymous user to use to connect to the database',
-          'default' : "maay",
-          }),
-        ('password',
-         {'type': 'string',
-          'metavar': '<password>', 'short' : "p",
-          'help': 'password of anonymous user to use to connect to the database',
-          'default' : "maay",
-          }),
-        ('registration-host',
-         {'type' : "string", 'metavar' : "<registration_host>", 
-          'help' : "Host name or IP address of the registration server",
-          'default' : "localhost",
-          }),
-        ('registration-port',
-         {'type' : "int", 'metavar' : "<registration_port>", 
-          'help' : "Internet port on which the registration server is listening",
-          'default' : 2345,
-          }),
-        ('webserver-port',
-         {'type' : "int", 'metavar' : "<webserver_port>", 
-          'help' : "Internet port on which the web interface is listening",
-          'default' : 7777,
-          }),
-        ('rpcserver-port',
-         {'type' : "int", 'metavar' : "<rpcserver_port>", 
-          'help' : "Internet port on which the xmlrpc server is listening",
-          'default' : 6789,
-          }),
-        ('bandwidth',
-         {'type' : "int", 'metavar' : "<bandwidth>", 
-          'help' : "Internet port on which the xmlrpc server is listening",
-          'default' : 10,
-          }),
-        ('nodeid-file',
-         {'type' : "string", 'metavar' : "<node_id_file>",
-          'help' : "Maay will store the generated node id in this file",
-          'default' : "node_id",
-          }),
-        ]
-
-    config_file = 'webapp.ini'
-
-    def __init__(self):
-        Configuration.__init__(self, name="Server")
-        self.node_id = None
-
-    def get_node_id(self):
-        if not self.node_id:
-            self.node_id = self._read_node_id()
-        return self.node_id
-
-    def _read_node_id(self):
-        for directory in self.get_writable_config_dirs():
-            try:
-                filename = os.path.join(directory, self.nodeid_file)
-                f = open(filename,'r')
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith('#'):
-                        continue
-                    node_id = line.strip()
-                    assert re.match('^[0-9a-fA-F]{40}$', node_id)
-                    f.close()
-                    return node_id
-            except IOError:
-                continue
-        self._write_node_id()
-        return self._read_node_id()
-
-    def _generate_node_id(self):
-        hasher = sha.sha()
-        hasher.update(''.join(platform.uname()))
-        hasher.update('%s' % id(self))
-        hasher.update('%s' % time.time())
-        return hasher.hexdigest()
-
-    def _write_node_id(self):
-        node_id = self._generate_node_id()
-        for directory in self.get_writable_config_dirs():
-            try:
-                filename = os.path.join(directory, self.nodeid_file)
-                f = open(filename, 'w')
-                lines = ['# This file contains the Node Identifier for your computer\n',
-                         '# Do not edit it or erase it, or this will corrupt the database\n',
-                         '# of your Maay instance.\n',
-                         '# This id was generated on %s\n' % time.asctime(),
-                         '%s\n' % node_id
-                         ]
-                f.writelines(lines)
-                f.close()
-                return
-            except IOError:
-                continue
-        raise ValueError('Unable to find a writable directory to store the node id')
-
-
 class MaaySessionWrapper(guard.SessionWrapper):
     """override guard.SessionWrapper to add an explicit errBack on
     portal.login()
@@ -354,7 +239,7 @@ class MaaySessionWrapper(guard.SessionWrapper):
     
     
 def run():
-    webappConfig = ServerConfiguration()
+    webappConfig = WebappConfiguration()
     webappConfig.load()
     maayPortal = MaayPortal(webappConfig)
     website = appserver.NevowSite(MaaySessionWrapper(maayPortal,
