@@ -125,6 +125,7 @@ class P2pQuerier:
         # now, read a config. provided value for EXPIRATION_TIME
         config = WebappConfiguration()
         config.load()
+        # FIXME: config.query_life_time does not exist. Aurelien: have you commited the change ?
         P2pQuerier._EXPIRATION_TIME = max(config.query_life_time,
                                           P2pQuerier._EXPIRATION_TIME)
 
