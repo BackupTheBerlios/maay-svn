@@ -38,7 +38,7 @@ Source: "thirdparty\mysql\bin\mysqld-max-nt.exe"; DestDir: "{app}\mysql\bin"
 Source: "thirdparty\mysql\bin\mysql.exe"; DestDir: "{app}\mysql\bin"
 Source: "thirdparty\antiword\*"; DestDir: "c:\antiword" ; Flags: recursesubdirs
 Source: "thirdparty\pdftohtml-0.36\*"; DestDir: "{app}\pdftohtml" ; Flags: recursesubdirs
-Source: "maay\configuration\*.ini"; DestDir: "{app}"
+Source: "maay\configuration\win32\*.ini"; DestDir: "{app}"
 Source: "README.txt"; DestDir: "{app}"
 Source: "ChangeLog"; DestDir: "{app}"
 Source: "ReleaseNotes"; DestDir: "{app}"

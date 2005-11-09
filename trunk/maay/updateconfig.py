@@ -47,9 +47,9 @@ public-skip-dir=%(public_skip)s
 
 def createConfigFile(myDesktop, myDocuments):
     f=open("indexer.ini", "w")
-    values = {'private'     : '"%s","%s"' % (myDesktop, myDocuments),
+    values = {'private'     : '%s,%s' % (myDesktop, myDocuments),
               'private_skip': '',
-              'public'      : '"%s\\Maay Documents"' % myDesktop,
+              'public'      : '%s\\Maay Documents' % myDesktop,
               'public_skip' : '',
               }
     f.write(config % values)
