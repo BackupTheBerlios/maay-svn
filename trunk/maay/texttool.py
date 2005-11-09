@@ -23,6 +23,7 @@ __metaclass__ = type
 from HTMLParser import HTMLParser, HTMLParseError
 import codecs
 import re
+import sys
 import mimetypes
 import gzip
 import bz2
@@ -143,7 +144,7 @@ class AbstractParser:
         try:
             title, result, links, offset = self.parseString(stream.read())
             if not title:
-                title = unicode(pristineFilename) 
+                title = unicode(pristineFilename, sys.getfilesystemencoding()) 
             return title, result, links, offset 
         finally:
             stream.close()

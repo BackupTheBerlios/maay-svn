@@ -68,6 +68,7 @@ class Indexer:
         password = self.indexerConfig.password
         host = self.indexerConfig.host
         port = self.indexerConfig.port
+        self.filesystemEncoding = sys.getfilesystemencoding()
         print "Indexer connecting to server %s:%s" % (host, port)
         self.serverProxy = ServerProxy('http://%s:%s' % (host, port),
                                        allow_none=True,
@@ -102,7 +103,9 @@ class Indexer:
         for filename in fileset:
             if self.verbose:
                 print "Requesting unindexation of %s" % filename
-            self.serverProxy.removeFileInfo(self.cnxId, filename)
+            self.serverProxy.removeFileInfo(self.cnxId,
+                                            unicode(filename,
+                                                    self.filesystemEncoding))
         if self.verbose:
             print "Requesting cleanup of unreferenced documents"
         self.serverProxy.removeUnreferencedDocuments(self.cnxId)
@@ -128,6 +131,7 @@ class Indexer:
             state = Document.PUBLISHED_STATE
             
         for filename in self.getFileIterator(isPrivate):
+            print filename
             existingFiles.add(filename)
             if not self.isIndexable(filename):
                 continue
@@ -148,7 +152,9 @@ class Indexer:
                 docId = makeDocumentId(filename)
                 mime_type = mimetypes.guess_type(filename)[0]
 
-                self.indexDocument(FutureDocument(filename=filename, title=title, text=text,
+                self.indexDocument(FutureDocument(filename=unicode(filename,
+                                                                   self.filesystemEncoding),
+                                                  title=title, text=text,
                                                   fileSize=fileSize,
                                                   lastModificationTime=lastModificationTime,
                                                   content_hash=docId, mime_type=mime_type,
@@ -156,6 +162,7 @@ class Indexer:
         return existingFiles
         
     def getLastIndexationTimeAndState(self, filename):
+        filename = unicode(filename, self.filesystemEncoding)
         answer = self.serverProxy.lastIndexationTimeAndState(self.cnxId, filename)
         if answer is None:
             raise MaayAuthenticationError("Bad cnxId sent to the server")
@@ -204,10 +211,10 @@ class FileIterator:
             # test path not in self.skipped (dummy config files)
             if path not in self.skipped:
                 for dirpath, dirnames, filenames in os.walk(path):
-##                     print "looking in", dirpath
+                    print "looking in", dirpath
                     self._removeSkippedDirnames(dirpath, dirnames)
                     for filename in filenames:
-                        if os.access(os.path.join(dirpath, filename), os.R_OK): # Can we open it ?
+                        if os.access(os.path.join(dirpath, filename), os.R_OK): 
                             yield os.path.join(dirpath, filename)
                     
     def _removeSkippedDirnames(self, dirpath, dirnames):
