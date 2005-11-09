@@ -166,15 +166,18 @@ class CommandBasedConverter(BaseConverter):
 
         outputDir = mkdtemp()
 
-        inputFile = uncompressFile (filepath, outputDir)
-        outputFile = osp.join(outputDir, osp.basename(filepath))
-
-        command_args = {'input' : inputFile, 'output' : outputFile}
-        cmd = self.COMMAND % command_args
-
-        #print "Executing %r" % cmd
-        errcode = os.system(cmd)
         try:
+            try:
+                inputFile = uncompressFile (filepath, outputDir)
+            except IOError,exc:
+                raise IndexationFailure("Unable to index %r [%s]" % (filename, exc))
+            outputFile = osp.join(outputDir, osp.basename(filepath))
+
+            command_args = {'input' : inputFile, 'output' : outputFile}
+            cmd = self.COMMAND % command_args
+
+            #print "Executing %r" % cmd
+            errcode = os.system(cmd)
             if errcode == 0: # OK
                 parser = self.getParser()
                 try:
