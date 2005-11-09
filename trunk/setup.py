@@ -50,6 +50,9 @@ createdb = Target(description = "Database creation utility",
 			    script = 'maay/createdb.py',
 			    dest_base = "createdb")
 
+updateConfig = Target(description = "Configuration update program",
+			    script = 'maay/updateconfig.py',
+			    dest_base = "updateconfig")
 
 if sys.platform == 'win32':
 	import py2exe
@@ -57,7 +60,7 @@ if sys.platform == 'win32':
             sys.argv.append('py2exe')
             
         
-	setup(console = [maay_server, maay_indexer,createdb],
+	setup(console = [maay_server, maay_indexer, createdb, updateConfig],
 		name = name,
 		version = version,
 		description = description,
