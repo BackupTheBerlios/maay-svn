@@ -21,6 +21,9 @@ __revision__ = '$Id$'
 import os, os.path as osp
 import sys
 import re
+import sha
+import platform
+import time
 
 from logilab.common.configuration import Configuration as BaseConfiguration
 
