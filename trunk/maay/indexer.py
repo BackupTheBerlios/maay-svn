@@ -131,7 +131,6 @@ class Indexer:
             state = Document.PUBLISHED_STATE
             
         for filename in self.getFileIterator(isPrivate):
-            print filename
             existingFiles.add(filename)
             if not self.isIndexable(filename):
                 continue
