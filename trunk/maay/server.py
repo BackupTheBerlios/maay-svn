@@ -349,8 +349,8 @@ class MaaySessionWrapper(guard.SessionWrapper):
         #d.addErrback(self._forceLoginPage)
         return d
 
-    def _forceLoginPage(self, *args):
-        return LoginForm(), ''
+##     def _forceLoginPage(self, *args):
+##         return LoginForm(), ''
     
     
 def run():
