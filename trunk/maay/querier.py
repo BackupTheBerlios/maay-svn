@@ -205,7 +205,7 @@ class AnonymousQuerier:
             winfo = Word.selectOrInsertWhere(cursor, word=word)[0]
             winfo.claim_count += 1 / len(words)
             winfo.commit(cursor, update=True)
-        cursor.close
+        cursor.close()
         self._cnx.commit()
 
 
