@@ -27,8 +27,20 @@ import sys
 import mimetypes
 import gzip
 import bz2
-from cStringIO import StringIO
 from sets import Set
+
+class LStringIO(list):
+    """simple StringIO-like objects using a list
+
+    Note: LStringIO should be more or less equivalent to cStrinIO speed-wise
+          but has the great advantage to accept any unicode string
+    """
+    def __init__(self):
+        list.__init__(self)
+    write = list.append
+    def getvalue(self):
+        return u''.join(self)
+
 
 from maay.image import get_ustring_from_exif, make_thumbnail, \
      ImageConfiguration as ImConfig, NoThumbnailsDir, ThumbnailCreationError
@@ -329,7 +341,7 @@ del _table2
 def removeSpace(text):
     return text
     rgx = re.compile('\s+')
-    s = StringIO()
+    s = LStringIO()
     lastStart = 0
     end = 0
     for occurence in rgx.finditer(text):
@@ -341,19 +353,19 @@ def removeSpace(text):
         lastStart = end
 
     s.write(text[end:])
-    return u"%s" % s.getvalue()
+    return s.getvalue()
 
 
 def boldifyText(text, words):
     rgx = re.compile('|'.join(words), re.I)
-    s = StringIO()
+    s = LStringIO()
     lastStart = 0
     end = 0
     for occurence in rgx.finditer(text):
         wordFound = occurence.group(0)
         start, end = occurence.start(), occurence.end()
         s.write(text[lastStart:start])
-        s.write("<b>%s</b>" % wordFound)
+        s.write(u"<b>%s</b>" % wordFound)
         lastStart = end
 
     s.write(text[end:])
@@ -437,7 +449,7 @@ def makeAbstract(text, words):
         else:
             return text
 
-    s = StringIO()
+    s = LStringIO()
     start = -1
     last_position = -100
     last_word = 0
@@ -459,7 +471,7 @@ def makeAbstract(text, words):
                     end -= 1
 
             if start > 0:
-                s.write(" <b>...</b> ")
+                s.write(u" <b>...</b> ")
             s.write(boldifyText(text[start:end], words))
             
         start = position - EXCERPT_MAX_HALF_LEN
@@ -474,7 +486,7 @@ def makeAbstract(text, words):
 
 
     if start > 0:
-        s.write(" <b>...</b> ")
+        s.write(u" <b>...</b> ")
     end = last_position + EXCERPT_MAX_HALF_LEN + len(word)
     if end >= text_length:
         end = text_length
@@ -484,6 +496,6 @@ def makeAbstract(text, words):
     s.write(boldifyText(text[start:end], words))
 
     if end < text_length:
-        s.write(" <b>...</b>")
+        s.write(u" <b>...</b>")
 
-    return u"%s" % s.getvalue()
+    return s.getvalue()

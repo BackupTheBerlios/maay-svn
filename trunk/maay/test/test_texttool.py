@@ -23,7 +23,8 @@ import unittest
 from os.path import join, dirname
 
 from maay.texttool import MaayHTMLParser, TextParser, guessEncoding, \
-     universalOpen, untagText, normalizeText, removeControlChar, makeAbstract
+     universalOpen, untagText, normalizeText, removeControlChar, makeAbstract, \
+     LStringIO
 
 RAW_TEXT = u"foo été bar baz top bim bam boum"
 
@@ -180,6 +181,25 @@ class UtilitiesTC(unittest.TestCase):
         norm = removeControlChar(text)
         self.assertEquals(u"\t\n\r\uFFEFtoto\U00011234", norm)
         self.assertEquals(unicode, type(norm))
+
+    def testBasicLStringIO(self):
+        buf = LStringIO()
+        buf.write('foo')
+        buf.write('bar')
+        self.assertEquals(buf.getvalue(), 'foobar')
+        buf.write(u'baz')
+        self.assertEquals(buf.getvalue(), 'foobarbaz')
+
+    def testLStringIOWithUnicodeStrings(self):
+        buf = LStringIO()
+        buf.write(unicode('été', 'iso-8859-1'))
+        buf.write('foo')
+        buf.write(u'bar')
+        self.assertEquals(buf.getvalue(), unicode('étéfoobar', 'iso-8859-1'))
+        buf.write(u'baz')
+        self.assertEquals(buf.getvalue(), unicode('étéfoobarbaz', 'iso-8859-1'))
+
+
 
 class AbstractTC(unittest.TestCase):
     text = "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA"
