@@ -61,21 +61,10 @@ class P2pQuery:
         self.ttl -= 1
 
     def addMatch(self, document):
-        """this function suffers from horrible polymorphism
-           sometimes we get a Document, sometimes a plain dict
-        """
-        if isinstance(document, dict):
-            self.documents_ids.add(document['document_id'])
-        else:
-            self.documents_ids.add(document.document_id)
+        self.documents_ids.add(document['document_id'])
 
     def isKnown(self, document):
-        """this function suffers from horrible polymorphism
-           sometimes we get a Document, sometimes a plain dict
-        """
-        if isinstance(document, dict):
-            return document['document_id'] in self.documents_ids
-        return document.document_id in self.documents_ids
+        return document['document_id'] in self.documents_ids
  
     def asKwargs(self):
         """return a dictionnary of arguments suitable for use as a
@@ -200,9 +189,13 @@ class P2pQuerier:
         toSend = []
         
         for document in answer.documents:
+            if not isinstance(document, dict):
+                document = document.__dict__
             # TODO: record answer in database if local is False
             # auc : to cache them ?
             if not query.isKnown(document):
+                abstract = makeAbstract(document['text'], query.getWords())
+                document['text'] = untagText(removeSpace(abstract))
                 query.addMatch(document)
                 #toSend.append(document.asDictionnary())
                 # above was meant to be like .asKwargs() ?
