@@ -237,7 +237,7 @@ class ExifParser(AbstractParser):
         TODO: port original code from htmltotext
         :param encoding: if None, then need to be guessed
         """
-        title = unicode(pristineFilename)
+        title = unicode(pristineFilename, sys.getfilesystemencoding())
         try:
             result = 'EXIF : ' + get_ustring_from_exif(filepath)
             try:
