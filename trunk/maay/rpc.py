@@ -54,6 +54,7 @@ class MaayRPCServer(XMLRPC):
         MaayRPCServer.theP2pQuerier = P2pQuerier(nodeId, portal.webQuerier)
 
     def render(self, request):
+        #XXX: check the correctness of this stuff
         self._lastClient = request.transport.getPeer()
         return XMLRPC.render(self, request)
 
@@ -146,23 +147,27 @@ class MaayRPCServer(XMLRPC):
 
         return 0
 
-    #def xmlrpc_distributedQuery(self, queryId, sender, ttl, words, mime_type):
     def xmlrpc_distributedQuery(self, queryDict):
+        """On node has sent a query (P2pQuerier.sendQuery)
+        """
         print "MaayRPCServer distributedQuery : %s " % queryDict
-        query = P2pQuery(queryDict['sender'],
-                         queryDict['port'],
-                         Query(queryDict['words'], filetype=queryDict['mime_type']),
-                         queryDict['ttl'],
-                         queryDict['qid'])
+        query = P2pQuery(sender=queryDict['sender'],
+                         port=queryDict['port'],
+                         query=Query(queryDict['words'],
+                                     filetype=queryDict['mime_type']),
+                         ttl=queryDict['ttl'],
+                         qid=queryDict['qid'])
         query.host = self._lastClient.host
+        print " ... QID : %s %s" % (queryDict['qid'], query.qid)
+        assert(queryDict['qid'] == query.qid)
         # schedule the query for later processing and return immediately
         # this enables the sender to query several nodes in a row
         d = reactor.callLater(.01, self.getP2pQuerier().receiveQuery, query)
         return self.nodeId
 
     def xmlrpc_distributedQueryAnswer(self, queryId, senderId, documents):
-        print "MaayRPCServer distributedQueryAnswer : %s %s %s" % \
-              (queryId, senderId, documents)
+        print "MaayRPCServer distributedQueryAnswer : %s %s, %s document(s)" % \
+              (queryId, senderId, len(documents))
         answer = P2pAnswer(queryId, documents)
         d = reactor.callLater(.01, self.getP2pQuerier().relayAnswer, answer)
         return self.nodeId

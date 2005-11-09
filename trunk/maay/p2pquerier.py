@@ -32,7 +32,7 @@ def incrementSequence(item):
        item is seen first)
     """
     if not SEQ_DICT.has_key(item):
-        SEQ_DICT[item] = 0
+        SEQ_DICT[item] = 1
     count = SEQ_DICT[item]
     SEQ_DICT[item] = count + 1
     return count
@@ -53,7 +53,7 @@ class P2pQuery:
         if qid:
             self.qid = qid
         else:
-            self.qid = incrementSequence(sender.__hash__)
+            self.qid = incrementSequence(sender.__hash__())
         self.sender = sender
         self.port = port
         self.ttl = ttl
@@ -64,9 +64,20 @@ class P2pQuery:
         self.ttl -= 1
 
     def addMatch(self, document):
-        self.documents_ids.add(document.document_id)
+        """this function suffers from horrible polymorphism
+           sometimes we get a Document, sometimes a plain dict
+        """
+        if isinstance(document, dict):
+            self.documents_ids.add(document['document_id'])
+        else:
+            self.documents_ids.add(document.document_id)
 
     def isKnown(self, document):
+        """this function suffers from horrible polymorphism
+           sometimes we get a Document, sometimes a plain dict
+        """
+        if isinstance(document, dict):
+            return document['document_id'] in self.documents_ids
         return document.document_id in self.documents_ids
  
     def asKwargs(self):
@@ -93,7 +104,7 @@ def sendQueryProblem(self, *args):
     """Politely displays any problem (bug, unavailability) related
     to an attempt to send a query.
     """
-    print " ... problem sending the query :", args
+    print " ... problem sending the query : %s" % (args,)
 
 class P2pQuerier:
     """The P2pQuerier class is responsible for managing P2P queries.
@@ -121,7 +132,12 @@ class P2pQuerier:
         """
         :type query: `maay.p2pquerier.P2pQuery`
         """        
-        print "P2pQuerier sendQuery : %s" % query
+        print "P2pQuerier sendQuery %s : %s" % (query.qid, query)
+        if self._sentQueries.has_key(query.qid):
+            print " ... my bad, we were going to send query %s to ourselves ..." \
+                  % query.qid
+            return
+        #FIXME: avoid to send query to the originator
         for neighbor in self._selectTargetNeighbors(query):
             proxy = Proxy(str(neighbor.getRpcUrl())) 
             d = proxy.callRemote('distributedQuery', query.asKwargs())
@@ -131,11 +147,13 @@ class P2pQuerier:
             print " ... sent to %s" % neighbor
 
     def addAnswerCallback(self, callback):
+        print "P2pQuerier : registering callback %s for results" \
+              % callback
         P2pQuerier._answerCallbacks.append(callback)
 
     def _notifyAnswerCallbacks(self, results):
         for cb in P2pQuerier._answerCallbacks:
-            apply(cb, results)
+            cb(results)
 
     def receiveQuery(self, query):
         """
@@ -144,10 +162,12 @@ class P2pQuerier:
         print "P2pQuerier receiveQuery : %s" % query
         if query.qid in self._receivedQueries or \
            query.qid in self._sentQueries:
-            print " ... we already know this query, this ends the trip"
+            print " ... we already know query %s, this ends the trip" % query.qid
             return
-        
-        self._receivedQueries[query.qid] = query 
+
+        if query.qid not in self._sentQueries:
+            print " ... %s is a new query, let's work ..." % query.qid
+            self._receivedQueries[query.qid] = query 
 
         query.hop()        
         if query.ttl > 0:
@@ -162,9 +182,15 @@ class P2pQuerier:
         and thus must not be recorded in the database"""
         print "P2pQuerier relayAnswer : %s documents" % len(answer.documents)
         query = self._receivedQueries.get(answer.queryId)
-        if query is None: 
-            print " ... bailing out : we had no query for this answer"
-            return
+        if query:
+            print " ... relaying Answer to originator ..."
+        else:
+            query = self._sentQueries.get(answer.queryId)
+            if query:
+                print " ... originator : we got mail :) ... "
+            else:
+                print " ... bailing out (bug?) : we had no query for this answer"
+                return
         
         toSend = []
         
