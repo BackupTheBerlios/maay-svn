@@ -27,7 +27,6 @@ from logilab.common.compat import set
 
 from twisted.web.xmlrpc import Proxy
 from maay.texttool import makeAbstract, removeSpace, untagText
-MAX_P2P_ANSWER_LENGTH = 15
 
 def hashIt(item):
     """Returns a growing monotone value for the
@@ -180,6 +179,10 @@ class P2pQuerier:
             self.sendQuery(query)
 
         documents = self.querier.findDocuments(query.query)
+        for doc in documents:
+            abstract = makeAbstract(doc.text, query.getWords())
+            doc.text = untagText(removeSpace(abstract))
+            
         self.relayAnswer(P2pAnswer(query.qid, documents))
 
     def relayAnswer(self, answer, local=False): # local still unused
@@ -204,15 +207,11 @@ class P2pQuerier:
             # TODO: record answer in database if local is False
             # auc : to cache them ?
             if not query.isKnown(document):
-                abstract = makeAbstract(document.text, query.getWords())
-                document.text = untagText(removeSpace(abstract))
                 query.addMatch(document)
                 #toSend.append(document.asDictionnary())
                 # above was meant to be like .asKwargs() ?
                 # anyway, this stuff is xmlrpc-serializable (auc)
                 toSend.append(document)
-                if len(toSend) >= MAX_P2P_ANSWER_LENGTH:
-                    break
         
         if query.sender != self.nodeId: 
             try:
