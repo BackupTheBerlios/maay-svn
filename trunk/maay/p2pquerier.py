@@ -26,7 +26,9 @@ import time
 from logilab.common.compat import set
 
 from twisted.web.xmlrpc import Proxy
+from twisted.internet import reactor
 from maay.texttool import makeAbstract, removeSpace, untagText
+from configuration import WebappConfiguration
 
 def hashIt(item, uname=''.join(platform.uname())):
     hasher = sha.sha()
@@ -110,6 +112,8 @@ class P2pQuerier:
     the statistical information available about the neighbors'
     documents.
     """
+    _EXPIRATION_TIME = 10 # secs, this is a min default guard value
+    _markedQueries = {}
     _receivedQueries = {} # key : queryId, val : query
     _sentQueries = {}     
     _answerCallbacks = []
@@ -117,6 +121,41 @@ class P2pQuerier:
     def __init__(self, nodeId, querier):
         self.nodeId = nodeId  
         self.querier = querier
+        reactor.callLater(20, self._markQueries)
+        # now, read a config. provided value for EXPIRATION_TIME
+        config = WebappConfiguration()
+        config.load()
+        P2pQuerier._EXPIRATION_TIME = max(config.query_life_time,
+                                          P2pQuerier._EXPIRATION_TIME)
+
+    def _markQueries(self):
+        queries = self._receivedQueries.keys() + self._sentQueries.keys()
+        stamp = time.time()
+        for q in queries:
+            if q not in self._markedQueries:
+                self._markedQueries[q] = stamp
+        reactor.callLater(self._EXPIRATION_TIME, self._expireQueries)
+        reactor.callLater(self._EXPIRATION_TIME+1, self._markQueries)
+
+    def _expireQueries(self):
+        curtime = time.time()
+        expiredQueries = []
+        for q in self._markedQueries:
+            if curtime - self._markedQueries[q] > self._EXPIRATION_TIME:
+                expiredQueries.append(q)
+                try:
+                    del self._receivedQueries[q]
+                except:
+                    pass
+                try:
+                    del self._sentQueries[q]
+                except:
+                    pass
+        for q in expiredQueries:
+            del self._markedQueries[q]
+        if len(expiredQueries) > 0:
+            print "P2pQuerier garbage collected old queries : %s" % \
+            expiredQueries
 
     def sendQuery(self, query):
         """
