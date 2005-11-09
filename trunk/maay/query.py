@@ -23,17 +23,11 @@ def normalizeMimetype(fileExtension):
 
 class Query(object):
     restrictions = ('filetype', 'filename', 'searchtype')
-    def __init__(self, words, offset=0, filetype=None, filename=None, searchtype='local'):
+    def __init__(self, words, offset=0, filetype=None, filename=None):
         self.words = words # unicode string 
         self.offset = offset
         self.filetype = normalizeMimetype(filetype)
         self.filename = filename
-        if searchtype.lower() not in ('local', 'p2p'):
-            searchtype = 'local'
-        self.searchtype = searchtype.lower()
-
-    def isDistributed(self):
-        return self.searchtype == 'p2p'
 
     def fromRawQuery(rawQuery, offset=0):
         """:type rawQuery: str"""
