@@ -31,8 +31,8 @@ from zope.interface import Interface, implements
 
 from logilab.common.db import get_dbapi_compliant_module
 
-from maay.dbentity import FutureDocument, Document, FileInfo, DocumentProvider, \
-     DocumentScore, Word, Node
+from maay.dbentity import FutureDocument, Document, FileInfo, \
+     DocumentProvider, DocumentScore, Word, Node
 from maay.texttool import normalizeText, WORDS_RGX, MAX_STORED_SIZE
 
 class MaayAuthenticationError(Exception):
@@ -93,7 +93,8 @@ class AnonymousQuerier:
 
     searchInPrivate = False
     
-    def __init__(self, host='', database='', user='', password='', connection=None):
+    def __init__(self, host='', database='', user='', password='',
+                 connection=None):
         if connection is None:
             dbapiMod = get_dbapi_compliant_module('mysql')
             try:
@@ -110,8 +111,8 @@ class AnonymousQuerier:
             except Exception, e:
                 import traceback
                 traceback.print_exc()
-                raise MaayAuthenticationError("Failed to authenticate user %r, cause is %s"
-                                              % (user, e))
+                raise MaayAuthenticationError(
+                    "Failed to authenticate user %r [%s]" % (user, e))
         self._cnx = connection
 
     def _execute(self, query, args=None):
@@ -190,7 +191,8 @@ class AnonymousQuerier:
             db_word.commit(cursor, update=False)
         
     def _getScoresDict(self, cursor, db_document_id):
-        _scores = DocumentScore.selectWhere(cursor, db_document_id=db_document_id)
+        _scores = DocumentScore.selectWhere(cursor,
+                                            db_document_id=db_document_id)
         db_scores = {}
         while _scores:
             score = _scores.pop()
@@ -237,11 +239,11 @@ class AnonymousQuerier:
                                                       word=word)[0]
 
         for winfo in wordInfo.itervalues():
-            winfo.download_count += 1/len(words)
+            winfo.download_count += 1 / len(words)
             winfo.commit(cursor, update=True)
 
         for word,score in scores.iteritems():
-            score.download_count = max(0, score.download_count) + 1/len(words)
+            score.download_count = max(0, score.download_count) + 1 / len(words)
             winfo_downloads = wordInfo[word].download_count
             
             score.popularity = score.download_count / winfo_downloads
@@ -257,7 +259,8 @@ class AnonymousQuerier:
 
     def registerNode(self, nodeId, ip, port, bandwidth, lastSeenTime=None):
         """this will be used as a callback in registrationclient/login"""
-        print "AnonymousQuerier registerNode (callback) %s %s:%s" % (nodeId, ip, port)
+        print "AnonymousQuerier registerNode (callback) %s %s:%s" % \
+                                                             (nodeId, ip, port)
         lastSeenTime = lastSeenTime or int(time.time())
         cursor = self._cnx.cursor()
         node = Node.selectOrInsertWhere(cursor, node_id=nodeId)[0]
@@ -313,7 +316,8 @@ class MaayQuerier(AnonymousQuerier):
     def removeFileInfo(self, filename):
         """remove filename from the database `files` table"""
         cursor = self._cnx.cursor()
-        rows = cursor.execute('DELETE FROM files WHERE file_name = %s', filename)
+        rows = cursor.execute('DELETE FROM files WHERE file_name = %s',
+                              filename)
         cursor.close()
         self._cnx.commit()
         #print "removed %s" % filename
@@ -326,12 +330,12 @@ class MaayQuerier(AnonymousQuerier):
         cursor = self._cnx.cursor()
         query1 = """DELETE documents
                     FROM documents LEFT JOIN files
-                                   ON documents.db_document_id = files.db_document_id
+                             ON documents.db_document_id = files.db_document_id
                     WHERE files.db_document_id IS NULL"""
         rows = cursor.execute(query1)
         query2 = """DELETE document_scores
                     FROM document_scores LEFT JOIN documents
-                                   ON document_scores.db_document_id = documents.db_document_id
+                       document_scores.db_document_id = documents.db_document_id
                     WHERE documents.db_document_id IS NULL"""
         rows += cursor.execute(query2)
         cursor.close()
@@ -343,7 +347,8 @@ class MaayQuerier(AnonymousQuerier):
         """Inserts or update information in table documents,
         file_info, document_score and word"""
         # XXX Decide if we can compute the content_hash and mime_type
-        # ourselves or if the indexer should do it and pass the values as an argument
+        # ourselves or if the indexer should do it and
+        # pass the values as an argument
         cursor = self._cnx.cursor()
         # insert or update in table file_info
         fileinfo = FileInfo.selectWhere(cursor, file_name=futureDoc.filename)
@@ -376,11 +381,13 @@ class MaayQuerier(AnonymousQuerier):
         else:
             # file unknown
             # try to find a Document with same hash value
-            doc = Document.selectWhere(cursor, document_id=futureDoc.content_hash)
+            doc = Document.selectWhere(cursor,
+                                       document_id=futureDoc.content_hash)
             if doc:
                 doc = doc[0]
                 doc.state = futureDoc.state
-                doc.publication_time = max(doc.publication_time, futureDoc.lastModificationTime)
+                doc.publication_time = max(doc.publication_time,
+                                           futureDoc.lastModificationTime)
                 doc.commit(cursor, update=True)
             else:
                 doc = self._createDocument(cursor, futureDoc)
