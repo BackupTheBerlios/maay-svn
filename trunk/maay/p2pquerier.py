@@ -19,25 +19,26 @@
 """
 __revision__ = '$Id$'
 
+import sha
+import platform
+import time
+
 from logilab.common.compat import set
 
 from twisted.web.xmlrpc import Proxy
 from maay.texttool import makeAbstract, removeSpace, untagText
-#TODO: add test for this
-SEQ_DICT = {}
 MAX_P2P_ANSWER_LENGTH = 15
 
-def incrementSequence(item):
+def hashIt(item):
     """Returns a growing monotone value for the
        associated item (starting from 0 when
        item is seen first)
     """
-    if not SEQ_DICT.has_key(item):
-        SEQ_DICT[item] = 1
-    count = SEQ_DICT[item]
-    SEQ_DICT[item] = count + 1
-    return count
-
+    hasher = sha.sha()
+    hasher.update(''.join(platform.uname()))
+    hasher.update('%s' % id(item))
+    hasher.update('%s' % time.time())
+    return hasher.hexdigest()
 
 # XXX should P2pQuery derive from query.Query?
 class P2pQuery:
@@ -54,7 +55,7 @@ class P2pQuery:
         if qid:
             self.qid = qid
         else:
-            self.qid = incrementSequence(sender.__hash__())
+            self.qid = hashIt(sender)
         self.sender = sender
         self.port = port
         self.ttl = ttl
