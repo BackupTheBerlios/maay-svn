@@ -7,20 +7,35 @@ Standards-Version: 3.6.2
 
 Package: maay
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, mysql-server-4.1, python, python-mysql, python-nevow, python-twisted
-Recommends: antiword, unrtf, pdftohtml, 
+Depends: ${misc:Depends}, mysql-server-4.1, python, python-mysql, python-nevow (>= 0.6.0), python-twisted (>= 2.0), python-logilab-common (>=0.12.0-3)
+Recommends: antiword, unrtf, pdftohtml, python-imaging
 Description: peer to peer indexation and search engine
  Maay can index files on your computer, and export them to other
  members of the Maay P2P network. You can also issue searches which
  will look for documents on your computer as well as on other nodes of
  the P2P network.
  .
- Maay can index raw text, html, pdf, ms word and rtf documents. Other
- formats are planned for a future release.
+ Maay can index raw text, html, pdf, Microsoft word and rtf
+ documents. Other formats are planned for a future release.
  .
  Queries are issued using a web interface. In the current version
- queries are ontly dispatched on the current node, i.e. the P2P
+ queries are only dispatched on the current node, i.e. the P2P
  functionnality is not available for now.
  . 
  Homepage: http://maay.netofpeers.net/
 
+Package: maay-registration-server
+Architecture: all
+Depends: ${misc:Depends}, python, python-twisted (>= 2.0)
+Description: registration server for maay P2P network
+ Maay can index files on your computer, and export them to other
+ members of the Maay P2P network. You can also issue searches which
+ will look for documents on your computer as well as on other nodes of
+ the P2P network.
+ .
+ The registration server is used to register maay nodes so that they
+ can initiate P2P connections and document searches. You need to
+ install this package if you intend to run Maay nodes on a local
+ network.
+ . 
+ Homepage: http://maay.netofpeers.net/
