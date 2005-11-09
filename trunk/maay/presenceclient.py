@@ -25,7 +25,7 @@ class PresenceClient(LineReceiver):
     """
  
     def __init__(self, nodePresenceCallback):
-        self.__callback = nodePresenceCallback
+        self._callback = nodePresenceCallback
         self._lineCount = 0
         
     def notify(self, nodeId, ip, port, bandwidth) :
@@ -59,7 +59,7 @@ class PresenceClient(LineReceiver):
             return
         time, nodeId, nodeIP, nodePort, nodeBandwidth = data.split('\t')
         lastSeenTime = parseTime(time)
-        self.__callback(nodeId, nodeIP, nodePort, nodeBandwidth, lastSeenTime)
+        self._callback(nodeId, nodeIP, nodePort, nodeBandwidth, lastSeenTime)
         
 
 def parseTime(isodatetime):
