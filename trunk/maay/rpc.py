@@ -51,7 +51,7 @@ class MaayRPCServer(XMLRPC):
         self._sessions[ANONYMOUS_AVATARID] = portal.anonymousQuerier
         self._lastClient = None
         #self._p2pQuerier = P2pQuerier(nodeId, portal.webQuerier)
-        MaayRPCServer.theP2pQuerier = P2pQuerier(nodeId, portal.webQuerier)
+        MaayRPCServer.theP2pQuerier = P2pQuerier(nodeId, portal.anonymousQuerier)
 
     def render(self, request):
         #XXX: check the correctness of this stuff
