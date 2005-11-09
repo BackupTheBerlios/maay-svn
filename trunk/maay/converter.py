@@ -185,11 +185,14 @@ class CommandBasedConverter(BaseConverter):
             else:
                 raise IndexationFailure('Unable to index %r' % filepath)
         finally:
-            if osp.isfile(outputFile):
-                os.remove(outputFile)
-            if osp.isfile(inputFile):
-                os.remove(inputFile)
-            os.rmdir(outputDir)
+            try:
+                if osp.isfile(outputFile):
+                    os.remove(outputFile)
+                if osp.isfile(inputFile):
+                    os.remove(inputFile)
+                os.rmdir(outputDir)
+            except OSError:
+                print "leaving %s behind" % outputDir
 
 
 class PDFConverter(CommandBasedConverter, HTMLConverter):
