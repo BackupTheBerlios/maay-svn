@@ -334,8 +334,8 @@ class MaayQuerier(AnonymousQuerier):
                     WHERE files.db_document_id IS NULL"""
         rows = cursor.execute(query1)
         query2 = """DELETE document_scores
-                    FROM document_scores LEFT JOIN documents
-                       document_scores.db_document_id = documents.db_document_id
+                    FROM document_scores LEFT JOIN  documents
+                       ON document_scores.db_document_id = documents.db_document_id
                     WHERE documents.db_document_id IS NULL"""
         rows += cursor.execute(query2)
         cursor.close()
