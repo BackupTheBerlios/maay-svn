@@ -27,7 +27,8 @@ class P2pQueryTC(unittest.TestCase):
     def setUp(self):
         self.query = P2pQuery(sender='http://localhost:3423', # should be a hash (auc)
                               port=3423,
-                              query=Query.fromRawQuery("foo"))
+                              query=Query.fromRawQuery("foo"),
+                              qid=42)
 
     def testHop(self):
         ttl = self.query.ttl
@@ -36,18 +37,18 @@ class P2pQueryTC(unittest.TestCase):
 
     def testAddMatch(self):
         doc = Document(document_id = '0'*40)
-        self.query.addMatch(doc)
+        self.query.addMatch(doc.__dict__)
         self.failUnless('0'*40 in self.query.documents_ids)
 
     def testIsKnown(self):
         doc = Document(document_id = '0'*40)
-        self.query.addMatch(doc)
-        self.failUnless(self.query.isKnown(doc))
-        self.failIf(self.query.isKnown(Document(document_id = '1'*40)))
+        self.query.addMatch(doc.__dict__)
+        self.failUnless(self.query.isKnown(doc.__dict__))
+        self.failIf(self.query.isKnown(Document(document_id = '1'*40).__dict__))
 
     def testSimpleQueryAsKwargs(self):
         self.assertEquals(self.query.asKwargs(),
-                          {'qid' : 0,
+                          {'qid' : 42,
                            'sender' : 'http://localhost:3423',
                            'port' : 3423,
                            'ttl' : 5, # default value
@@ -58,9 +59,10 @@ class P2pQueryTC(unittest.TestCase):
         query = P2pQuery(sender='http://localhost:3423',
                          port = 3423,
                          ttl=2,
-                         query=Query.fromRawQuery("foo bar filetype:pdf"))
+                         query=Query.fromRawQuery("foo bar filetype:pdf"),
+                         qid=42)
         self.assertEquals(query.asKwargs(),
-                          {'qid' : 0,
+                          {'qid' : 42,
                            'sender' : 'http://localhost:3423',
                            'port' : 3423,
                            'ttl' : 2,

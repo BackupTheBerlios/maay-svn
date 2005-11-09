@@ -30,7 +30,7 @@ class Document_TC(unittest.TestCase):
         for p in params[:-1]:
             self.assertEquals(type(p), unicode)
         self.assertEquals(len(params), params[-1] + 1)
-        expected = "SELECT D.db_document_id, D.document_id, D.title, D.size, D.text, D.url, D.mime_type, D.publication_time FROM documents D, document_scores DS WHERE DS.db_document_id=D.db_document_id AND DS.word IN (%s, %s, %s, %s) GROUP BY DS.db_document_id HAVING count(DS.db_document_id) = %s LIMIT 15 OFFSET 0"
+        expected = "SELECT D.db_document_id, D.document_id, D.title, D.size, D.text, D.url, D.mime_type, D.publication_time FROM documents D, document_scores DS WHERE DS.db_document_id=D.db_document_id AND DS.word IN (%s, %s, %s, %s) GROUP BY DS.db_document_id HAVING count(DS.db_document_id) = %s ORDER BY D.publication_time DESC LIMIT 15 OFFSET 0"
         self.assertEquals(query.split(), expected.split())
         q = query%tuple(params) # sanity check for argument count
         
@@ -41,7 +41,7 @@ class Document_TC(unittest.TestCase):
         for p in params[:-1]:
             self.assertEquals(type(p), unicode)
         self.assertEquals(len(params), params[-1] + 1)
-        expected = "SELECT D.db_document_id, D.document_id, D.title, D.size, D.text, D.url, D.mime_type, D.publication_time FROM documents D, document_scores DS WHERE DS.db_document_id=D.db_document_id AND DS.word IN (%s, %s, %s, %s) GROUP BY DS.db_document_id HAVING count(DS.db_document_id) = %s LIMIT 15 OFFSET 15"
+        expected = "SELECT D.db_document_id, D.document_id, D.title, D.size, D.text, D.url, D.mime_type, D.publication_time FROM documents D, document_scores DS WHERE DS.db_document_id=D.db_document_id AND DS.word IN (%s, %s, %s, %s) GROUP BY DS.db_document_id HAVING count(DS.db_document_id) = %s ORDER BY D.publication_time DESC LIMIT 15 OFFSET 15"
         self.assertEquals(query.split(), expected.split())
         q = query%tuple(params) # sanity check for argument count
         
@@ -53,7 +53,7 @@ class Document_TC(unittest.TestCase):
         for p in params[:-2]:
             self.assertEquals(type(p), unicode)
         self.assertEquals(len(params), params[-1] + 2)
-        expected = "SELECT D.db_document_id, D.document_id, D.title, D.size, D.text, D.url, D.mime_type, D.publication_time FROM documents D, document_scores DS WHERE DS.db_document_id=D.db_document_id AND DS.word IN (%s, %s, %s, %s) AND D.state!=%s GROUP BY DS.db_document_id HAVING count(DS.db_document_id) = %s LIMIT 15 OFFSET 15"
+        expected = "SELECT D.db_document_id, D.document_id, D.title, D.size, D.text, D.url, D.mime_type, D.publication_time FROM documents D, document_scores DS WHERE DS.db_document_id=D.db_document_id AND DS.word IN (%s, %s, %s, %s) AND D.state!=%s GROUP BY DS.db_document_id HAVING count(DS.db_document_id) = %s ORDER BY D.publication_time DESC LIMIT 15 OFFSET 15"
         self.assertEquals(query.split(), expected.split())
         q = query%tuple(params) # sanity check for argument count
         
@@ -67,7 +67,7 @@ class Document_TC(unittest.TestCase):
         for p in params[:-1]:
             self.assertEquals(type(p), unicode)
         self.assertEquals(len(params), params[-1] + 2)
-        expected = "SELECT D.db_document_id, D.document_id, D.title, D.size, D.text, D.url, D.mime_type, D.publication_time FROM documents D, document_scores DS WHERE DS.db_document_id=D.db_document_id AND DS.word IN (%s, %s, %s, %s)   AND D.mime_type=%s  GROUP BY DS.db_document_id HAVING count(DS.db_document_id) = %s LIMIT 15 OFFSET 0"
+        expected = "SELECT D.db_document_id, D.document_id, D.title, D.size, D.text, D.url, D.mime_type, D.publication_time FROM documents D, document_scores DS WHERE DS.db_document_id=D.db_document_id AND DS.word IN (%s, %s, %s, %s)   AND D.mime_type=%s  GROUP BY DS.db_document_id HAVING count(DS.db_document_id) = %s ORDER BY D.publication_time DESC LIMIT 15 OFFSET 0"
         self.assertEquals(query.split(), expected.split())
         q = query%tuple(params) # sanity check for argument count
         
