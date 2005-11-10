@@ -22,8 +22,6 @@ from __future__ import division
 __revision__ = '$Id$'
 __metaclass__ = type
 
-from mimetypes import guess_type
-import re
 import time
 from math import sqrt, log
 
@@ -31,7 +29,7 @@ from zope.interface import Interface, implements
 
 from logilab.common.db import get_dbapi_compliant_module
 
-from maay.dbentity import FutureDocument, Document, FileInfo, \
+from maay.dbentity import Document, FileInfo, \
      DocumentProvider, DocumentScore, Word, Node
 from maay.texttool import normalizeText, WORDS_RGX, MAX_STORED_SIZE
 

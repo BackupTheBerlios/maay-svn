@@ -17,14 +17,15 @@
 
 "querier test cases"""
 
+__revision__ = ''
+
 import unittest
 import sha
 
 from logilab.common.testlib import MockConnection
 from logilab.common.db import get_connection
-from maay.querier import MaayQuerier, normalizeText, FutureDocument, Document, FileInfo
-
-
+from maay.querier import MaayQuerier, normalizeText, Document, FileInfo
+from maay.dbentity import FutureDocument
 
 class QuerierTC(unittest.TestCase):
     def setUp(self):
