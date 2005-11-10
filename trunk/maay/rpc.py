@@ -13,18 +13,26 @@
 #     You should have received a copy of the GNU General Public License
 #     along with this program; if not, write to the Free Software
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+"""
+This is the interface made available to the network, from a node.
+Protocol is XMLRPC, which provides :
+- to everybody : [authenticate]
+- to the indexer : [lastIndexationTimeAndState, getIndexedFiles,
+                    removeFileInfo, UnreferencedDocuments, indexDocument]
+- to the peers : [distributedQuery, distributedQueryAnswer]               
+"""
+
+__revision__ = ''
 
 from time import time
 from random import randint
-import sys
 
 from twisted.web.xmlrpc import XMLRPC
 from twisted.cred.credentials import UsernamePassword, Anonymous
-from twisted.cred.error import UnauthorizedLogin
-from twisted.internet import defer, reactor
+from twisted.internet import reactor
 ## from twisted.python.failure import Failure
 
-from maay.querier import MaayQuerier, IQuerier, ANONYMOUS_AVATARID, WEB_AVATARID
+from maay.querier import IQuerier, ANONYMOUS_AVATARID, WEB_AVATARID
 from maay.dbentity import FutureDocument, Document
 from maay.p2pquerier import P2pQuerier, P2pQuery, P2pAnswer
 from maay.query import Query
@@ -34,6 +42,8 @@ def make_uid(username, password):
     # FIXME: need a better implementation
     return '%X' % abs(hash(username+password) + hash(time()) + randint(-1000, 1000))
 
+def getP2pQuerier():
+    return MaayRPCServer.theP2pQuerier
 
 class MaayRPCServer(XMLRPC):
     #XXX: should be in instance, but this simplifies greatly
@@ -58,11 +68,8 @@ class MaayRPCServer(XMLRPC):
         self._lastClient = request.transport.getPeer()
         return XMLRPC.render(self, request)
 
-    def getP2pQuerier(self):
-        assert (MaayRPCServer.theP2pQuerier) is not None
-        return MaayRPCServer.theP2pQuerier
-        
-    def _attachUser(self, (interface, querier, logout), username, password):
+      
+    def _attachUser(self, (interface, querier, _), username, password):
         print "MaayRPCServer _attachUser", username, type(querier)
         if interface is not IQuerier or querier is None:
             errmsg = "Could not get Querier for", username
@@ -94,17 +101,17 @@ class MaayRPCServer(XMLRPC):
             querier = self._sessions[cnxId]
             fileInfos = querier.getFileInformations(filename)
             if len(fileInfos):
-                time = fileInfos[0].file_time
+                time_ = fileInfos[0].file_time
                 state = fileInfos[0].state
             else:
-                time = 0
+                time_ = 0
                 state = Document.UNKNOWN_STATE
         else:
             # XXX : could we return twisted.python.failure.Failure instance here ?
             ## return Failure(ValueError("invalid connexion")
-            time = -1 # XXX: need to differenciate bad cnxId and no last mod time
+            time_ = -1 # XXX: need to differenciate bad cnxId and no last mod time
             state = Document.UNKNOWN_STATE
-        return time, state
+        return time_, state
 
     def xmlrpc_getIndexedFiles(self, cnxId):
         if self.cnxIsValid(cnxId):
@@ -139,7 +146,7 @@ class MaayRPCServer(XMLRPC):
             futureDoc.text = unicode(futureDoc.text)
         except UnicodeError, exc:
             print exc
-            print `text`
+            print futureDoc.text
             return 1
         if self.cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
@@ -162,14 +169,14 @@ class MaayRPCServer(XMLRPC):
         querier.registerNode(query.sender, query.host, query.port)
         # schedule the query for later processing and return immediately
         # this enables the sender to query several nodes in a row
-        d = reactor.callLater(.01, self.getP2pQuerier().receiveQuery, query)
+        reactor.callLater(.01, getP2pQuerier().receiveQuery, query)
         return self.nodeId
 
     def xmlrpc_distributedQueryAnswer(self, queryId, senderId, documents):
         print "MaayRPCServer distributedQueryAnswer : %s %s, %s document(s)" % \
               (queryId, senderId, len(documents))
         answer = P2pAnswer(queryId, documents)
-        d = reactor.callLater(.01, self.getP2pQuerier().relayAnswer, answer)
+        reactor.callLater(.01, getP2pQuerier().relayAnswer, answer)
         return self.nodeId
                          
     
