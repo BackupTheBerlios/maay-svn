@@ -51,7 +51,8 @@ class Query(object):
 
     def fromContext(context):
         """:type context: nevow's context objects"""
-        rawQuery = unicode(context.arg('words'), 'utf-8')
+        wordsInContext  = context.arg('words') or ''
+        rawQuery = unicode(wordsInContext, 'utf-8')
         offset = int(context.arg('offset', 0))
         return Query.fromRawQuery(rawQuery, offset)
     fromContext = staticmethod(fromContext)
