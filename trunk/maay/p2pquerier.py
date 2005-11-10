@@ -224,8 +224,9 @@ class P2pQuerier:
             d.addErrback(P2pErrbacks.sendQueryProblem)
             P2pErrbacks.setQueryTarget(target)
             self._sentQueries[query.qid] = query
-            print " ... sent to %s" % neighbor
-
+            print " ... sent to %s %s %s" % (neighbor.node_id,
+                                             neighbor.ip,
+                                             neighbor.port)
 
     def receiveQuery(self, query):
         """
@@ -246,6 +247,11 @@ class P2pQuerier:
             self.sendQuery(query)
 
         documents = self.querier.findDocuments(query.query)
+        
+        if len(documents) == 0:
+            print " ... no document matching the query, won't answer."
+            return
+        
         for doc in documents:
             abstract = makeAbstract(doc.text, query.getWords())
             doc.text = untagText(removeSpace(abstract))
@@ -256,17 +262,17 @@ class P2pQuerier:
         """record and forward answers to a query.
         If local is True, then the answers come from a local query,
         and thus must not be recorded in the database"""
-        print "P2pQuerier relayAnswer : %s documents" % len(answer.documents)
+        print "P2pQuerier relayAnswer : %s document(s)" % len(answer.documents)
         query = self._receivedQueries.get(answer.queryId)
-        if query:
-            print " ... relaying Answer to originator ..."
-        else:
+        if not query :
             query = self._sentQueries.get(answer.queryId)
             if query:
-                print " ... originator : we got mail :) ... "
+                print " ... originator : we got an answer !"
             else:
-                print " ... bailing out (bug?) : we had no query for this answer"
+                print " ... bug or dos : we had no query for this answer"
                 return
+        print " ... relaying Answer to %s:%s ..." \
+              % (query.host, query.port)
         
         toSend = []
         
@@ -279,15 +285,10 @@ class P2pQuerier:
                 abstract = makeAbstract(document['text'], query.getWords())
                 document['text'] = untagText(removeSpace(abstract))
                 query.addMatch(document)
-                #toSend.append(document.asDictionnary())
-                # above was meant to be like .asKwargs() ?
-                # anyway, this stuff is xmlrpc-serializable (auc)
                 toSend.append(document)
         
         if query.sender != self.nodeId: 
             try:
-                # getNodeUrl seems not to exist yet
-                #senderUrl = self.querier.getNodeUrl(query.sender)
                 host = query.host 
                 port = query.port
                 print " ... will send answer to %s:%s" % (host, port)
