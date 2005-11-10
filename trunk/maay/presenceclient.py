@@ -69,6 +69,18 @@ def parseTime(isodatetime):
     return mktime(tuple(date+time+[0,0,0]))
 
 
+class Errbacks:
+    """helper namespace for meaningfull tracebacks"""
+    target = None
+
+    def setTarget(target):
+        Errbacks.target = target
+    setTarget = staticmethod(setTarget)
+
+    def reportBug(bug):
+        print " ... problem contacting %s" % Errbacks.target
+    reportBug = staticmethod(reportBug)
+
 def notify(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidth):
     """registers and transmits the node catalog to querier.registerNode
     """
@@ -78,6 +90,8 @@ def notify(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwid
         d = c.connectTCP(regIP, regPort)
         d.addCallback(PresenceClient.notify, nodeId, nodeIP, xmlrpcPort, bandwidth)
         d.addCallback(PresenceClient.who)
+        Errbacks.setTarget("%s:%s" % (regIP, regPort))
+        d.addErrback(Errbacks.reportBug)
     else:
         print "Login : no querier found => no presence / no P2P"
 
@@ -86,9 +100,14 @@ def askWho(reactor, regIp, regPort, callback):
     c = ClientCreator(reactor, RegistrationClient, callback)
     d = c.connectTCP(regIp, regPort)
     d.addCallback(RegistrationClient.who)
+    Errbacks.setTarget("%s:%s" % (regIP, regPort))
+    d.addErrback(Errbacks.reportBug)
 
 def logout(reactor, regIp, regPort, nodeId):
     print "PresenceClient@%s:%s node %s wants to log out." % (regIp, regPort, nodeId)
     c = ClientCreator(reactor, PresenceClient, None)
     d = c.connectTCP(regIp, regPort)
     d.addCallback(PresenceClient.logout)
+    Errbacks.setTarget("%s:%s" % (regIP, regPort))
+    d.addErrback(Errbacks.reportBug)
+
