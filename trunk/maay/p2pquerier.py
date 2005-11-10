@@ -28,7 +28,7 @@ from logilab.common.compat import set
 from twisted.web.xmlrpc import Proxy
 from twisted.internet import reactor
 from maay.texttool import makeAbstract, removeSpace, untagText
-from configuration import WebappConfiguration
+from configuration import NodeConfiguration
 
 def hashIt(item, uname=''.join(platform.uname())):
     hasher = sha.sha()
@@ -155,7 +155,7 @@ class P2pQuerier:
         self._answerCallbacks = {}
         # now, read a config. provided value for EXPIRATION_TIME
         # and fire the garbage collector
-        config = WebappConfiguration()
+        config = NodeConfiguration()
         config.load()
         P2pQuerier._EXPIRATION_TIME = max(config.query_life_time,
                                           P2pQuerier._EXPIRATION_TIME)

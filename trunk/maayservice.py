@@ -34,7 +34,7 @@ class MyService(win32serviceutil.ServiceFramework):
 
     def SvcDoRun(self):
         import servicemanager
-        from maay.server import run
+        from maay.node import run
         win32evtlogutil.ReportEvent(self._svc_name_,
                                     servicemanager.PYS_SERVICE_STARTED,
                                     0, # category

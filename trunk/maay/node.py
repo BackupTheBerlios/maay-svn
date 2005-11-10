@@ -14,7 +14,11 @@
 #     along with this program; if not, write to the Free Software
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-"""maay local web UI script"""
+"""Maay Node
+
+The node is reponsible for running the web user interface and
+an xmlrpc server for the indexer and distributed queries.
+"""
 
 __revision__ = '$Id$'
 
@@ -49,9 +53,9 @@ import MySQLdb
 from maay.querier import MaayQuerier, IQuerier, AnonymousQuerier, \
      MaayAuthenticationError, WEB_AVATARID
 from maay.rpc import MaayRPCServer
-from maay.configuration import WebappConfiguration
+from maay.configuration import NodeConfiguration
 from maay import presenceclient
-from maay.webapplication import Maay404, IServerConfiguration, SearchForm
+from maay.webapplication import Maay404, INodeConfiguration, SearchForm
 
 
 ## nevow app/server setup ############################################
@@ -114,26 +118,26 @@ class MaayRealm:
 
 class MaayPortal(object, portal.Portal):
     """Portal for Maay authentication system"""
-    def __init__(self, webappConfig):
+    def __init__(self, nodeConfig):
         print "Portal creation"
         realm = MaayRealm()
-        checker = DBAuthChecker(realm, webappConfig.db_host,
-                                webappConfig.db_name)
+        checker = DBAuthChecker(realm, nodeConfig.db_host,
+                                nodeConfig.db_name)
         portal.Portal.__init__(self, realm, (checker,))
         self.anonymousChecker = MaayAnonymousChecker()
         self.registerChecker(self.anonymousChecker, IAnonymous)
-        self.config = webappConfig
+        self.config = nodeConfig
         # Create default web querier, based on local configuration
         try:
             print "Credentials : "
-            print "  - host", webappConfig.db_host
-            print "  - db", webappConfig.db_name
-            print "  - user", webappConfig.user
-            print "  - pass", webappConfig.password
-            webQuerier = MaayQuerier(host=webappConfig.db_host,
-                                     database=webappConfig.db_name,
-                                     user=webappConfig.user,
-                                     password=webappConfig.password)
+            print "  - host", nodeConfig.db_host
+            print "  - db", nodeConfig.db_name
+            print "  - user", nodeConfig.user
+            print "  - pass", nodeConfig.password
+            webQuerier = MaayQuerier(host=nodeConfig.db_host,
+                                     database=nodeConfig.db_name,
+                                     user=nodeConfig.user,
+                                     password=nodeConfig.password)
         except Exception, exc:
             # unable to create a web querier
             print "***"
@@ -146,13 +150,13 @@ class MaayPortal(object, portal.Portal):
             realm.createUserSession(WEB_AVATARID, webQuerier)
             webQuerier.registerNode(self.config.get_node_id(),
                                     ip=socket.gethostbyname(socket.gethostname()),
-                                    port=webappConfig.rpcserver_port,
-                                    bandwidth=webappConfig.bandwidth)
+                                    port=nodeConfig.rpcserver_port,
+                                    bandwidth=nodeConfig.bandwidth)
         self.webQuerier = webQuerier
-        self.anonymousQuerier = AnonymousQuerier(host=webappConfig.db_host,
-                                                 database=webappConfig.db_name,
-                                                 user=webappConfig.user,
-                                                 password=webappConfig.password)
+        self.anonymousQuerier = AnonymousQuerier(host=nodeConfig.db_host,
+                                                 database=nodeConfig.db_name,
+                                                 user=nodeConfig.user,
+                                                 password=nodeConfig.password)
 
 
     def getWebQuerier(self):
@@ -240,31 +244,31 @@ class MaaySessionWrapper(guard.SessionWrapper):
     
     
 def run():
-    webappConfig = WebappConfiguration()
-    webappConfig.load()
-    maayPortal = MaayPortal(webappConfig)
+    nodeConfig = NodeConfiguration()
+    nodeConfig.load()
+    maayPortal = MaayPortal(nodeConfig)
     website = appserver.NevowSite(MaaySessionWrapper(maayPortal,
                                                      mindFactory=MaayMindFactory))
     website.remember(Maay404(), inevow.ICanHandleNotFound)
-    website.remember(webappConfig, IServerConfiguration)
+    website.remember(nodeConfig, INodeConfiguration)
     presenceclient.notify(reactor,
-                          webappConfig.registration_host, webappConfig.registration_port,
+                          nodeConfig.presence_host, nodeConfig.presence_port,
                           maayPortal.webQuerier,
-                          webappConfig.get_node_id(),
+                          nodeConfig.get_node_id(),
                           socket.gethostbyname(socket.gethostname()),
-                          webappConfig.rpcserver_port,
-                          webappConfig.bandwidth)
+                          nodeConfig.rpcserver_port,
+                          nodeConfig.bandwidth)
     
                              
-    rpcserver = server.Site(MaayRPCServer(webappConfig.get_node_id(),
+    rpcserver = server.Site(MaayRPCServer(nodeConfig.get_node_id(),
                                           maayPortal))
-    reactor.listenTCP(webappConfig.webserver_port, website)
-    reactor.listenTCP(webappConfig.rpcserver_port, rpcserver)
+    reactor.listenTCP(nodeConfig.webserver_port, website)
+    reactor.listenTCP(nodeConfig.rpcserver_port, rpcserver)
     try:
-        print "-------------Server mainloop-------------"
+        print "-------------Starting Node mainloop-------------"
         reactor.run()
     finally:
-        print "-----------Shutting down Server----------"
+        print "-----------Shutting down Node----------"
         
 
 if __name__ == '__main__':

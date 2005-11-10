@@ -1,4 +1,3 @@
-#!/usr/bin/python
 #     Copyright (C) 2005 France Telecom R&D
 #
 #     This program is free software; you can redistribute it and/or modify
@@ -15,6 +14,10 @@
 #     along with this program; if not, write to the Free Software
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-__revision__ = '$Id$'
-from maay.server import run
-run()
+import unittest
+import maay.node
+
+if __name__ == '__main__':
+    unittest.main()
+
+

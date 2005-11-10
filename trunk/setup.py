@@ -30,18 +30,18 @@ url = "http://maay.netofpeers.net/"
 packages = ['maay']
 data_files = [('maay/data', glob('maay/data/*')+glob('maay/data/images/*')),
                   ('maay/sql', glob('maay/sql/*.sql')),]
-scripts = ['maay/bin/maay-server', 'maay/bin/maay-indexer']
+scripts = ['maay/bin/maay-node', 'maay/bin/maay-indexer']
 
 
 class Target:
     def __init__(self, **kw):
         self.__dict__.update(kw)
         
-maay_server = Target(description = "The maay server application",
+maay_node = Target(description = "The maay server application",
 			    icon_resources=[(1,  "maay/data/images/maay.ico"),],
-			    script = 'maay/server.py',
+			    script = 'maay/node.py',
                             includes = ["MySQLdb"],
-			    dest_base = "maay_server")
+			    dest_base = "maay_node")
 maay_indexer = Target(description = "The maay indexer application (CLI)",
 			    icon_resources=[(1,  "maay/data/images/maay.ico"),],
 			    script = 'maay/indexer.py',
@@ -64,7 +64,7 @@ if sys.platform == 'win32':
             sys.argv.append('py2exe')
             
         
-	setup(console = [maay_server, maay_indexer,
+	setup(console = [maay_node, maay_indexer,
                          createdb, updateConfig],
               service = [maay_service],
 		name = name,
@@ -82,7 +82,7 @@ else:
 		version = version,
 		author = author,
                 author_email = author_email,
-		copyright = copyright,
+#		copyright = copyright,
 		description = description,
 		url = url,
 		data_files = data_files,

@@ -36,7 +36,7 @@ from maay.query import Query
 from maay.p2pquerier import P2pQuerier, P2pQuery
 import maay.indexer
 
-class IServerConfiguration(Interface):
+class INodeConfiguration(Interface):
     """provide an interface in order to be able to remember webappconfig"""
 
 
@@ -72,7 +72,7 @@ class PeersList(MaayPage):
         self.querier = querier
 
     def data_peers(self, context, data):
-        webappConfig = IServerConfiguration(context)
+        webappConfig = INodeConfiguration(context)
         myNodeId = webappConfig.get_node_id()
         print "PeerList data_peers : my_node_id =", myNodeId
         peers = self.querier.getActiveNeighbors(myNodeId, 10)
@@ -99,7 +99,7 @@ class SearchForm(MaayPage):
 
     def logout(self):
         print "Bye %s !" % (self.maayId,)
-        # XXX: logout message should be forwarded to registration server
+        # XXX: logout message should be forwarded to presence server
         return None
 
     def child_peers(self, context):
@@ -129,7 +129,7 @@ class SearchForm(MaayPage):
         if not self.p2pquerier:
             print "BUG ? We don't have a P2pQuerier"
             return
-        webappConfig = IServerConfiguration(context)
+        webappConfig = INodeConfiguration(context)
         theDistributedQuery = P2pQuery(webappConfig.get_node_id(),
                                        webappConfig.rpcserver_port,
                                        query)
@@ -151,7 +151,7 @@ class SearchForm(MaayPage):
         # self._askForPeerResults(query, context)
         resultsPage = FACTORY.clientFactory(context, self.maayId, localResults, query, offset)
         #######################
-        webappConfig = IServerConfiguration(context)
+        webappConfig = INodeConfiguration(context)
         p2pQuery = P2pQuery(webappConfig.get_node_id(),
                             webappConfig.rpcserver_port,
                             query)

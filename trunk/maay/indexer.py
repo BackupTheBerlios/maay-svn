@@ -68,7 +68,7 @@ class Indexer:
         host = self.indexerConfig.host
         port = self.indexerConfig.port
         self.filesystemEncoding = sys.getfilesystemencoding()
-        print "Indexer connecting to server %s:%s" % (host, port)
+        print "Indexer connecting to Node %s:%s" % (host, port)
         self.serverProxy = ServerProxy('http://%s:%s' % (host, port),
                                        allow_none=True,
                                        encoding='utf-8')
@@ -76,7 +76,7 @@ class Indexer:
         self.verbose = indexerConfig.verbose
         if not self.cnxId:
             if self.verbose:
-                print "Got failure from server:", errmsg
+                print "Got failure from Node:", errmsg
             raise MaayAuthenticationError("Failed to connect as '%s'" % username)
         # we might be asked to purge everything and just exit
         if indexerConfig['purge']:
@@ -163,7 +163,7 @@ class Indexer:
         filename = unicode(filename, self.filesystemEncoding)
         answer = self.serverProxy.lastIndexationTimeAndState(self.cnxId, filename)
         if answer is None:
-            raise MaayAuthenticationError("Bad cnxId sent to the server")
+            raise MaayAuthenticationError("Bad cnxId sent to the Node")
         lastTime, lastState = answer
         return lastTime, lastState
 
@@ -180,10 +180,10 @@ class Indexer:
 
         except (Fault, ProtocolError), exc:
             if self.verbose:
-                print "An error occured on the server while indexing %s" % \
+                print "An error occured on the Node while indexing %s" % \
                       futureDoc.filename.encode('iso-8859-1')
                 print exc
-                print "See server log for details"
+                print "See Node log for details"
             else:
                 print "Error indexing %s: %s" % (futureDoc.filename.encode('iso-8859-1'), exc)
         
@@ -238,8 +238,8 @@ def run():
             sys.exit(1)
         indexer.start()
     except socket.error, exc:
-        print "Cannot contact server:", exc
-        print "Check that the server is running on %s:%s" % \
+        print "Cannot contact Node:", exc
+        print "Check that the Node is running on %s:%s" % \
               (indexerConfig.host, indexerConfig.port)
         sys.exit(1)
 

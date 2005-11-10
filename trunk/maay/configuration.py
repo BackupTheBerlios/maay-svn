@@ -133,7 +133,7 @@ class Configuration(BaseConfiguration):
 
 ################ Web server, rpc server stuff
 
-class WebappConfiguration(Configuration):
+class NodeConfiguration(Configuration):
     options = Configuration.options + [
         ('db-name',
          {'type' : "string", 'metavar' : "<dbname>", 'short' : "d",
@@ -142,7 +142,7 @@ class WebappConfiguration(Configuration):
           }),
         ('db-host',
          {'type' : "string", 'metavar' : "<dbhost>", 'short' : "H",
-          'help' : "which server hosts the database",
+          'help' : "hostname of the database server",
           'default' : "localhost",
           }),
         ('user',
@@ -157,14 +157,14 @@ class WebappConfiguration(Configuration):
           'help': 'password of anonymous user to use to connect to the database',
           'default' : "maay",
           }),
-        ('registration-host',
-         {'type' : "string", 'metavar' : "<registration_host>", 
-          'help' : "Host name or IP address of the registration server",
-          'default' : "localhost",
+        ('presence-host',
+         {'type' : "string", 'metavar' : "<presence_host>", 
+          'help' : "Host name or IP address of the presence server",
+          'default' : "192.33.178.29",
           }),
-        ('registration-port',
-         {'type' : "int", 'metavar' : "<registration_port>", 
-          'help' : "Internet port on which the registration server is listening",
+        ('presence-port',
+         {'type' : "int", 'metavar' : "<presence_port>", 
+          'help' : "Internet port on which the presence server is listening",
           'default' : 2345,
           }),
         ('webserver-port',
@@ -189,15 +189,15 @@ class WebappConfiguration(Configuration):
           }),
         ('query-life-time',
          {'type' : 'int', 'metavar' : '<query_life_time>',
-          'help' : "Sets the maximum time allowed for a query to live in the node caches",
+          'help' : "The lifespan (in seconds) of a query in the node cache",
           'default' : 60,
           }),
         ]
 
-    config_file = 'webapp.ini'
+    config_file = 'Node.ini'
 
     def __init__(self):
-        Configuration.__init__(self, name="Server")
+        Configuration.__init__(self, name="Node")
         self.node_id = None
 
     def get_node_id(self):
@@ -259,7 +259,7 @@ class NoThumbnailsDir(Exception):
 class ImageConfiguration(Configuration):
     options = Configuration.options + [
         ('thumbnails-dir',
-         {'type' : "string", 'metavar' : "--thumbnailsdir", 'short' : "-thumbs",
+         {'type' : "string", 'metavar' : "--thumbnailsdir",
           'help' : "Thumbnail files repository",
           'default' : '.maay_thumbnails'},)]
     config_file = 'image.ini'

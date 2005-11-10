@@ -19,14 +19,14 @@ import os
 import sys
 
 config = """[INDEXER]
-# Host on which the maay server is running
+# Host on which the maay node is running
 host=localhost
-#Port on which the maay server is listening
+#Port on which the maay node is listening
 port=6789
 
-# User login on the maay server 
+# User login on the maay node 
 user=maay
-# User password on the maay server
+# User password on the maay node
 password=maay
 
 # Which directories are to be indexed

@@ -1,10 +1,3 @@
-# Copyright (c) 2000-2003 LOGILAB S.A. (Paris, FRANCE).
-# http://www.logilab.fr/ -- mailto:contact@logilab.fr
-"""
-
-"""
-
-__revision__ = "$Id$"
 #     Copyright (C) 2005 France Telecom R&D
 #
 #     This program is free software; you can redistribute it and/or modify
@@ -22,6 +15,8 @@ __revision__ = "$Id$"
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 """tests converters registry management"""
+
+__revision__ = "$Id$"
 
 import unittest
 from mimetypes import guess_type
@@ -74,6 +69,10 @@ class ConvertersTC(unittest.TestCase):
                           'AUTHORS')
         self.assertRaises(converter.IndexationFailure, converter.extractWordsFromFile,
                           'bogus.txt.gz')
+
+
+class MSWordConverterTC(unittest.TestCase):
+    pass
 
 
 if __name__ == '__main__':

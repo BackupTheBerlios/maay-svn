@@ -9,7 +9,7 @@ AppName=Maay
 AppVerName=Maay snapshot 2005-10-07
 DefaultDirName={pf}\Maay
 DefaultGroupName=Maay
-UninstallDisplayIcon={app}\maay_server.exe
+UninstallDisplayIcon={app}\maay_node.exe
 Compression=bzip
 SolidCompression=yes
 LicenseFile=thirdparty\mysql\COPYING.txt
@@ -46,9 +46,9 @@ Source: "ReleaseNotes"; DestDir: "{app}"
 [Icons]
 Name: "{group}\README.txt"; Filename: "{app}\README.txt"; Comment: "Required reading before launching Maay"
 Name: "{group}\ReleaseNotes.txt"; Filename: "{app}\ReleaseNotes"; Comment: "Required reading before launching Maay"
-Name: "{group}\Maay Server"; Filename: "{app}\maay_server.exe"; WorkingDir: "{app}"; Comment: "The Maay server component"
+Name: "{group}\Maay Node"; Filename: "{app}\maay_node.exe"; WorkingDir: "{app}"; Comment: "The Maay node component"
 Name: "{group}\Maay Indexer"; Filename: "{app}\maay_indexer.exe"; WorkingDir: "{app}"; Comment: "The Maay indexer component"
-Name: "{group}\webapp.ini"; Filename: "{app}\webapp.ini"; Comment: "Maay server configuration"
+Name: "{group}\node.ini"; Filename: "{app}\node.ini"; Comment: "Maay node configuration"
 Name: "{group}\indexer.ini"; Filename: "{app}\indexer.ini"; Comment: "Maay indexer configuration"
 Name: "{group}\image.ini"; Filename: "{app}\image.ini"; Comment: "Maay indexer configuration"
 
@@ -60,7 +60,7 @@ Filename: "{app}\createdb.exe"; StatusMsg: "Installing database"; WorkingDir:"{a
 Filename: "{app}\updateconfig.exe"; Parameters:"""{userdesktop}"" ""{userdocs}"""; WorkingDir:"{app}"; Flags:runhidden
 Filename: "{app}\maay.exe"; Parameters:"-install"; StatusMsg: "Registering Maay as a service"; WorkingDir:"{app}"; Flags:runhidden
 Filename: "NET"; Parameters: "start Maay"; StatusMsg: "Starting Maay node"; Flags:runhidden
-;Filename: "{app}\maay_server.exe"; StatusMsg: "Launching maay server"; WorkingDir:"{app}"; Flags:postinstall nowait
+;Filename: "{app}\maay_node.exe"; StatusMsg: "Launching maay node"; WorkingDir:"{app}"; Flags:postinstall nowait
 
 
 [UninstallRun]
