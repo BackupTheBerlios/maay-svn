@@ -133,32 +133,38 @@ class SearchForm(MaayPage):
         theDistributedQuery = P2pQuery(webappConfig.get_node_id(),
                                        webappConfig.rpcserver_port,
                                        query)
+        
         self.p2pquerier.sendQuery(theDistributedQuery)
-        self.p2pquerier.addAnswerCallback(self.newStuff)
         self.oldContext = context
 
-    def newStuff(self, results):
-        print "newStuff, great !"
-        self.child_search(oldContext, results)
 
-    def child_search(self, context, results=None):
+    def child_search(self, context):
         # query = unicode(context.arg('words'))        
         offset = int(context.arg('offset', 0))
-        if not results:
-            rawQuery = unicode(context.arg('words'), 'utf-8')
-            query = Query.fromRawQuery(rawQuery, offset)
-            localResults = self.querier.findDocuments(query)
-            self._askForPeerResults(query, context)
-            return ResultsPage(self.maayId, localResults, query, offset)
-        else:
-            return ResultsPage(self.maayId, results, query, offset)
-        # return FACTORY.clientFactory(context, self.maayId, results, query)
+        words = context.arg('words')
+        if not words:
+            query = Query.fromRawQuery('')
+            return FACTORY.getLivePage(context)
+        rawQuery = unicode(context.arg('words'), 'utf-8')
+        query = Query.fromRawQuery(rawQuery, offset)
+        localResults = self.querier.findDocuments(query)
+        # self._askForPeerResults(query, context)
+        resultsPage = FACTORY.clientFactory(context, self.maayId, localResults, query, offset)
+        #######################
+        webappConfig = IServerConfiguration(context)
+        p2pQuery = P2pQuery(webappConfig.get_node_id(),
+                            webappConfig.rpcserver_port,
+                            query)
+        self.p2pquerier.sendQuery(p2pQuery)
+        #######################
 
+        self.p2pquerier.addAnswerCallback(p2pQuery.qid, resultsPage.onNewResults)
+        return resultsPage
+    
     # XXX make sure that the requested document is really in the database
     # XXX don't forget to update the download statistics of the document
     def child_download(self, context):
         docid = context.arg('docid')
-        # query = unicode(context.arg('words'))
         query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'))
         docurl = self.querier.notifyDownload(docid, query.words)
         if docurl:
@@ -182,21 +188,28 @@ class IndexationPage(MaayPage):
         return context.tag
 
 
-class ResultsPage(MaayPage):
+from nevow import athena, inevow
+from twisted.python import log
+
+class ResultsPage(athena.LivePage):
     """default results page"""
-    bodyFactory = loaders.xmlfile(get_path_of('resultpage.html'))
-    addSlash = False    
+    child_maaycss = static.File(get_path_of('maay.css'))
+    child_images = static.File(get_path_of('images/'))
+    docFactory = loaders.xmlfile(get_path_of('liveresults.html'))
+    addSlash = False
+
+    instances = []
     
     def __init__(self, maayId, results, query, offset):
-        MaayPage.__init__(self, maayId)
+        athena.LivePage.__init__(self)
+        self.maayId = maayId
         self.results = results
-        self.query = query.words # unicode(query)
         self.offset = offset
-
+        self.query = query.words # unicode(query)
 
     def data_results(self, context, data):
         return self.results
-
+    
     def render_title(self, context, data):
         context.fillSlots('words', self.query)
         context.fillSlots('start_result', min(len(self.results), self.offset + 1))
@@ -219,7 +232,6 @@ class ResultsPage(MaayPage):
         offset = int(context.arg('offset', 0)) + 15
         return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
 
-    
     def render_row(self, context, data):
         document = data
         words = self.query.split()
@@ -231,6 +243,8 @@ class ResultsPage(MaayPage):
             abstract = makeAbstract(document.text, words)
             abstract = normalize_text(unicode(abstract))
         except Exception, exc:
+            import traceback
+            traceback.print_exc()
             print exc
             abstract = u'No abstract available for this document [%s]' % exc
         context.fillSlots('abstract', tags.xml(abstract))
@@ -242,107 +256,37 @@ class ResultsPage(MaayPage):
         context.fillSlots('publication_date', date.strftime('%d %b %Y'))
         return context.tag
 
+    def onNewResults(self, results):
+        # r = mergeResults(self.results, results)
+        # source = htmlize(r)
+        print "++++++++++++++++++ Got new resulsts", results
+        self.callRemote('updateResults', u'<div>%r</div>' % results)
+
+    def remote_foo(self, context):
+        print "************************************************** le client m'appelle !!"
+        return 0
 
 
-## from twisted.internet import reactor
-## from nevow import athena
-## class ResultsPage(athena.LivePage):
-##     """default results page"""
-##     child_maaycss = static.File(get_path_of('maay.css'))
-##     child_images = static.File(get_path_of('images/'))
-##     docFactory = loaders.xmlfile(get_path_of('liveresults.html'))
-##     addSlash = False
-    
-##     def __init__(self, maayId, results, query, offset):
-##         athena.LivePage.__init__(self)
-##         self.maayId = maayId
-##         self.results = results
-##         self.offset = offset
-##         self.query = query.words # unicode(query)
-##         reactor.callLater(5, self.updatePage)
+class ResultsPageFactory(athena.LivePageFactory):
+    def getLivePage(self, context):
+        livepageId = inevow.IRequest(context).getHeader('Livepage-Id')
+        print "*** livepage id =", livepageId
+        if livepageId is not None:
+            return self.clients.get(livepageId)
+        else:
+            return None        
 
+    def clientFactory(self, context, maayId, results, query, offset):
+        livepage = self.getLivePage(context)
+        if livepage is None:
+            return self._manufactureClient(maayId, results, query, offset)
+        else:
+            return livepage
+        
+    def _manufactureClient(self, maayId, results, query, offset):
+        print "Building livepage !"
+        cl = self._pageFactory(maayId, results, query, offset)
+        cl.factory = self
+        return cl
 
-##     def data_results(self, context, data):
-##         return self.results
-
-##     def render_title(self, context, data):
-##         context.fillSlots('words', self.query)
-##         context.fillSlots('start_result', min(len(self.results), self.offset + 1))
-##         context.fillSlots('end_result', self.offset + len(self.results))
-##         return context.tag
-
-##     def render_searchfield(self, context, data):
-##         context.fillSlots('words', self.query)
-##         return context.tag
-
-##     def render_prevset_url(self, context, data):
-##         words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'), 'utf-8')))
-##         offset = int(context.arg('offset', 0))
-##         if offset:
-##             offset -= 15
-##         return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
-
-##     def render_nextset_url(self, context, data):
-##         words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'), 'utf-8')))
-##         offset = int(context.arg('offset', 0)) + 15
-##         return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
-
-    
-##     def render_row(self, context, data):
-##         document = data
-##         words = self.query.split()
-##         context.fillSlots('mime_type', re.sub("/", "_", document.mime_type))
-##         context.fillSlots('doctitle',
-##                           tags.xml(boldifyText(document.title, words)))
-##         # XXX abstract attribute should be a unicode string
-##         try:
-##             abstract = makeAbstract(document.text, words)
-##             abstract = normalize_text(unicode(abstract))
-##         except Exception, exc:
-##             print exc
-##             abstract = u'No abstract available for this document [%s]' % exc
-##         context.fillSlots('abstract', tags.xml(abstract))
-##         context.fillSlots('docid', document.db_document_id)
-##         context.fillSlots('docurl', tags.xml(boldifyText(document.url, words)))
-##         context.fillSlots('words', self.query)
-##         context.fillSlots('readable_size', document.readable_size())
-##         date = datetime.fromtimestamp(document.publication_time)
-##         context.fillSlots('publication_date', date.strftime('%d %b %Y'))
-##         return context.tag
-
-
-##     def updatePage(self):
-##         print "ZOUuuuuuuuuuuuuuuuuuuuuuuuuuuu"
-##         source = u"<h3>YO !!!!!!</h3>"
-##         self.callRemote('updateResults', source)
-
-##     def xmlrpc_foo(self):
-##         print "le client m'appelle !!"
-##         return 0
-
-
-## class ResultsPageFactory(athena.LivePageFactory):
-##     def clientFactory(self, context, maayId, results, query):
-##         livepageId = inevow.IRequest(context).getHeader('Livepage-Id')
-##         if livepageId is not None:
-##             livepage = self.clients.get(livepageId)
-##             if livepage is not None:
-##                 # A returning, known client.  Give them their page.
-##                 return livepage
-##             else:
-##                 # A really old, expired client.  Or maybe an evil
-##                 # hax0r.  Give them a fresh new page and log the
-##                 # occurrence.
-##                 if self.noisy:
-##                     log.msg("Unknown Livepage-Id: %r" % (livepageId,))
-##                 return self._manufactureClient(maayId, results, query)
-##         else:
-##             # A brand new client.  Give them a brand new page!
-##             return self._manufactureClient(maayId, results, query)
-
-##     def _manufactureClient(self, maayId, results, query):
-##         cl = self._pageFactory(maayId, results, query)
-##         cl.factory = self
-##         return cl
-
-## FACTORY = ResultsPageFactory(ResultsPage)
+FACTORY = ResultsPageFactory(ResultsPage)

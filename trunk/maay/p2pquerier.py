@@ -117,11 +117,11 @@ class P2pQuerier:
     _markedQueries = {}
     _receivedQueries = {} # key : queryId, val : query
     _sentQueries = {}     
-    _answerCallbacks = []
     
     def __init__(self, nodeId, querier):
         self.nodeId = nodeId  
         self.querier = querier
+        self._answerCallbacks = {}
         reactor.callLater(20, self._markQueries)
         # now, read a config. provided value for EXPIRATION_TIME
         config = WebappConfiguration()
@@ -176,13 +176,13 @@ class P2pQuerier:
             self._sentQueries[query.qid] = query
             print " ... sent to %s" % neighbor
 
-    def addAnswerCallback(self, callback):
-        print "P2pQuerier : registering callback %s for results" \
-              % callback
-        P2pQuerier._answerCallbacks.append(callback)
+    def addAnswerCallback(self, queryId, callback):
+        print "P2pQuerier : registering callback (%s, %s) for results" \
+              % (queryId, callback)
+        self._answerCallbacks.setdefault(queryId, []).append(callback)
 
-    def _notifyAnswerCallbacks(self, results):
-        for cb in P2pQuerier._answerCallbacks:
+    def _notifyAnswerCallbacks(self, queryId, results):
+        for cb in self._answerCallbacks.get(queryId, []):
             cb(results)
 
     def receiveQuery(self, query):
@@ -259,7 +259,7 @@ class P2pQuerier:
             except ValueError:
                 print "unknown node %s" % query.sender
         else: # local would be true ? don't waste the answers ...
-            self._notifyAnswerCallbacks(toSend)
+            self._notifyAnswerCallbacks(answer.queryId, toSend)
     
     def _selectTargetNeighbors(self, query):
         """return a list of nodes to which the query will be sent.
