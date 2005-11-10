@@ -96,11 +96,39 @@ class P2pAnswer:
         self.queryId = queryId
         self.documents = documents
 
-def sendQueryProblem(failure):
-    """Politely displays any problem (bug, unavailability) related
-    to an attempt to send a query.
+class P2pErrbacks:
+    """a small namespace to hold errbacks and contextual
+       information so as to display meaningful stuff
     """
-    print " ... problem sending the query : %s" % failure.getTraceback()
+
+    lastQueryTarget = None
+    lastAnswerTarget = None
+
+    def setQueryTarget(target):
+        P2pErrbacks.lastQueryTarget = target
+    setQueryTarget = staticmethod(setQueryTarget)
+        
+    def setAnswerTarget(target):
+        P2pErrbacks.lastAnswerTarget = target
+    setAnswerTarget = staticmethod(setAnswerTarget)
+
+    def sendQueryProblem(failure):
+        """Politely displays any problem (bug, unavailability) related
+        to an attempt to send a query.
+        """
+        print " ... problem sending the query (likely to %s) : %s" \
+              % (P2pErrbacks.lastQueryTarget, failure.getTraceback())
+    sendQueryProblem = staticmethod(sendQueryProblem)
+
+
+    def answerQueryProblem(failure):
+        """Politely displays any problem (bug, unavailability) related
+        to an attempt to answer a query.
+        """
+        print " ... problem answering the query (likely to %s) : %s" \
+              % (P2pErrbacks.lastAnswerTarget, failure.getTraceback())
+    answerQueryProblem = staticmethod(answerQueryProblem)
+
 
 class P2pQuerier:
     """The P2pQuerier class is responsible for managing P2P queries.
@@ -189,10 +217,12 @@ class P2pQuerier:
             return
         #FIXME: avoid to send query to the originator
         for neighbor in self._selectTargetNeighbors(query):
-            proxy = Proxy(str(neighbor.getRpcUrl())) 
+            target = str(neighbor.getRpcUrl())
+            proxy = Proxy(target) 
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
-            d.addErrback(sendQueryProblem)
+            d.addErrback(P2pErrbacks.sendQueryProblem)
+            P2pErrbacks.setQueryTarget(target)
             self._sentQueries[query.qid] = query
             print " ... sent to %s" % neighbor
 
@@ -268,6 +298,8 @@ class P2pQuerier:
                                      self.nodeId,
                                      toSend)
                 d.addCallback(self.querier.registerNodeActivity)
+                d.addErrback(P2pErrbacks.answerQueryProblem)
+                P2pErrbacks.setAnswerTarget(senderUrl)
             except ValueError:
                 print "unknown node %s" % query.sender
         else: # local would be true ? don't waste the answers ...
