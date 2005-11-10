@@ -259,7 +259,6 @@ def run():
                           nodeConfig.rpcserver_port,
                           nodeConfig.bandwidth)
     
-                             
     rpcserver = server.Site(MaayRPCServer(nodeConfig.get_node_id(),
                                           maayPortal))
     reactor.listenTCP(nodeConfig.webserver_port, website)
@@ -268,7 +267,7 @@ def run():
         print "-------------Starting Node mainloop-------------"
         reactor.run()
     finally:
-        print "-----------Shutting down Node----------"
+        print "---------------Shutting down Node---------------"
         
 
 if __name__ == '__main__':
