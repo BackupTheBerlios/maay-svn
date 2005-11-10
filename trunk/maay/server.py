@@ -39,14 +39,6 @@ from nevow import inevow, appserver, guard
 # These imports are not used, but they help py2exe tremendously.
 # Do not remove them (that is, unless we change the database backend
 # or drop twisted)
-
-#from twisted.web import http
-#import twisted.application.service
-#import twisted.web.woven.guard
-#from twisted.python.components import *
-#from twisted.python.components import CannotAdapt
-#from nevow.compy import *
-#import nevow.events
 import nevow.flat.flatstan
 import nevow.query
 import nevow.i18n
