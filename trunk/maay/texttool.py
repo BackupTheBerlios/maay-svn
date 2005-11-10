@@ -27,25 +27,10 @@ import sys
 import mimetypes
 import gzip
 import bz2
-from sets import Set
 
-class LStringIO(list):
-    """simple StringIO-like objects using a list
+from maay.image import get_ustring_from_exif, make_thumbnail
+from maay.configuration import ImageConfiguration as ImConfig
 
-    Note: LStringIO should be more or less equivalent to cStrinIO speed-wise
-          but has the great advantage to accept any unicode string
-    """
-    def __init__(self):
-        list.__init__(self)
-    write = list.append
-    def getvalue(self):
-        return u''.join(self)
-
-
-from maay.image import get_ustring_from_exif, make_thumbnail,\
-     ThumbnailCreationError
-from maay.configuration import ImageConfiguration as ImConfig, \
-     NoThumbnailsDir
 
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50
@@ -57,10 +42,22 @@ MAX_STORED_SIZE = 65535
 
 WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN)) 
 
-
-
 CHARSET_RGX = re.compile(r'charset=[\s"]*([^\s"]+)', re.I | re.S | re.U)
 XML_ENCODING_RGX = re.compile(r'^<\?xml version=[^\s]*\s*encoding=([^\s]*)\s*\?>', re.I | re.S | re.U)
+
+
+class LStringIO(list):
+    """simple StringIO-like objects using a list
+       Note: LStringIO should be more or less equivalent to cStrinIO speed-wise
+       but has the great advantage to accept any unicode string
+    """
+    def __init__(self):
+        list.__init__(self)
+
+    write = list.append
+
+    def getvalue(self):
+        return u''.join(self)
 
 class ParsingError(Exception):
     """raised when an error occurs during the indexation of a file"""
@@ -92,28 +89,28 @@ def guessEncoding(filename): #may throw IOError
         stream = file(filename, 'rb')
         
     try:
-        buffer = stream.read(4)
+        buffer_ = stream.read(4)
         # try to guess from BOM
-        if buffer[:4] in (codecs.BOM_UTF32_BE, codecs.BOM_UTF32_LE):
+        if buffer_[:4] in (codecs.BOM_UTF32_BE, codecs.BOM_UTF32_LE):
             return 'UTF-32'
-        elif buffer[:2] in (codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE):
+        elif buffer_[:2] in (codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE):
             return 'UTF-16'
-        elif buffer[:3] == codecs.BOM_UTF8:
+        elif buffer_[:3] == codecs.BOM_UTF8:
             return 'UTF-8'
-        buffer += stream.read()
+        buffer_ += stream.read()
         if mimetypes.guess_type(filename)[0] == 'text/html':
-            m = CHARSET_RGX.search(buffer)
+            m = CHARSET_RGX.search(buffer_)
             if m is not None :
                 return normalizeHtmlEncoding(m.group(1))
         # check for xml encoding declaration
-        if buffer.lstrip().startswith('<?xml'):
-            m = XML_ENCODING_RGX.match(buffer)
+        if buffer_.lstrip().startswith('<?xml'):
+            m = XML_ENCODING_RGX.match(buffer_)
             if m is not None:
                 return m.group(1)[1:-1].upper()
             # xml files with no encoding declaration default to UTF-8
             return 'UTF-8'
         try:
-            data = unicode(buffer, 'utf-8')
+            _ = unicode(buffer_, 'utf-8')
             return 'UTF-8'
         except UnicodeError:
             return 'ISO-8859-1'
@@ -260,7 +257,7 @@ del i
 
 
 
-for s, d in zip(    list('\xc0\xc1\xc2\xc3\xc4\xc5'
+for _s, _d in zip(    list('\xc0\xc1\xc2\xc3\xc4\xc5'
     '\xc7'
     '\xc8\xc9\xca\xcb'
     '\xcc\xcd\xce\xcf'
@@ -298,7 +295,7 @@ for s, d in zip(    list('\xc0\xc1\xc2\xc3\xc4\xc5'
     'uuuu'
     'y'
     )):
-    _table[ord(s)] = ord(d)
+    _table[ord(_s)] = ord(_d)
 
 def normalizeText(text, table=_table):
     """turns everything to lowercase, and converts accentuated
@@ -347,7 +344,6 @@ def removeSpace(text):
     lastStart = 0
     end = 0
     for occurence in rgx.finditer(text):
-        wordFound = occurence.group(0)
         start, end = occurence.start(), occurence.end()
         if start > 0:
             s.write(" ")
@@ -376,14 +372,9 @@ def boldifyText(text, words):
     
 
 def computeExcerptPositions(text, words):
-    text_length = len(text)
-
-
-
     # quick and dirty regex...
     rgx = re.compile(r'\W' + r'\W|\W'.join(words) + r'\W', re.I)
 
-    #
     # Get the best excerpt for the abstract :
     # - excerpt for most words of the query
     # - first occurence of words
@@ -410,7 +401,7 @@ def computeExcerptPositions(text, words):
                 continue
                     
             for i in xrange(len(excerptPositions) - 1, 0, -1):
-                word, position = excerptPositions[i]
+                word, _ = excerptPositions[i]
                 if wordOccurrences[word] == max_occurence:
                     wordOccurrences[word] -= 1
                     if wordOccurrences[word] == 0:
