@@ -22,6 +22,8 @@ __revision__ = '$Id$'
 import sha
 import platform
 import time
+import os
+import socket
 
 from logilab.common.compat import set
 
