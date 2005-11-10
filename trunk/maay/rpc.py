@@ -156,8 +156,9 @@ class MaayRPCServer(XMLRPC):
                          query=Query(queryDict['words'],
                                      filetype=queryDict['mime_type']),
                          ttl=queryDict['ttl'],
-                         qid=queryDict['qid'])
-        query.host = self._lastClient.host
+                         qid=queryDict['qid'],
+                         host = self._lastClient.host)
+        self.querier.registerNode(query.sender, query.host, query.port)
         # schedule the query for later processing and return immediately
         # this enables the sender to query several nodes in a row
         d = reactor.callLater(.01, self.getP2pQuerier().receiveQuery, query)

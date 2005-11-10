@@ -257,7 +257,7 @@ class AnonymousQuerier:
         self._cnx.commit()
 
 
-    def registerNode(self, nodeId, ip, port, bandwidth, lastSeenTime=None):
+    def registerNode(self, nodeId, ip, port, bandwidth=None, lastSeenTime=None):
         """this will be used as a callback in registrationclient/login"""
         print "AnonymousQuerier registerNode (callback) %s %s:%s" % \
                                                              (nodeId, ip, port)
@@ -266,7 +266,7 @@ class AnonymousQuerier:
         node = Node.selectOrInsertWhere(cursor, node_id=nodeId)[0]
         node.ip = ip
         node.port = port
-        node.bandwidth = bandwidth
+        node.bandwidth = bandwidth or 1
         node.last_seen_time = lastSeenTime
         node.commit(cursor, update=True)
         cursor.close()

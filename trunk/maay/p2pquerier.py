@@ -39,7 +39,7 @@ def hashIt(item, uname=''.join(platform.uname())):
 
 # XXX should P2pQuery derive from query.Query? (auc : no)
 class P2pQuery:
-    def __init__(self, sender, port, query, ttl=5, qid=None):
+    def __init__(self, sender, port, query, ttl=5, qid=None, host=None):
         """
         :param sender: really a nodeId
         :type sender: str
@@ -47,8 +47,10 @@ class P2pQuery:
         :type port: int
         :param query: the query to wrap
         :type query: `maay.query.Query`
+        :param qid: query identifier
         :type qid: str
-
+        :param host: IP adress of sender
+        :type host: str
         """
         if qid:
             self.qid = qid
@@ -59,7 +61,8 @@ class P2pQuery:
         self.ttl = ttl
         self.query = query
         self.documents_ids = set()
-
+        self.host = host
+        
     def hop(self):
         self.ttl -= 1
 
