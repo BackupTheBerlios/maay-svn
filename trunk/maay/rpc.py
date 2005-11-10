@@ -172,10 +172,10 @@ class MaayRPCServer(XMLRPC):
         reactor.callLater(.01, getP2pQuerier().receiveQuery, query)
         return self.nodeId
 
-    def xmlrpc_distributedQueryAnswer(self, queryId, senderId, documents):
-        print "MaayRPCServer distributedQueryAnswer : %s %s, %s document(s)" % \
-              (queryId, senderId, len(documents))
-        answer = P2pAnswer(queryId, documents)
+    def xmlrpc_distributedQueryAnswer(self, queryId, senderId, provider, documents):
+        print "MaayRPCServer distributedQueryAnswer : %s %s, %s document(s) fom %s" % \
+              (queryId, senderId, len(documents), provider)
+        answer = P2pAnswer(queryId, provider, documents)
         reactor.callLater(.01, getP2pQuerier().relayAnswer, answer)
         return self.nodeId
                          

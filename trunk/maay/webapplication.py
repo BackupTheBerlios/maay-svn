@@ -255,7 +255,8 @@ class ResultsPage(athena.LivePage):
         context.fillSlots('publication_date', date.strftime('%d %b %Y'))
         return context.tag
 
-    def onNewResults(self, results):
+    def onNewResults(self, provider, results):
+        #FIXME: do something with the provider info
         # r = mergeResults(self.results, results)
         # source = htmlize(r)
         self.results = [Document(**params) for params in results]

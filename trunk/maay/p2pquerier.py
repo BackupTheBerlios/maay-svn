@@ -94,6 +94,7 @@ class P2pQuery:
 class P2pAnswer:
     def __init__(self, queryId, documents):
         self.queryId = queryId
+        self.provider = provider
         self.documents = documents
 
 class P2pErrbacks:
@@ -147,7 +148,9 @@ class P2pQuerier:
     _EXPIRATION_TIME = 10 # secs, this is a min default guard value
     _markedQueries = {}
     _receivedQueries = {} # key : queryId, val : query
-    _sentQueries = {}     
+    _sentQueries = {}
+
+    _ourRPCPort = None
     
     def __init__(self, nodeId, querier):
         self.nodeId = nodeId  
@@ -160,6 +163,8 @@ class P2pQuerier:
         P2pQuerier._EXPIRATION_TIME = max(config.query_life_time,
                                           P2pQuerier._EXPIRATION_TIME)
         reactor.callLater(self._EXPIRATION_TIME, self._markQueries)
+        # remember once and for all our RPC port
+        P2pQuerier._ourRPCPort = config.rpcserver_port
 
 
     ######## Stuff to remove old queries from cache
@@ -200,9 +205,9 @@ class P2pQuerier:
               % (queryId, callback)
         self._answerCallbacks.setdefault(queryId, []).append(callback)
 
-    def _notifyAnswerCallbacks(self, queryId, results):
+    def _notifyAnswerCallbacks(self, queryId, provider, results):
         for cb in self._answerCallbacks.get(queryId, []):
-            cb(results)
+            cb(provider, results)
 
     ######### True p2p ops (send, receive, answer ...)
 
@@ -255,8 +260,13 @@ class P2pQuerier:
         for doc in documents:
             abstract = makeAbstract(doc.text, query.getWords())
             doc.text = untagText(removeSpace(abstract))
+
+        # provider is a triple (login, IP, xmlrpc-port)
+        provider = (os.getlogin(),
+                    socket.gethostbyname(socket.gethostname()),
+                    P2pQuerier._ourRPCPort)
             
-        self.relayAnswer(P2pAnswer(query.qid, documents))
+        self.relayAnswer(P2pAnswer(query.qid, provider, documents))
 
     def relayAnswer(self, answer, local=False): # local still unused
         """record and forward answers to a query.
@@ -297,6 +307,7 @@ class P2pQuerier:
                 d = proxy.callRemote('distributedQueryAnswer',
                                      query.qid,
                                      self.nodeId,
+                                     answer.provider,
                                      toSend)
                 d.addCallback(self.querier.registerNodeActivity)
                 d.addErrback(P2pErrbacks.answerQueryProblem)
@@ -304,7 +315,7 @@ class P2pQuerier:
             except ValueError:
                 print "unknown node %s" % query.sender
         else: # local would be true ? don't waste the answers ...
-            self._notifyAnswerCallbacks(answer.queryId, toSend)
+            self._notifyAnswerCallbacks(answer.queryId, provider, toSend)
     
     def _selectTargetNeighbors(self, query):
         """return a list of nodes to which the query will be sent.
