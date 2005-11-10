@@ -6,14 +6,14 @@
     <link rel="stylesheet" type="text/css" href="maaycss"/>
     <link rel="shortcut icon" href="images/maay.ico" />
     <nevow:invisible nevow:render="liveglue" />
+
     <script type='text/javascript' language='javascript'>
 function updateResults(source) {
-  alert("I'm alive .... alive !!!");
   div = document.getElementById('resultsDiv');
   div.innerHTML = source;
 }
 function startConnection() {
-  var d = server.callRemote('foo');
+  var d = server.callRemote('connect');
 }
     </script>
 

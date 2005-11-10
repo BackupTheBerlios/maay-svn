@@ -39,6 +39,11 @@ a.docTitle {
   display: block;
 }
 
+a.distantDocTitle {
+  display: block;
+  background-color: yellow;
+}
+
 span.resultUrl {
   font-size: 80%;
   font-family: "New Century Schoolbook", serif;

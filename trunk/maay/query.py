@@ -49,6 +49,13 @@ class Query(object):
         return Query(u' '.join(words), offset, **restrictions)
     fromRawQuery = staticmethod(fromRawQuery)
 
+    def fromContext(context):
+        """:type context: nevow's context objects"""
+        rawQuery = unicode(context.arg('words'), 'utf-8')
+        offset = int(context.arg('offset', 0))
+        return Query.fromRawQuery(rawQuery, offset)
+    fromContext = staticmethod(fromContext)
+
     def __repr__(self):
         return 'Query Object (%s, %s, %s)' % (self.words, self.filetype,
                                               self.filename)

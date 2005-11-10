@@ -22,6 +22,7 @@ __revision__ = '$Id: server.py 281 2005-11-03 11:00:56Z aurelienc $'
 from datetime import datetime
 import re
 from xmlrpclib import ServerProxy
+from itertools import cycle
 
 from zope.interface import Interface
 from twisted.web import static
@@ -34,6 +35,7 @@ from maay.configuration import get_path_of
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
 from maay.query import Query
 from maay.p2pquerier import P2pQuerier, P2pQuery
+from maay.dbentity import Document
 import maay.indexer
 
 class INodeConfiguration(Interface):
@@ -139,27 +141,7 @@ class SearchForm(MaayPage):
 
 
     def child_search(self, context):
-        # query = unicode(context.arg('words'))        
-        offset = int(context.arg('offset', 0))
-        words = context.arg('words')
-        if not words:
-            query = Query.fromRawQuery('')
-            return FACTORY.getLivePage(context)
-        rawQuery = unicode(context.arg('words'), 'utf-8')
-        query = Query.fromRawQuery(rawQuery, offset)
-        localResults = self.querier.findDocuments(query)
-        # self._askForPeerResults(query, context)
-        resultsPage = FACTORY.clientFactory(context, self.maayId, localResults, query, offset)
-        #######################
-        webappConfig = INodeConfiguration(context)
-        p2pQuery = P2pQuery(webappConfig.get_node_id(),
-                            webappConfig.rpcserver_port,
-                            query)
-        self.p2pquerier.sendQuery(p2pQuery)
-        #######################
-
-        self.p2pquerier.addAnswerCallback(p2pQuery.qid, resultsPage.onNewResults)
-        return resultsPage
+        return FACTORY.clientFactory(context, self.querier, self.p2pquerier)
     
     # XXX make sure that the requested document is really in the database
     # XXX don't forget to update the download statistics of the document
@@ -198,26 +180,43 @@ class ResultsPage(athena.LivePage):
     docFactory = loaders.xmlfile(get_path_of('liveresults.html'))
     addSlash = False
 
-    instances = []
-    
-    def __init__(self, maayId, results, query, offset):
+    def __init__(self, context, querier, p2pquerier):
         athena.LivePage.__init__(self)
-        self.maayId = maayId
-        self.results = results
-        self.offset = offset
-        self.query = query.words # unicode(query)
+        # XXX: nevow/livepage related trick (version 0.6.0) :
+        # This resource is instanciated several times when rendering the
+        # results page (each time the browser tries to load
+        # ROOT/search/athena.js, ROOT/search/MochiKit.js, etc.) because
+        # the Livepage-Id is not yet set in the request. In these particuliar
+        # cases, we don't want to start new queries, so we do an ugly check
+        # to test whether or not we're instanciating the *real* live page
+        # (or if we're just trying to download JS files)
+        # NOTE: At the time this comment is written, athena/LivePages are handled
+        #       differently in nevow SVN. It's now possible to insantiate directly
+        #       LivePage instances (which is great !), so we'll have to change
+        #       the implementation for next nevow release.
+        if len(inevow.IRemainingSegments(context)) < 2:
+            self.query = Query.fromContext(context)
+            self.offset = self.query.offset
+            self.results = querier.findDocuments(self.query)
+            webappConfig = IServerConfiguration(context)
+            p2pQuery = P2pQuery(webappConfig.get_node_id(),
+                                webappConfig.rpcserver_port,
+                                self.query)
+            p2pquerier.sendQuery(p2pQuery)
+            p2pquerier.addAnswerCallback(p2pQuery.qid, self.onNewResults)
+    
 
     def data_results(self, context, data):
         return self.results
     
     def render_title(self, context, data):
-        context.fillSlots('words', self.query)
+        context.fillSlots('words', self.query.words)
         context.fillSlots('start_result', min(len(self.results), self.offset + 1))
         context.fillSlots('end_result', self.offset + len(self.results))
         return context.tag
 
     def render_searchfield(self, context, data):
-        context.fillSlots('words', self.query)
+        context.fillSlots('words', self.query.words)
         return context.tag
 
     def render_prevset_url(self, context, data):
@@ -234,7 +233,7 @@ class ResultsPage(athena.LivePage):
 
     def render_row(self, context, data):
         document = data
-        words = self.query.split()
+        words = self.query.words.split()
         context.fillSlots('mime_type', re.sub("/", "_", document.mime_type))
         context.fillSlots('doctitle',
                           tags.xml(boldifyText(document.title, words)))
@@ -250,7 +249,7 @@ class ResultsPage(athena.LivePage):
         context.fillSlots('abstract', tags.xml(abstract))
         context.fillSlots('docid', document.db_document_id)
         context.fillSlots('docurl', tags.xml(boldifyText(document.url, words)))
-        context.fillSlots('words', self.query)
+        context.fillSlots('words', self.query.words)
         context.fillSlots('readable_size', document.readable_size())
         date = datetime.fromtimestamp(document.publication_time)
         context.fillSlots('publication_date', date.strftime('%d %b %Y'))
@@ -259,12 +258,38 @@ class ResultsPage(athena.LivePage):
     def onNewResults(self, results):
         # r = mergeResults(self.results, results)
         # source = htmlize(r)
-        print "++++++++++++++++++ Got new resulsts", results
-        self.callRemote('updateResults', u'<div>%r</div>' % results)
+        self.results = [Document(**params) for params in results]
+        page = PleaseCloseYourEyes(self.results, self.query).renderSynchronously()
+        self.callRemote('updateResults', u'<div>%s</div>' % page)
 
-    def remote_foo(self, context):
-        print "************************************************** le client m'appelle !!"
+    def remote_connect(self, context):
+        """just here to start the connection between client and server (Ajax)"""
         return 0
+
+
+class PleaseCloseYourEyes(ResultsPage):
+    """This resource and the way it is called is kind of ugly.
+    It will be refactored later. The idea is to have something working
+    quickly.
+    """
+
+    docFactory = loaders.xmlstr("""
+  <table xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1" class="results" nevow:render="sequence" nevow:data="results">
+    <tr nevow:pattern="item" nevow:render="row">
+      <td>
+	<div class="resultItem">
+	  <table><tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type"/></nevow:attr></div></td><td><a class="distantDocTitle"><nevow:attr name="href">/download?docid=<nevow:slot name="docid" />&amp;words=<nevow:slot name="words" /></nevow:attr><nevow:slot name="doctitle">DOC TITLE</nevow:slot></a></td></tr></table>
+	  <div class="resultDesc"><nevow:slot name="abstract" /></div>
+	  <span class="resultUrl"><nevow:attr name="href"><nevow:slot name="docurl" /></nevow:attr><nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
+	</div>
+      </td>
+    </tr>
+  </table>
+    """)
+    
+    def __init__(self, results, query):
+        self.results = results
+        self.query = query
 
 
 class ResultsPageFactory(athena.LivePageFactory):
@@ -276,16 +301,16 @@ class ResultsPageFactory(athena.LivePageFactory):
         else:
             return None        
 
-    def clientFactory(self, context, maayId, results, query, offset):
+    def clientFactory(self, context, querier, p2pquerier):
         livepage = self.getLivePage(context)
         if livepage is None:
-            return self._manufactureClient(maayId, results, query, offset)
+            return self._manufactureClient(context, querier, p2pquerier)
         else:
             return livepage
         
-    def _manufactureClient(self, maayId, results, query, offset):
+    def _manufactureClient(self, context, querier, p2pquerier):
         print "Building livepage !"
-        cl = self._pageFactory(maayId, results, query, offset)
+        cl = self._pageFactory(context, querier, p2pquerier)
         cl.factory = self
         return cl
 
