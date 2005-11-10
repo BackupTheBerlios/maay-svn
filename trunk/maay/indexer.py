@@ -24,11 +24,10 @@ TODO: analyse the God class into something understandable
 __revision__ = '$Id$'
 
 import os
-import time
 import sys
 import sha
 from sets import Set
-from xmlrpclib import ServerProxy, Binary, Fault, ProtocolError
+from xmlrpclib import ServerProxy, Fault, ProtocolError
 import mimetypes
 import socket
 
@@ -143,7 +142,7 @@ class Indexer:
             else:
                 fileSize = os.path.getsize(filename)
                 try:
-                    title, text, links, offset = converter.extractWordsFromFile(filename)
+                    title, text, _, _ = converter.extractWordsFromFile(filename)
                 except converter.IndexationFailure, exc:
                     if self.verbose:
                         print exc
@@ -189,6 +188,15 @@ class Indexer:
                 print "Error indexing %s: %s" % (futureDoc.filename.encode('iso-8859-1'), exc)
         
 
+######### FileIterator
+
+if sys.platform == 'win32':
+    def normalizeCase(path):
+        return path.lower()
+else:    
+    def normalizeCase(path):
+        return path
+
 class FileIterator:
     """provide a simple way to walk through indexed dirs"""
     def __init__(self, indexed, skipped=[]):
@@ -196,14 +204,7 @@ class FileIterator:
                (type(skipped) in (list,tuple)))
         self.indexed = [os.path.abspath(os.path.expanduser(p)) for p in indexed]
         self.skipped = [os.path.abspath(os.path.expanduser(p)) for p in skipped]
-        self.skipped = [self.normalizeCase(p) for p in self.skipped]
-        
-    if sys.platform == 'win32':
-        def normalizeCase(self, path):
-            return path.lower()
-    else:    
-        def normalizeCase(self, path):
-            return path
+        self.skipped = [normalizeCase(p) for p in self.skipped]
         
     def __iter__(self):
         for path in self.indexed:
@@ -219,7 +220,7 @@ class FileIterator:
     def _removeSkippedDirnames(self, dirpath, dirnames):
         """removed skipped directories from dirnames (inplace !)"""
         for dirname in dirnames[:]:
-            abspath = self.normalizeCase(os.path.join(dirpath, dirname))
+            abspath = normalizeCase(os.path.join(dirpath, dirname))
             if abspath in self.skipped:
                 # print "skipping", dirname
                 dirnames.remove(dirname)
