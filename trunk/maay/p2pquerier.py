@@ -96,11 +96,11 @@ class P2pAnswer:
         self.queryId = queryId
         self.documents = documents
 
-def sendQueryProblem(self, *args):
+def sendQueryProblem(failure):
     """Politely displays any problem (bug, unavailability) related
     to an attempt to send a query.
     """
-    print " ... problem sending the query : %s" % (args,)
+    print " ... problem sending the query : %s" % failure.getTraceback()
 
 class P2pQuerier:
     """The P2pQuerier class is responsible for managing P2P queries.
