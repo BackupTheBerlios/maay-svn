@@ -170,23 +170,24 @@ class CommandBasedConverter(BaseConverter):
         try:
             try:
                 inputFile = uncompressFile (filepath, outputDir)
-            except IOError,exc:
-                raise IndexationFailure("Unable to index %r [%s]" % (filename, exc))
+            except Exception, exc:
+                raise IndexationFailure("Unable to index %r [%s]" % (filepath, exc))
 
             command_args = {'input' : inputFile, 'output' : outputFile}
             cmd = self.COMMAND % command_args
 
             #print "Executing %r" % cmd
             errcode = os.system(cmd)
-            if errcode == 0: # OK
-                parser = self.getParser()
-                try:
-                    return parser.parseFile(outputFile, osp.basename(filepath),
-                                        self.OUTPUT_ENCODING)
-                except IOError:
-                    raise IndexationFailure('Unable to index %r' % filepath)
-            else:
+            if errcode: # NOK
                 raise IndexationFailure('Unable to index %r' % filepath)
+
+            parser = self.getParser()
+            try:
+                return parser.parseFile(outputFile, osp.basename(filepath),
+                                    self.OUTPUT_ENCODING)
+            except Exception:
+                raise IndexationFailure('Unable to index %r' % filepath)
+                
         finally:
             try:
                 if osp.isfile(outputFile):
