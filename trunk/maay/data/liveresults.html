@@ -25,14 +25,17 @@ function startConnection() {
     <form action="search" accept-charset="utf-8">
       <table>
         <tr>
-          <td><img src="images/smallmaay.png" /></td>
+          <td><a href="/"><img border="0" src="images/smallmaay.png" /></a></td>
           <td><input type="text" name="words" nevow:render="searchfield"><nevow:attr name="value" ><nevow:slot name="words" /></nevow:attr></input></td>
           <td><input type="submit" class="searchButton" value="search" /></td>
 	</tr>
       </table>
     </form>      
   </div>
-  <div class="message" nevow:render="title">Results for "<nevow:slot name="words" />"</div>
+  <div class="message" nevow:render="title">Results <nevow:slot name="start_result" /> - <nevow:slot name="end_result" /> for <b><nevow:slot name="words" /></b>.</div>
+  <!--
+  <div class="sort"><a href="">Sort by date</a> - <a href="">Sort by popularity</a></div>
+  -->
   <div id="resultsDiv"></div>
   <table class="results" nevow:render="sequence" nevow:data="results">
     <tr nevow:pattern="item" nevow:render="row">

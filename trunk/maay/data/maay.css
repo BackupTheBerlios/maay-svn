@@ -77,6 +77,11 @@ image{
   border: 0px;
 }
 
+div.sort {
+  font-size: 60%;
+  text-align: right;
+}
+
 /** icon *******/
 div.text_html {
   /* display: block; */
@@ -94,4 +99,13 @@ div.text_plain {
   width: 16px;
   height: 16px;
   background: url(images/txt_icon.png);
+}
+
+div.text_x-python {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/python_icon.png);
 }
