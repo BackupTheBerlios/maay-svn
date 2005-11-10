@@ -99,10 +99,9 @@ class BaseConverter:
         try:
             return parser.parseFile(filepath, osp.basename(filepath),
                                     self.OUTPUT_ENCODING)
-        except ParsingError, exc:
+        except Exception, exc:
             raise IndexationFailure("Cannot parse document %s (because %s)" % (filepath, exc))
-        except IOError, exc:
-            raise IndexationFailure("Cannot read document %s (because %s)" % (filepath, exc))
+        
 
 
 class RawTextConverter(BaseConverter):
@@ -165,13 +164,14 @@ class CommandBasedConverter(BaseConverter):
         """
 
         outputDir = mkdtemp()
+        outputFile = osp.join(outputDir, osp.basename(filepath))
+        inputFile = ''
 
         try:
             try:
                 inputFile = uncompressFile (filepath, outputDir)
             except IOError,exc:
                 raise IndexationFailure("Unable to index %r [%s]" % (filename, exc))
-            outputFile = osp.join(outputDir, osp.basename(filepath))
 
             command_args = {'input' : inputFile, 'output' : outputFile}
             cmd = self.COMMAND % command_args

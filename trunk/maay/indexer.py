@@ -146,7 +146,7 @@ class Indexer:
                 except converter.IndexationFailure, exc:
                     if self.verbose:
                         print exc
-                    continue
+                    continue                    
                 docId = makeDocumentId(filename)
                 mime_type = mimetypes.guess_type(filename)[0]
 
