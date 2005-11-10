@@ -230,7 +230,7 @@ def extractWordsFromFile(filename):
         try:
             converter = klass()
             return converter.extractWordsFromFile(filename)
-        except IndexationFailure, exc:
+        except IndexationFailure:
             print "indexation failed for %s, trying another converter" % filename
             continue
     # reaching this point means that none of our converters was able
