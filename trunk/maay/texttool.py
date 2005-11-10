@@ -42,8 +42,10 @@ class LStringIO(list):
         return u''.join(self)
 
 
-from maay.image import get_ustring_from_exif, make_thumbnail, \
-     ImageConfiguration as ImConfig, NoThumbnailsDir, ThumbnailCreationError
+from maay.image import get_ustring_from_exif, make_thumbnail,\
+     ThumbnailCreationError
+from maay.configuration import ImageConfiguration as ImConfig, \
+     NoThumbnailsDir
 
 WORD_MIN_LEN = 2
 WORD_MAX_LEN = 50

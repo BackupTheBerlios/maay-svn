@@ -6,12 +6,7 @@ except:
     print "Python Imaging Library not installed for your version of Python.",
     print "Thumbnail support will not work."
 
-from tempfile import mkdtemp
-import stat, os, os.path as osp
-from maay.exif import *
-from maay.configuration import ImageConfiguration, \
-     NoThumbnailsDir
-
+import os.path as osp
 
 ############# Thumbnail bizness
 
