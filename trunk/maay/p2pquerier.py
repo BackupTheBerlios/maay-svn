@@ -122,13 +122,17 @@ class P2pQuerier:
         self.nodeId = nodeId  
         self.querier = querier
         self._answerCallbacks = {}
-        reactor.callLater(20, self._markQueries)
         # now, read a config. provided value for EXPIRATION_TIME
+        # and fire the garbage collector
         config = WebappConfiguration()
         config.load()
         P2pQuerier._EXPIRATION_TIME = max(config.query_life_time,
                                           P2pQuerier._EXPIRATION_TIME)
+        reactor.callLater(self._EXPIRATION_TIME, self._markQueries)
 
+
+    ######## Stuff to remove old queries from cache
+        
     def _markQueries(self):
         queries = self._receivedQueries.keys() + self._sentQueries.keys()
         stamp = time.time()
@@ -158,6 +162,19 @@ class P2pQuerier:
             print "P2pQuerier garbage collected old queries : %s" % \
             expiredQueries
 
+    ######### Callback ops (who to feed the results of a query)
+
+    def addAnswerCallback(self, queryId, callback):
+        print "P2pQuerier : registering callback (%s, %s) for results" \
+              % (queryId, callback)
+        self._answerCallbacks.setdefault(queryId, []).append(callback)
+
+    def _notifyAnswerCallbacks(self, queryId, results):
+        for cb in self._answerCallbacks.get(queryId, []):
+            cb(results)
+
+    ######### True p2p ops (send, receive, answer ...)
+
     def sendQuery(self, query):
         """
         :type query: `maay.p2pquerier.P2pQuery`
@@ -176,14 +193,6 @@ class P2pQuerier:
             self._sentQueries[query.qid] = query
             print " ... sent to %s" % neighbor
 
-    def addAnswerCallback(self, queryId, callback):
-        print "P2pQuerier : registering callback (%s, %s) for results" \
-              % (queryId, callback)
-        self._answerCallbacks.setdefault(queryId, []).append(callback)
-
-    def _notifyAnswerCallbacks(self, queryId, results):
-        for cb in self._answerCallbacks.get(queryId, []):
-            cb(results)
 
     def receiveQuery(self, query):
         """
