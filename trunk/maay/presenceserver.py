@@ -90,7 +90,7 @@ class PresenceServer(LineReceiver):
         PresenceServer._ruTimestamp[nodeId] = lastseen
         PresenceServer._registeredUsers[nodeId] = (lastseen.isoformat(),
                                          nodeId,
-                                         ip,
+                                         self.transport.getPeer(),
                                          port,
                                          bandwidth)
 
