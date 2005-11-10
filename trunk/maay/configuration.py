@@ -194,7 +194,7 @@ class NodeConfiguration(Configuration):
           }),
         ]
 
-    config_file = 'Node.ini'
+    config_file = 'node.ini'
 
     def __init__(self):
         Configuration.__init__(self, name="Node")
