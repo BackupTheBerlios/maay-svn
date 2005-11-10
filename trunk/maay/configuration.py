@@ -187,6 +187,11 @@ class WebappConfiguration(Configuration):
           'help' : "Maay will store the generated node id in this file",
           'default' : "node_id",
           }),
+        ('query-life-time',
+         {'type' : 'int', 'metavar' : '<query_life_time>',
+          'help' : "Sets the maximum time allowed for a query to live in the node caches",
+          'default' : 60,
+          }),
         ]
 
     config_file = 'webapp.ini'

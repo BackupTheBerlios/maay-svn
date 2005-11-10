@@ -37,7 +37,7 @@ def hashIt(item, uname=''.join(platform.uname())):
     hasher.update('%s' % time.time())
     return hasher.hexdigest()
 
-# XXX should P2pQuery derive from query.Query?
+# XXX should P2pQuery derive from query.Query? (auc : no)
 class P2pQuery:
     def __init__(self, sender, port, query, ttl=5, qid=None):
         """
@@ -47,6 +47,7 @@ class P2pQuery:
         :type port: int
         :param query: the query to wrap
         :type query: `maay.query.Query`
+        :type qid: str
 
         """
         if qid:
@@ -125,7 +126,6 @@ class P2pQuerier:
         # now, read a config. provided value for EXPIRATION_TIME
         config = WebappConfiguration()
         config.load()
-        # FIXME: config.query_life_time does not exist. Aurelien: have you commited the change ?
         P2pQuerier._EXPIRATION_TIME = max(config.query_life_time,
                                           P2pQuerier._EXPIRATION_TIME)
 
