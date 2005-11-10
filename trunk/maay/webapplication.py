@@ -198,7 +198,7 @@ class ResultsPage(athena.LivePage):
             self.query = Query.fromContext(context)
             self.offset = self.query.offset
             self.results = querier.findDocuments(self.query)
-            webappConfig = IServerConfiguration(context)
+            webappConfig = INodeConfiguration(context)
             p2pQuery = P2pQuery(webappConfig.get_node_id(),
                                 webappConfig.rpcserver_port,
                                 self.query)
