@@ -109,3 +109,21 @@ div.text_x-python {
   height: 16px;
   background: url(images/python_icon.png);
 }
+
+div.application_pdf {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/pdf_icon.png);
+}
+
+div.application_msword {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/msword_icon.png);
+}
