@@ -160,7 +160,7 @@ class NodeConfiguration(Configuration):
         ('presence-host',
          {'type' : "string", 'metavar' : "<presence_host>", 
           'help' : "Host name or IP address of the presence server",
-          'default' : "192.33.178.29",
+          'default' : "localhost",
           }),
         ('presence-port',
          {'type' : "int", 'metavar' : "<presence_port>", 

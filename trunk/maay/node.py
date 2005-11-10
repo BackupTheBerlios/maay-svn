@@ -251,8 +251,8 @@ def run():
                                                      mindFactory=MaayMindFactory))
     website.remember(Maay404(), inevow.ICanHandleNotFound)
     website.remember(nodeConfig, INodeConfiguration)
-    presenceclient.notify(reactor,
-                          nodeConfig.presence_host, nodeConfig.presence_port,
+    presenceclient.notify(nodeConfig.presence_host,
+                          nodeConfig.presence_port,
                           maayPortal.webQuerier,
                           nodeConfig.get_node_id(),
                           socket.gethostbyname(socket.gethostname()),

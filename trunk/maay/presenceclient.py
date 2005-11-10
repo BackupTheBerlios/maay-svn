@@ -78,10 +78,10 @@ class Errbacks:
     setTarget = staticmethod(setTarget)
 
     def reportBug(bug):
-        print " ... problem contacting %s" % Errbacks.target
+        print " ... problem contacting (likely) %s" % Errbacks.target
     reportBug = staticmethod(reportBug)
 
-def notify(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidth):
+def notify(regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidth):
     """registers and transmits the node catalog to querier.registerNode
     """
     print "PresenceClient notify %s %s" % (nodeIP, xmlrpcPort)
@@ -94,14 +94,6 @@ def notify(reactor, regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwid
         d.addErrback(Errbacks.reportBug)
     else:
         print "Login : no querier found => no presence / no P2P"
-
-def askWho(reactor, regIp, regPort, callback):
-    """transmits node catalog to the callback"""
-    c = ClientCreator(reactor, RegistrationClient, callback)
-    d = c.connectTCP(regIp, regPort)
-    d.addCallback(RegistrationClient.who)
-    Errbacks.setTarget("%s:%s" % (regIP, regPort))
-    d.addErrback(Errbacks.reportBug)
 
 def logout(reactor, regIp, regPort, nodeId):
     print "PresenceClient@%s:%s node %s wants to log out." % (regIp, regPort, nodeId)
