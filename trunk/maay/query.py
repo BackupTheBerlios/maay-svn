@@ -20,13 +20,12 @@ def normalizeMimetype(fileExtension):
     import mimetypes
     return mimetypes.types_map.get('.%s' % fileExtension)
 
-
 class Query(object):
     restrictions = ('filetype', 'filename', 'searchtype')
     def __init__(self, words, offset=0, filetype=None, filename=None):
         self.words = words # unicode string 
         self.offset = offset
-        self.filetype = normalizeMimetype(filetype)
+        self.filetype = normalizeMimetype(filetype) #XXX: don't set this from outside !
         self.filename = filename
 
     def fromRawQuery(rawQuery, offset=0):

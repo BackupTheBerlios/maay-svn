@@ -92,8 +92,7 @@ class P2pQuery:
                 }
 
     def fromDict(dic):
-        _query = Query(dic['words'])
-        _query.filetype = dic['mime_type']
+        _query = Query(dic['words'], filetype=dic['mime_type'])
         return P2pQuery(qid=dic['qid'],
                         sender=dic['sender'],
                         port=dic['port'],
@@ -269,7 +268,7 @@ class P2pQuerier:
             self.sendQuery(query)
 
         documents = self.querier.findDocuments(query.query)
-        
+
         if len(documents) == 0:
             print " ... no document matching the query, won't answer."
             return
@@ -330,8 +329,8 @@ class P2pQuerier:
                 d.addErrback(P2pErrbacks.answerQueryProblem)
                 P2pErrbacks.setAnswerTarget(senderUrl)
             except ValueError:
-                print "unknown node %s" % query.sender
-        else: # local would be true ? don't waste the answers ...
+                print " ... unknown node %s" % query.sender
+        else: 
             self._notifyAnswerCallbacks(answer.queryId, answer.provider, toSend)
     
     def _selectTargetNeighbors(self, query):
