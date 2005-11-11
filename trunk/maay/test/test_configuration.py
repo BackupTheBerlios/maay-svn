@@ -23,7 +23,7 @@ import os.path as osp
 import re
 
 from maay import configuration
-from maay.configuration import NodeConfiguration
+from maay.configuration import NodeConfiguration, ImageConfiguration
 
 class NodeConfigTC(unittest.TestCase):
 
@@ -66,6 +66,18 @@ class NodeConfigTC(unittest.TestCase):
         result = configuration._filter_files_with(files, os.R_OK)
         self.assertEquals(result, ['.'])
 
+class ImageConfigurationTC(unittest.TestCase):
+    def setUp(self):
+        self.argvBackup = sys.argv
+
+    def tearDown(self):
+        sys.argv = self.argvBackup
+    
+    def testLoadNotClutteredByArgv(self):
+        sys.argv = "indexer.py --private-index-dir=foo".split()
+        config = ImageConfiguration()
+        self.assertEquals(config.get('thumbnails-dir'), '.maay_thumbnails')
+        
 if sys.platform == 'win32':
     class Win32ConfigTC(unittest.TestCase):
         def testUpdateEnvPath(self):

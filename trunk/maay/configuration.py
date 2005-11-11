@@ -24,6 +24,7 @@ import re
 import sha
 import platform
 import time
+import stat
 
 from logilab.common.configuration import Configuration as BaseConfiguration
 
@@ -249,42 +250,6 @@ class NodeConfiguration(Configuration):
                 continue
         raise ValueError('Unable to find a writable directory to store the node id')
 
-################ Image stuff 
-
-class NoThumbnailsDir(Exception):
-    """Represents impossibility to access or create RW the
-       maay thumbnails dir repository"""
-    pass
-
-class ImageConfiguration(Configuration):
-    options = Configuration.options + [
-        ('thumbnails-dir',
-         {'type' : "string", 'metavar' : "--thumbnailsdir",
-          'help' : "Thumbnail files repository",
-          'default' : '.maay_thumbnails'},)]
-    config_file = 'image.ini'
-
-    def __init__(self):
-        Configuration.__init__(self, name="Image")
-
-    def get_thumbnails_dir(self):
-        """Returns the complete path to Maay thumnails directory
-           XXX: It will try to create the dir if absent"""
-        path = osp.join(osp.expanduser('~'),
-                        self.get('thumbnails-dir'))
-        if not os.access(path, os.W_OK):
-            try:
-                os.makedirs(path, stat.S_IRWXU)
-            except Exception, e:
-                raise NoThumbnailsDir("Impossible to access or create %s. "
-                                      "Cause : %e" % (path, e))
-        if os.access(path, os.W_OK): # yes, I'm paranoId
-            return path
-        else:
-            raise NoThumbnailsDir("Access to %s is impossible." % path)
-
-
-
 ################ Indexer stuff 
 
 class IndexerConfiguration(Configuration):
@@ -360,3 +325,42 @@ class IndexerConfiguration(Configuration):
 
     def __init__(self):
         Configuration.__init__(self, name="Indexer")
+
+################ Image stuff 
+
+class NoThumbnailsDir(Exception):
+    """Represents impossibility to access or create RW the
+       maay thumbnails dir repository"""
+    pass
+
+class ImageConfiguration(BaseConfiguration):
+    options = [
+        ('thumbnails-dir',
+         {'type' : "string", 'metavar' : "--thumbnailsdir",
+          'help' : "Thumbnail files repository",
+          'default' : '.maay_thumbnails'},)]
+    config_file = 'image.ini'
+
+    def __init__(self):
+        BaseConfiguration.__init__(self, options=self.options,
+                                   config_file=self.config_file,
+                                   name='Image')
+
+    def get_thumbnails_dir(self):
+        """Returns the complete path to Maay thumnails directory
+           XXX: It will try to create the dir if absent"""
+        path = osp.join(osp.expanduser('~'),
+                        self.get('thumbnails-dir'))
+        if not os.access(path, os.W_OK):
+            try:
+                os.makedirs(path, stat.S_IRWXU)
+            except Exception, e:
+                raise NoThumbnailsDir("Impossible to access or create %s. "
+                                      "Cause : %s" % (path, e))
+        if os.access(path, os.W_OK): # yes, I'm paranoId
+            return path
+        else:
+            raise NoThumbnailsDir("Access to %s is impossible." % path)
+
+
+
