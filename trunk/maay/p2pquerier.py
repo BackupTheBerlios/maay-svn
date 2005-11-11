@@ -31,6 +31,8 @@ from twisted.web.xmlrpc import Proxy
 from twisted.internet import reactor
 from maay.texttool import makeAbstract, removeSpace, untagText
 from configuration import NodeConfiguration
+from maay.query import Query
+
 
 def hashIt(item, uname=''.join(platform.uname())):
     hasher = sha.sha()
@@ -89,6 +91,16 @@ class P2pQuery:
                 'mime_type': self.query.filetype or '',
                 }
 
+    def fromDict(dic):
+        _query = Query(dic['words'])
+        _query.filetype = dic['mime_type']
+        return P2pQuery(qid=dic['qid'],
+                        sender=dic['sender'],
+                        port=dic['port'],
+                        ttl=dic['ttl'],
+                        query=_query)
+    fromDict = staticmethod(fromDict)
+    
     def getWords(self):
         return self.query.words.split()
 

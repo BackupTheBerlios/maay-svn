@@ -158,14 +158,16 @@ class MaayRPCServer(XMLRPC):
         """On node has sent a query (P2pQuerier.sendQuery)
         """
         print "MaayRPCServer distributedQuery : %s " % queryDict
-        _query = Query(queryDict['words'])
-        _query.filetype = queryDict.get('mime_type')
-        query = P2pQuery(sender=queryDict['sender'],
-                         port=queryDict['port'],
-                         query=_query,
-                         ttl=queryDict['ttl'],
-                         qid=queryDict['qid'],
-                         host = self._lastClient.host)
+        query = P2pQuery.fromDict(queryDict)
+        query.host = self._lastClient.host
+##         _query = Query(queryDict['words'])
+##         _query.filetype = queryDict.get('mime_type')
+##         query = P2pQuery(sender=queryDict['sender'],
+##                          port=queryDict['port'],
+##                          query=_query,
+##                          ttl=queryDict['ttl'],
+##                          qid=queryDict['qid'],
+##                          host = self._lastClient.host)
         querier = self._sessions[ANONYMOUS_AVATARID]
         querier.registerNode(query.sender, query.host, query.port)
         # schedule the query for later processing and return immediately
