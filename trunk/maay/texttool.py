@@ -27,6 +27,7 @@ import sys
 import mimetypes
 import gzip
 import bz2
+import traceback
 
 from maay.image import get_ustring_from_exif, make_thumbnail
 from maay.configuration import ImageConfiguration as ImConfig
@@ -239,12 +240,14 @@ class ExifParser(AbstractParser):
         title = unicode(pristineFilename, sys.getfilesystemencoding())
         try:
             result = 'EXIF : ' + get_ustring_from_exif(filepath)
-            try:
-                thumb = make_thumbnail(filepath, self.get_thumbnails_dir())
-            except Exception, e:
-                print "Can't make thumbnail. Cause : %s" % e
-                thumb = None
-            return title, result, [thumb], 0
+##             try:
+##                 thumb = make_thumbnail(filepath, self.get_thumbnails_dir())
+##             except Exception, e:
+##                 print "Can't make thumbnail. Cause : %s" % e
+##                 traceback.print_exc()
+##                 thumb = None
+##             return title, result, [thumb], 0
+            return title, result, [], 0
         except Exception, e:
             print "No EXIF nor thumbnails. Cause : %s" % e
         return title, u'No EXIF information available', [], 0
