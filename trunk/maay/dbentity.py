@@ -284,17 +284,17 @@ class Document(DBEntity):
         
     selectContaining = classmethod(selectContaining)
     
-class Result(Document):
+class Result:
     """Results are temporary relations created/destroyed on the fly
        they contain documents matching both local and distributed requests
     """
     attributes = ('db_document_id', 'document_id', 'mime_type', 'title',
-                  'size', 'text', 'publication_time', 'url', 'host', 'port',
-                  'login')
-    tableName = None # will be provided at run-time
+                  'size', 'text', 'publication_time', 'local_pathname',
+                  'host', 'port', 'login')
 
-    def __init__(self, name, **values):
-        Result.tableName = name
+    def __init__(self, cursor, name, **values):
+        self.cursor = cursor
+        self.tableName = name
         DBEntity.__init__(self, **values)
         self._buildTemporary()
 
@@ -317,11 +317,11 @@ class Result(Document):
                     "PRIMARY KEY (`db_document_id`),"
                     "KEY `document_id` (`document_id`),"
                     "KEY `local_pathname` (`local_pathname`))"
-                 "TYPE=MyISAM;")
+                 "TYPE=MyISAM;"
+                 % self.tableName)
 
     def _destroyTemporary(self):
-        query = "DROP TABLE %s;" % Result.tableName
-
+        query = "DROP TABLE %s;" % self.tableName
     
 
 class FileInfo(DBEntity):
