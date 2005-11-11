@@ -94,7 +94,10 @@ class P2pQuery:
 
 
 class P2pAnswer:
-    def __init__(self, queryId, documents):
+    def __init__(self, queryId, provider, documents):
+        """
+        :type provider: 3-tuple (login, IP, xmlrpc-port)
+        """
         self.queryId = queryId
         self.provider = provider
         self.documents = documents
@@ -317,7 +320,7 @@ class P2pQuerier:
             except ValueError:
                 print "unknown node %s" % query.sender
         else: # local would be true ? don't waste the answers ...
-            self._notifyAnswerCallbacks(answer.queryId, provider, toSend)
+            self._notifyAnswerCallbacks(answer.queryId, answer.provider, toSend)
     
     def _selectTargetNeighbors(self, query):
         """return a list of nodes to which the query will be sent.
