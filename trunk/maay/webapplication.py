@@ -325,9 +325,6 @@ class PleaseCloseYourEyes(ResultsPage):
         context.fillSlots('distanturl', '/distantfile?filepath=%s&host=%s&port=%s' % (document.url, self.peerHost, self.peerPort))
         return context.tag
 
-    def render_distanturl(self, context, data):
-        return '/distantfile?filepath=bim&host=%s&port=%s' % (self.peerHost, self.peerPort)
-
 
 class ResultsPageFactory(athena.LivePageFactory):
     def getLivePage(self, context):
