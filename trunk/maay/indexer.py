@@ -102,9 +102,10 @@ class Indexer:
         for filename in fileset:
             if self.verbose:
                 print "Requesting unindexation of %s" % filename
-            self.serverProxy.removeFileInfo(self.cnxId,
-                                            unicode(filename,
-                                                    self.filesystemEncoding))
+            self.serverProxy.removeFileInfo(self.cnxId, filename)
+            #XXX: fix by alf, below, causes indexer crash on auc personnal machine
+##                                             unicode(filename,
+##                                                     self.filesystemEncoding))
         if self.verbose:
             print "Requesting cleanup of unreferenced documents"
         self.serverProxy.removeUnreferencedDocuments(self.cnxId)
