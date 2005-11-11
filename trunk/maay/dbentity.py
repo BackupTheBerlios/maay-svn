@@ -289,10 +289,13 @@ class Result(Document):
        they contain documents matching both local and distributed requests
     """
     attributes = ('db_document_id', 'document_id', 'mime_type', 'title',
-                  'size', 'text', 'publication_time', 'state', 'download_count',
-                  'url', 'matching', 'indexed')
+                  'size', 'text', 'publication_time', 'url', 'host', 'port',
+                  'login')
     tableName = None # will be provided at run-time
 
+    def __init__(self, name, **values):
+        DBEntity.__init__(self, **values)
+    
 
 class FileInfo(DBEntity):
     """
