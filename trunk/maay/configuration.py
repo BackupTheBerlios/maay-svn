@@ -334,7 +334,7 @@ class NoThumbnailsDir(Exception):
     pass
 
 class ImageConfiguration(BaseConfiguration):
-    options = [
+    options = Configuration.options + [
         ('thumbnails-dir',
          {'type' : "string", 'metavar' : "--thumbnailsdir",
           'help' : "Thumbnail files repository",
@@ -345,6 +345,15 @@ class ImageConfiguration(BaseConfiguration):
         BaseConfiguration.__init__(self, options=self.options,
                                    config_file=self.config_file,
                                    name='Image')
+
+    def load_command_line_configuration(self):
+        """We won't load command line stuff because ImageConfiguration
+           is an auxiliary config thing which will purely and simply
+           choke on the cmd-line args it doesn't know about
+           Let's just pretend for now that thumbnail-dir can't be
+           specified on command line.
+        """
+        pass
 
     def get_thumbnails_dir(self):
         """Returns the complete path to Maay thumnails directory
