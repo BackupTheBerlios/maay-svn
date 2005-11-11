@@ -294,7 +294,19 @@ class Result(Document):
     tableName = None # will be provided at run-time
 
     def __init__(self, name, **values):
+        tableName = name
         DBEntity.__init__(self, **values)
+        self._buildTemporary()
+
+    def __del__(self):
+        self._destroyTemporary()
+
+    def _buildTemporary(self):
+        pass
+
+    def _destroyTemporary(self):
+        pass
+
     
 
 class FileInfo(DBEntity):
