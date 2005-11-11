@@ -294,7 +294,7 @@ class Result(Document):
     tableName = None # will be provided at run-time
 
     def __init__(self, name, **values):
-        tableName = name
+        Result.tableName = name
         DBEntity.__init__(self, **values)
         self._buildTemporary()
 
@@ -302,10 +302,25 @@ class Result(Document):
         self._destroyTemporary()
 
     def _buildTemporary(self):
-        pass
+        query = ("CREATE TABLE `%s` ("
+                    "`db_document_id` int(11) NOT NULL auto-increment,"
+                    "`document_id` varchar(40) NOT NULL default '',"
+                    "`mime_type` varchar(40) NOT NULL default '',"
+                    "`title` varchar(255) default NULL,"
+                    "`size` int(11) default NULL,"
+                    "`text` text,"
+                    "`publication_time` int(14) default NULL,"
+                    "`local_pathname` varchar(255) NOT NULL default ''," # like url
+                    "`host` varchar(15),"
+                    "`port` int(11)," # check this
+                    "`login` varchar(255),"
+                    "PRIMARY KEY (`db_document_id`),"
+                    "KEY `document_id` (`document_id`),"
+                    "KEY `local_pathname` (`local_pathname`))"
+                 "TYPE=MyISAM;")
 
     def _destroyTemporary(self):
-        pass
+        query = "DROP TABLE %s;" % Result.tableName
 
     
 
