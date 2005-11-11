@@ -163,7 +163,7 @@ class Document(DBEntity):
      
      * float download_count: sum of the weights of the downloads
      
-     * str url: url of the document if it was downloaded
+     * str url: really contains the full pathname of the file (not an url)
      
      * float matching: defaults to 0
      
