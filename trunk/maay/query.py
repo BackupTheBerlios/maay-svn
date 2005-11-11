@@ -25,7 +25,7 @@ class Query(object):
     def __init__(self, words, offset=0, filetype=None, filename=None):
         self.words = words # unicode string 
         self.offset = offset
-        self.filetype = normalizeMimetype(filetype) #XXX: don't set this from outside !
+        self.filetype = filetype
         self.filename = filename
 
     def fromRawQuery(rawQuery, offset=0):
@@ -55,6 +55,21 @@ class Query(object):
         offset = int(context.arg('offset', 0))
         return Query.fromRawQuery(rawQuery, offset)
     fromContext = staticmethod(fromContext)
+
+    def getFiletype(self):
+        return getattr(self, '_filetype', None)
+
+    def setFiletype(self, filetype):
+        # try to guess if filetype is already normalized or not
+        if filetype:
+            mimetype = normalizeMimetype(filetype)
+            if mimetype:
+                self._filetype = mimetype
+            else:
+                self._filetype = filetype
+        else:
+            self._filetype = None
+    filetype = property(getFiletype, setFiletype)
 
     def __repr__(self):
         return 'Query Object (%s, %s, %s)' % (self.words, self.filetype,

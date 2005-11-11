@@ -239,7 +239,7 @@ class P2pQuerier:
         #FIXME: avoid to send query to the originator
         for neighbor in self._selectTargetNeighbors(query):
             target = str(neighbor.getRpcUrl())
-            proxy = Proxy(target) 
+            proxy = Proxy(target)
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
             d.addErrback(P2pErrbacks.sendQueryProblem)

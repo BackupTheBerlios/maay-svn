@@ -65,6 +65,18 @@ class QueryTC(unittest.TestCase):
         self.assertEquals(query.filetype, 'application/pdf')
         self.assertEquals(query.offset, 12)
 
+    def testMimeTypeNormalization(self):
+        query = Query.fromRawQuery(u"hello filetype:pdf world", 12)
+        self.assertEquals(query.filetype, 'application/pdf')
+        query.filetype = 'text/x-python'
+        self.assertEquals(query.filetype, 'text/x-python')
+        query.filetype = ''
+        self.assertEquals(query.filetype, None)
+        query.filetype = 'pdf'
+        self.assertEquals(query.filetype, 'application/pdf')
+        query.filetype = None
+        self.assertEquals(query.filetype, None)
+        
     # Commented because not sure how filename should be handled  :
     # (regexps ? LIKE %...% ?, etc.)
 ##     def testSeveralWordsAndSeveralRestrictions(self):
