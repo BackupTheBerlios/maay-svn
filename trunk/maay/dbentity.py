@@ -284,6 +284,14 @@ class Document(DBEntity):
         
     selectContaining = classmethod(selectContaining)
     
+class Result(Document):
+    """Results are temporary relations created/destroyed on the fly
+       they contain documents matching both local and distributed requests
+    """
+    attributes = ('db_document_id', 'document_id', 'mime_type', 'title',
+                  'size', 'text', 'publication_time', 'state', 'download_count',
+                  'url', 'matching', 'indexed')
+    tableName = None # will be provided at run-time
 
 
 class FileInfo(DBEntity):
