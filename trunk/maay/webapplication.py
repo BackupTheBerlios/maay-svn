@@ -154,6 +154,23 @@ class SearchForm(MaayPage):
         else:
             return Maay404()
 
+    def child_distantfile(self, context):
+        host = context.arg('host')
+        port = context.arg('port')
+        filepath = context.arg('filepath')
+        if not host or not port or not filepath:
+            return Maay404()
+        proxy = ServerProxy('http://%s:%s' % (host, port))
+        return DistantFilePage(filepath, proxy.downloadFile(filepath))
+
+class DistantFilePage(static.File):
+    def __init__(self, filepath, fileContent):
+        static.File.__init__(self, filepath)
+        self.fileContent = fileContent
+        
+    def openForReading(self):
+        from cStringIO import StringIO
+        return StringIO(self.fileContent)
 
 class IndexationPage(MaayPage):
     # just for the demo. Should be moved to a adminpanel interface later.
@@ -163,12 +180,10 @@ class IndexationPage(MaayPage):
     
     def __init__(self, msg = "No message"):
         MaayPage.__init__(self)
-        self.__msg = msg
+        self._msg = msg
 
     def render_message(self, context, data):
-        context.fillSlots('msg', self.__msg)
-        return context.tag
-
+        return self._msg
 
 from nevow import athena, inevow
 from twisted.python import log
@@ -260,7 +275,7 @@ class ResultsPage(athena.LivePage):
         # r = mergeResults(self.results, results)
         # source = htmlize(r)
         self.results = [Document(**params) for params in results]
-        page = PleaseCloseYourEyes(self.results, self.query).renderSynchronously()
+        page = PleaseCloseYourEyes(self.results, provider, self.query).renderSynchronously()
         self.callRemote('updateResults', u'<div>%s</div>' % page)
 
     def remote_connect(self, context):
@@ -273,24 +288,45 @@ class PleaseCloseYourEyes(ResultsPage):
     It will be refactored later. The idea is to have something working
     quickly.
     """
-
     docFactory = loaders.xmlstr("""
   <table xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1" class="results" nevow:render="sequence" nevow:data="results">
     <tr nevow:pattern="item" nevow:render="row">
       <td>
 	<div class="resultItem">
-	  <table><tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type"/></nevow:attr></div></td><td><a class="distantDocTitle"><nevow:attr name="href">/download?docid=<nevow:slot name="docid" />&amp;words=<nevow:slot name="words" /></nevow:attr><nevow:slot name="doctitle">DOC TITLE</nevow:slot></a></td></tr></table>
-	  <div class="resultDesc"><nevow:slot name="abstract" /></div>
-	  <span class="resultUrl"><nevow:attr name="href"><nevow:slot name="docurl" /></nevow:attr><nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
+	  <table>
+            <tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type"/></nevow:attr></div></td>
+                <td>
+                 <a class="distantDocTitle">
+                  <nevow:attr name="href"><nevow:slot name="distanturl" /></nevow:attr>
+                  <nevow:slot name="doctitle">DOC TITLE</nevow:slot>
+                 </a>
+                </td>
+            </tr>
+          </table>
+          <div class="resultDesc"><nevow:slot name="abstract" /></div>
+	  <span class="resultUrl">(<span nevow:render="peer" />) - <nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
 	</div>
       </td>
     </tr>
   </table>
     """)
     
-    def __init__(self, results, query):
+    def __init__(self, results, provider, query):
         self.results = results
+        self.peerLogin, self.peerHost, self.peerPort = provider
         self.query = query
+
+    def render_peer(self, context, data):
+        return '%s (%s:%s)' % (self.peerLogin, self.peerHost, self.peerPort)
+
+    def render_row(self, context, data):
+        document = data
+        ResultsPage.render_row(self, context, data)
+        context.fillSlots('distanturl', '/distantfile?filepath=%s&host=%s&port=%s' % (document.url, self.peerHost, self.peerPort))
+        return context.tag
+
+    def render_distanturl(self, context, data):
+        return '/distantfile?filepath=bim&host=%s&port=%s' % (self.peerHost, self.peerPort)
 
 
 class ResultsPageFactory(athena.LivePageFactory):

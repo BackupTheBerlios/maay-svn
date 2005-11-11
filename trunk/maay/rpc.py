@@ -178,7 +178,18 @@ class MaayRPCServer(XMLRPC):
         answer = P2pAnswer(queryId, provider, documents)
         reactor.callLater(.01, getP2pQuerier().relayAnswer, answer)
         return self.nodeId
-                         
+
+    def xmlrpc_downloadFile(self, filepath):
+        """dummy implementation for now"""
+        try:
+            fp = file(filepath)
+            data = fp.read()
+            fp.close()
+        except Exception, exc:
+            import traceback
+            traceback.print_exc()
+            return "Could not get %r" % filepath
+        return data
     
     def cnxIsValid(self, cnxId):
         if cnxId in self._sessions:
