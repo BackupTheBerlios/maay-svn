@@ -23,6 +23,7 @@ __revision__ = '$Id$'
 __metaclass__ = type
 
 import time
+import traceback
 from math import sqrt, log
 
 from zope.interface import Interface, implements
@@ -30,7 +31,7 @@ from zope.interface import Interface, implements
 from logilab.common.db import get_dbapi_compliant_module
 
 from maay.dbentity import Document, FileInfo, \
-     DocumentProvider, DocumentScore, Word, Node
+     DocumentProvider, DocumentScore, Word, Node, Result
 from maay.texttool import normalizeText, WORDS_RGX, MAX_STORED_SIZE
 
 class MaayAuthenticationError(Exception):
@@ -107,12 +108,12 @@ class AnonymousQuerier:
                 raise MaayAuthenticationError("Failed to authenticate user %r"
                                               % user)
             except Exception, e:
-                import traceback
                 traceback.print_exc()
                 raise MaayAuthenticationError(
                     "Failed to authenticate user %r [%s]" % (user, e))
         self._cnx = connection
-
+        self.flushTemporaryTable()
+    
     def _execute(self, query, args=None):
         cursor = self._cnx.cursor()
         results = []
@@ -130,6 +131,9 @@ class AnonymousQuerier:
             self._cnx.commit()
         return results
 
+    def flushTemporaryTable(self):
+        self._execute('DELETE FROM results')
+        
     def close(self):
         self._cnx.close()
         self._cnx = None
@@ -287,7 +291,32 @@ class AnonymousQuerier:
         nodes = Node.selectActive(cursor, nodeId, nbNodes) 
         cursor.close()
         return nodes
-    
+
+    def getQueryResults(self, queryId, limit=15, offset=0):
+        """builds and returns Result' instances by searching in
+        the temporary table built for <queryId>
+        """
+        cursor = self._cnx.cursor()
+        results = Result.selectWhere(cursor, limit, offset, query_id=queryId)
+        cursor.close()
+        return results
+        
+    def pushDocuments(self, queryId, documents, provider=None):
+        """push <documents> into the temporary table built for
+        <queryId>
+        """
+        cursor = self._cnx.cursor()
+        try:
+            for document in documents:
+                res = Result.fromDocument(document, queryId, provider)
+                res.commit(cursor, update=False)
+            cursor.close()
+            self._cnx.commit()
+        except:
+            import traceback
+            traceback.print_exc()
+            self._cnx.rollback()
+        
 class MaayQuerier(AnonymousQuerier):
     """High-Level interface to Maay SQL database.
 

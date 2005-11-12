@@ -9,6 +9,7 @@
 
     <script type='text/javascript' language='javascript'>
 function updateResults(source) {
+  alert('yo');
   div = document.getElementById('resultsDiv');
   div.innerHTML = source;
 }
@@ -18,9 +19,7 @@ function startConnection() {
     </script>
 
   </head>
- 
   <body onload="startConnection()">
-  <!-- <a nevow:render="loginurl"><nevow:attr name="href"><nevow:slot name="loginurl" /></nevow:attr><nevow:slot name="actionlabel" /></a> -->
   <div class="reSearch">
     <form action="search" accept-charset="utf-8">
       <table>
@@ -36,20 +35,22 @@ function startConnection() {
   <!--
   <div class="sort"><a href="">Sort by date</a> - <a href="">Sort by popularity</a></div>
   -->
-  <div id="resultsDiv"></div>
-  <table class="results" nevow:render="sequence" nevow:data="results">
-    <tr nevow:pattern="item" nevow:render="row">
-      <td>
-	<div class="resultItem">
-	  <table><tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type" /></nevow:attr></div></td><td><a class="docTitle"><nevow:attr name="href">/download?docid=<nevow:slot name="docid" />&amp;words=<nevow:slot name="words" /></nevow:attr><nevow:slot name="doctitle">DOC TITLE</nevow:slot></a></td></tr></table>
-	  <div class="resultDesc"><nevow:slot name="abstract" /></div>
-	  <span class="resultUrl"><nevow:attr name="href"><nevow:slot name="docurl" /></nevow:attr><nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
-	</div>
-      </td>
-    </tr>
-  </table>
-  <div class="prevnext"><a><nevow:attr name="href"
-  nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
-  name="href" nevow:render="nextset_url"/>Next</a></div>
-  </body>
+  <div id="resultsDiv">
+    <table class="results" nevow:render="sequence" nevow:data="results">
+      <tr nevow:pattern="item" nevow:render="row">
+        <td>
+  	<div class="resultItem">
+  	  <table><tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type" /></nevow:attr></div></td><td><a class="docTitle"><nevow:attr name="href">/download?docid=<nevow:slot name="docid" />&amp;words=<nevow:slot name="words" /></nevow:attr><nevow:slot name="doctitle">DOC TITLE</nevow:slot></a></td></tr></table>
+  	  <div class="resultDesc"><nevow:slot name="abstract" /></div>
+  	  <span class="resultUrl"><nevow:attr name="href"><nevow:slot name="docurl" /></nevow:attr><nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
+  	</div>
+        </td>
+      </tr>
+    </table>
+    <div class="prevnext"><a><nevow:attr name="href"
+    nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
+    name="href" nevow:render="nextset_url"/>Next</a></div>
+    <nevow:invisble nevow:macro="footer" />
+  </div>
+ </body>
 </html>

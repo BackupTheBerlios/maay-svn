@@ -63,6 +63,8 @@ class MaayPage(rend.Page):
     def macro_body(self, context):
         return self.bodyFactory
 
+    def macro_footer(self, context):
+        return loaders.xmlfile(get_path_of('footer.html'))
 
 class PeersList(MaayPage):
     """display list of registered peers"""
@@ -192,6 +194,9 @@ class ResultsPage(athena.LivePage):
         #       differently in nevow SVN. It's now possible to insantiate directly
         #       LivePage instances (which is great !), so we'll have to change
         #       the implementation for next nevow release.
+        # NOTE2: another way to be sure that only the appopriate resource
+        #        starts the p2pquery (and registers callbacks) would be
+        #        to launch the query in the remote_conect() method
         if len(inevow.IRemainingSegments(context)) < 2:
             self.query = Query.fromContext(context)
             self.offset = self.query.offset
@@ -203,11 +208,15 @@ class ResultsPage(athena.LivePage):
                                 self.query)
             p2pquerier.sendQuery(p2pQuery)
             p2pquerier.addAnswerCallback(p2pQuery.qid, self.onNewResults)
-    
-
+            self.queryId = p2pQuery.qid
+            self.querier = querier
+            
     def data_results(self, context, data):
         return self.results
     
+    def macro_footer(self, context):
+        return loaders.xmlfile(get_path_of('footer.html'))
+
     def render_title(self, context, data):
         context.fillSlots('words', self.query.words)
         context.fillSlots('start_result', min(len(self.results), self.offset + 1))
@@ -255,15 +264,15 @@ class ResultsPage(athena.LivePage):
         return context.tag
 
     def onNewResults(self, provider, results):
-        #FIXME: do something with the provider info
-        # r = mergeResults(self.results, results)
-        # source = htmlize(r)
-        self.results = [Document(**params) for params in results]
-        page = PleaseCloseYourEyes(self.results, provider, self.query).renderSynchronously()
+        results = [Document(**params) for params in results]
+        self.querier.pushDocuments(self.queryId, results, provider)
+        results = self.querier.getQueryResults(self.queryId) # XXX offset, limit ?
+        page = PleaseCloseYourEyes(results, provider, self.query).renderSynchronously()
         self.callRemote('updateResults', u'<div>%s</div>' % page)
 
     def remote_connect(self, context):
         """just here to start the connection between client and server (Ajax)"""
+        self.querier.pushDocuments(self.queryId, self.results, provider=None)
         return 0
 
 
@@ -273,26 +282,29 @@ class PleaseCloseYourEyes(ResultsPage):
     quickly.
     """
     docFactory = loaders.xmlstr("""
-  <table xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1" class="results" nevow:render="sequence" nevow:data="results">
-    <tr nevow:pattern="item" nevow:render="row">
-      <td>
-	<div class="resultItem">
-	  <table>
-            <tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type"/></nevow:attr></div></td>
-                <td>
-                 <a class="distantDocTitle">
-                  <nevow:attr name="href"><nevow:slot name="distanturl" /></nevow:attr>
-                  <nevow:slot name="doctitle">DOC TITLE</nevow:slot>
-                 </a>
-                </td>
-            </tr>
-          </table>
-          <div class="resultDesc"><nevow:slot name="abstract" /></div>
-	  <span class="resultUrl">(<span nevow:render="peer" />) - <nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
-	</div>
-      </td>
-    </tr>
-  </table>
+  <div id="resultsDiv" xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1" >
+    <table class="results" nevow:render="sequence" nevow:data="results">
+      <tr nevow:pattern="item" nevow:render="row">
+        <td>
+          <div class="resultItem">
+            <table>
+              <tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type"/></nevow:attr></div></td>
+                  <td>
+                   <a class="distantDocTitle">
+                    <nevow:attr name="href"><nevow:slot name="distanturl" /></nevow:attr>
+                    <nevow:slot name="doctitle">DOC TITLE</nevow:slot>
+                   </a>
+                  </td>
+              </tr>
+            </table>
+            <div class="resultDesc"><nevow:slot name="abstract" /></div>
+            <span class="resultUrl">(<span nevow:render="peer" />) - <nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
+          </div>
+        </td>
+      </tr>
+    </table>
+    <nevow:invisble nevow:macro="footer" />
+  </div>
     """)
     
     def __init__(self, results, provider, query):
