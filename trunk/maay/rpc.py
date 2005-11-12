@@ -27,7 +27,7 @@ __revision__ = ''
 from time import time
 from random import randint
 
-from twisted.web.xmlrpc import XMLRPC
+from twisted.web.xmlrpc import XMLRPC, Binary
 from twisted.cred.credentials import UsernamePassword, Anonymous
 from twisted.internet import reactor
 ## from twisted.python.failure import Failure
@@ -160,14 +160,6 @@ class MaayRPCServer(XMLRPC):
         print "MaayRPCServer distributedQuery : %s " % queryDict
         query = P2pQuery.fromDict(queryDict)
         query.host = self._lastClient.host
-##         _query = Query(queryDict['words'])
-##         _query.filetype = queryDict.get('mime_type')
-##         query = P2pQuery(sender=queryDict['sender'],
-##                          port=queryDict['port'],
-##                          query=_query,
-##                          ttl=queryDict['ttl'],
-##                          qid=queryDict['qid'],
-##                          host = self._lastClient.host)
         querier = self._sessions[ANONYMOUS_AVATARID]
         querier.registerNode(query.sender, query.host, query.port)
         # schedule the query for later processing and return immediately
