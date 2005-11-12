@@ -123,23 +123,6 @@ class SearchForm(MaayPage):
 
         return IndexationPage(msg)
 
-    def _askForPeerResults(self, query, context):
-        """Launches a P2P cascade of queries
-           The result of this shall be used ~ 5 and 15 secs. later
-           by the ResultPage
-        """
-        if not self.p2pquerier:
-            print "BUG ? We don't have a P2pQuerier"
-            return
-        webappConfig = INodeConfiguration(context)
-        theDistributedQuery = P2pQuery(webappConfig.get_node_id(),
-                                       webappConfig.rpcserver_port,
-                                       query)
-        
-        self.p2pquerier.sendQuery(theDistributedQuery)
-        self.oldContext = context
-
-
     def child_search(self, context):
         return FACTORY.clientFactory(context, self.querier, self.p2pquerier)
     
@@ -212,6 +195,7 @@ class ResultsPage(athena.LivePage):
         if len(inevow.IRemainingSegments(context)) < 2:
             self.query = Query.fromContext(context)
             self.offset = self.query.offset
+            #TODO: very soon, the line below will also be the p2pquerier's job
             self.results = querier.findDocuments(self.query)
             webappConfig = INodeConfiguration(context)
             p2pQuery = P2pQuery(webappConfig.get_node_id(),
