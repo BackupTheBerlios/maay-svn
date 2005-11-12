@@ -72,6 +72,30 @@ class Document_TC(unittest.TestCase):
         q = query%tuple(params) # sanity check for argument count
         
     
+class ResultTC(unittest.TestCase):
+
+    def testBuildFromLocalDocument(self):
+        document = Document(db_document_id='foo', mime_type='application/pdf')
+        result = Result.fromDocument(document, 'qid')
+        self.assertEquals(result.db_document_id, 'foo')
+        self.assertEquals(result.query_id, 'qid')
+        self.assertEquals(result.host, 'localhost')
+        self.assertEquals(result.mime_type, 'application/pdf')
+        self.assertEquals(result.boundAttributes(), ['db_document_id', 'query_id',
+                                                     'mime_type', 'host'])
+        
+    def testBuildFromDistantDocument(self):
+        document = Document(db_document_id='foo', mime_type='application/pdf')
+        result = Result.fromDocument(document, 'qid', ('adim', 'IP', 'PORT'))
+        self.assertEquals(result.db_document_id, 'foo')
+        self.assertEquals(result.mime_type, 'application/pdf')
+        self.assertEquals(result.login, 'adim')
+        self.assertEquals(result.host, 'IP')
+        self.assertEquals(result.query_id, 'qid')
+        self.assertEquals(result.port, 'PORT')
+        self.assertEquals(result.boundAttributes(), ['db_document_id', 'query_id', 'mime_type',
+                                                     'host', 'port', 'login'])
+
 
 class NodeInterest_TC(unittest.TestCase):
     def setUp(self):

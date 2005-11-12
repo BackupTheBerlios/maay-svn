@@ -18,7 +18,7 @@
 
 __revision__ = '$Id$'
 __all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore',
-           'Word', 'Node', 'NodeInterest']
+           'Word', 'Node', 'NodeInterest', 'Result']
 
 import re
 from sets import Set
@@ -53,8 +53,8 @@ class DBEntity:
         else:
             where = ''
         query = 'SELECT %s FROM %s%s' % (', '.join(cls.attributes),
-                                                cls.tableName,
-                                                where)
+                                         cls.tableName,
+                                         where)
         return query
     _selectQuery = classmethod(_selectQuery)
 
@@ -88,6 +88,7 @@ class DBEntity:
         try:
             cursor.execute(query, self.stateDict)
         except Exception, exc:
+            print "######### %s, %s" % (query, self.stateDict)
             print "commit error:", exc
             print query
             raise
@@ -284,45 +285,48 @@ class Document(DBEntity):
         
     selectContaining = classmethod(selectContaining)
     
-class Result:
+class Result(Document):
     """Results are temporary relations created/destroyed on the fly
        they contain documents matching both local and distributed requests
     """
-    attributes = ('db_document_id', 'document_id', 'mime_type', 'title',
-                  'size', 'text', 'publication_time', 'local_pathname',
+    attributes = ('db_document_id', 'document_id', 'query_id', 'mime_type',
+                  'title', 'size', 'text', 'publication_time', 'url',
                   'host', 'port', 'login')
-
-    def __init__(self, cursor, name, **values):
-        self.cursor = cursor
-        self.tableName = name
-        DBEntity.__init__(self, **values)
-        self._buildTemporary()
-
-    def __del__(self):
-        self._destroyTemporary()
-
-    def _buildTemporary(self):
-        query = ("CREATE TABLE `%s` ("
-                    "`db_document_id` int(11) NOT NULL auto-increment,"
-                    "`document_id` varchar(40) NOT NULL default '',"
-                    "`mime_type` varchar(40) NOT NULL default '',"
-                    "`title` varchar(255) default NULL,"
-                    "`size` int(11) default NULL,"
-                    "`text` text,"
-                    "`publication_time` int(14) default NULL,"
-                    "`local_pathname` varchar(255) NOT NULL default ''," # like url
-                    "`host` varchar(15),"
-                    "`port` int(11)," # check this
-                    "`login` varchar(255),"
-                    "PRIMARY KEY (`db_document_id`),"
-                    "KEY `document_id` (`document_id`),"
-                    "KEY `local_pathname` (`local_pathname`))"
-                 "TYPE=MyISAM;"
-                 % self.tableName)
-
-    def _destroyTemporary(self):
-        query = "DROP TABLE %s;" % self.tableName
+    key = ('document_id', 'query_id', 'host')
+    tableName = 'results'
     
+    def fromDocument(document, queryId, provider=None):
+        stateDict = document.stateDict
+        for key, value in stateDict.items():
+            if key not in Result.attributes or not value:
+                del stateDict[key]
+        if provider:
+            stateDict['login'], stateDict['host'], stateDict['port'] = provider
+        else:
+            stateDict['host'] = 'localhost'
+        stateDict['query_id'] = queryId
+        return Result(**stateDict)
+    fromDocument = staticmethod(fromDocument)
+
+    def _selectQuery(cls, limit, offset, whereColumns=()):
+        if whereColumns:
+            wheres = ['%s=%%(%s)s' % (attr, attr) for attr in whereColumns]
+            where =  ' WHERE ' + ' AND '.join(wheres)
+        else:
+            where = ''
+        query = 'SELECT %s FROM %s%s ORDER BY publication_time LIMIT %s OFFSET %s' % (
+            ', '.join(cls.attributes),
+            cls.tableName,
+            where, limit, offset)
+        return query
+    _selectQuery = classmethod(_selectQuery)
+
+    def selectWhere(cls, cursor, limit, offset, **args):
+        query = cls._selectQuery(limit, offset, args.keys())
+        cursor.execute(query, args)
+        results = cursor.fetchall()
+        return [cls(**dict(zip(cls.attributes, row))) for row in results]
+    selectWhere = classmethod(selectWhere)
 
 class FileInfo(DBEntity):
     """

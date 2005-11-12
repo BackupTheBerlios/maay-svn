@@ -145,6 +145,23 @@ CREATE TABLE `words` (
 ) TYPE=MyISAM;
  
 
+CREATE TABLE `results` (
+  `db_document_id` varchar(40) NOT NULL,
+  `document_id` varchar(40) NOT NULL default '',
+  `query_id` varchar(64) NOT NULL,
+  `mime_type` varchar(40) NOT NULL default '',
+  `title` varchar(255) default NULL,
+  `size` int(11) default NULL,
+  `text` text,
+  `publication_time` int(14) default NULL,
+  `url` varchar(255) NOT NULL default '',
+  `host` varchar(15),
+  `port` int(11), -- check this
+  `login` varchar(255),
+  PRIMARY KEY (`db_document_id`, `query_id`, `host`)
+--  KEY `document_id` (`document_id`),
+--  KEY `url` (`url`)
+) TYPE=MyISAM;
 
 -- ---------------------------------------------------------
 -- maay user (anonymous user, used to create connections
