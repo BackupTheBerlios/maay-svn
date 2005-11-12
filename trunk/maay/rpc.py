@@ -177,8 +177,8 @@ class MaayRPCServer(XMLRPC):
     def xmlrpc_downloadFile(self, filepath):
         """dummy implementation for now"""
         try:
-            fp = file(filepath)
-            data = fp.read()
+            fp = file(filepath, 'rb')
+            data = Binary(fp.read())
             fp.close()
         except Exception, exc:
             import traceback

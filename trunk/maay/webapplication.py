@@ -146,7 +146,8 @@ class SearchForm(MaayPage):
         if not host or not port or not filepath:
             return Maay404()
         proxy = ServerProxy('http://%s:%s' % (host, port))
-        return DistantFilePage(filepath, proxy.downloadFile(filepath))
+        fileData = proxy.downloadFile(filepath).data
+        return DistantFilePage(filepath, fileData)
 
 class DistantFilePage(static.File):
     def __init__(self, filepath, fileContent):
