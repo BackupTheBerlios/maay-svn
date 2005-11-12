@@ -171,46 +171,7 @@ class IndexationPage(MaayPage):
     def render_message(self, context, data):
         return self._msg
 
-from nevow import athena, inevow
-from twisted.python import log
-
-class ResultsPage(athena.LivePage):
-    """default results page"""
-    child_maaycss = static.File(get_path_of('maay.css'))
-    child_images = static.File(get_path_of('images/'))
-    docFactory = loaders.xmlfile(get_path_of('liveresults.html'))
-    addSlash = False
-
-    def __init__(self, context, querier, p2pquerier):
-        athena.LivePage.__init__(self)
-        # XXX: nevow/livepage related trick (version 0.6.0) :
-        # This resource is instanciated several times when rendering the
-        # results page (each time the browser tries to load
-        # ROOT/search/athena.js, ROOT/search/MochiKit.js, etc.) because
-        # the Livepage-Id is not yet set in the request. In these particuliar
-        # cases, we don't want to start new queries, so we do an ugly check
-        # to test whether or not we're instanciating the *real* live page
-        # (or if we're just trying to download JS files)
-        # NOTE: At the time this comment is written, athena/LivePages are handled
-        #       differently in nevow SVN. It's now possible to insantiate directly
-        #       LivePage instances (which is great !), so we'll have to change
-        #       the implementation for next nevow release.
-        # NOTE2: another way to be sure that only the appopriate resource
-        #        starts the p2pquery (and registers callbacks) would be
-        #        to launch the query in the remote_conect() method
-        if len(inevow.IRemainingSegments(context)) < 2:
-            self.query = Query.fromContext(context)
-            self.offset = self.query.offset
-            #TODO: very soon, the line below will also be the p2pquerier's job
-            self.results = querier.findDocuments(self.query)
-            webappConfig = INodeConfiguration(context)
-            p2pQuery = P2pQuery(webappConfig.get_node_id(),
-                                webappConfig.rpcserver_port,
-                                self.query)
-            p2pquerier.sendQuery(p2pQuery)
-            p2pquerier.addAnswerCallback(p2pQuery.qid, self.onNewResults)
-            self.queryId = p2pQuery.qid
-            self.querier = querier
+class ResultsPageMixIn:
             
     def data_results(self, context, data):
         return self.results
@@ -263,12 +224,59 @@ class ResultsPage(athena.LivePage):
         date = datetime.fromtimestamp(document.publication_time)
         context.fillSlots('publication_date', date.strftime('%d %b %Y'))
         return context.tag
+    
+class StaticResultsPage(MaayPage, ResultsPageMixIn):
+    bodyFactory = loaders.xmlfile(get_path_of('resultpage.html'))
 
+    def __init__(self, results):
+        self.results = results
+
+from nevow import athena, inevow
+from twisted.python import log
+
+class ResultsPage(athena.LivePage, ResultsPageMixIn):
+    """default results page"""
+    child_maaycss = static.File(get_path_of('maay.css'))
+    child_images = static.File(get_path_of('images/'))
+    docFactory = loaders.xmlfile(get_path_of('liveresults.html'))
+    addSlash = False
+
+    def __init__(self, context, querier, p2pquerier):
+        athena.LivePage.__init__(self)
+        # XXX: nevow/livepage related trick (version 0.6.0) :
+        # This resource is instanciated several times when rendering the
+        # results page (each time the browser tries to load
+        # ROOT/search/athena.js, ROOT/search/MochiKit.js, etc.) because
+        # the Livepage-Id is not yet set in the request. In these particuliar
+        # cases, we don't want to start new queries, so we do an ugly check
+        # to test whether or not we're instanciating the *real* live page
+        # (or if we're just trying to download JS files)
+        # NOTE: At the time this comment is written, athena/LivePages are handled
+        #       differently in nevow SVN. It's now possible to insantiate directly
+        #       LivePage instances (which is great !), so we'll have to change
+        #       the implementation for next nevow release.
+        # NOTE2: another way to be sure that only the appopriate resource
+        #        starts the p2pquery (and registers callbacks) would be
+        #        to launch the query in the remote_conect() method
+        if len(inevow.IRemainingSegments(context)) < 2:
+            self.query = Query.fromContext(context)
+            self.offset = self.query.offset
+            #TODO: very soon, the line below will also be the p2pquerier's job
+            self.results = querier.findDocuments(self.query)
+            webappConfig = INodeConfiguration(context)
+            p2pQuery = P2pQuery(webappConfig.get_node_id(),
+                                webappConfig.rpcserver_port,
+                                self.query)
+            p2pquerier.sendQuery(p2pQuery)
+            p2pquerier.addAnswerCallback(p2pQuery.qid, self.onNewResults)
+            self.queryId = p2pQuery.qid
+            self.querier = querier
+            
     def onNewResults(self, provider, results):
         results = [Document(**params) for params in results]
         self.querier.pushDocuments(self.queryId, results, provider)
         results = self.querier.getQueryResults(self.queryId) # XXX offset, limit ?
-        page = PleaseCloseYourEyes(results, provider, self.query).renderSynchronously()
+        page = PleaseCloseYourEyes(results, provider, self.query, self.queryId).renderSynchronously()
         self.callRemote('updateResults', u'<div>%s</div>' % page)
 
     def remote_connect(self, context):
@@ -277,7 +285,7 @@ class ResultsPage(athena.LivePage):
         return 0
 
 
-class PleaseCloseYourEyes(ResultsPage):
+class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     """This resource and the way it is called is kind of ugly.
     It will be refactored later. The idea is to have something working
     quickly.
@@ -304,23 +312,40 @@ class PleaseCloseYourEyes(ResultsPage):
         </td>
       </tr>
     </table>
+    <div class="prevnext"><a><nevow:attr name="href"
+    nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
+    name="href" nevow:render="nextset_url"/>Next</a></div>
     <nevow:invisble nevow:macro="footer" />
   </div>
     """)
     
-    def __init__(self, results, provider, query):
+    def __init__(self, results, provider, query, queryId):
         self.results = results
         self.peerLogin, self.peerHost, self.peerPort = provider
         self.query = query
+        self.queryId = queryId
 
     def render_peer(self, context, data):
         return '%s (%s:%s)' % (self.peerLogin, self.peerHost, self.peerPort)
 
     def render_row(self, context, data):
         document = data
-        ResultsPage.render_row(self, context, data)
+        ResultsPageMixIn.render_row(self, context, data)
         context.fillSlots('distanturl', '/distantfile?filepath=%s&host=%s&port=%s' % (document.url, self.peerHost, self.peerPort))
         return context.tag
+
+    def render_nextset_url(self, context, data):
+        # XXX find a better implementation later
+        return 'search?words=%s&offset=%s&qid=%s' % ('+'.join(self.query.words),
+                                                     self.query.offset + 15,
+                                                     self.queryId)
+    def render_prevset_url(self, context, data):
+        offset = self.query.offset
+        if offset:
+            offset -= 15
+        return 'search?words=%s&offset=%s&qid=%s' % ('+'.join(self.query.words),
+                                                     offset,
+                                                     self.queryId)
 
 
 class ResultsPageFactory(athena.LivePageFactory):
