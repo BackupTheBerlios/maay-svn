@@ -66,10 +66,6 @@ class IQuerier(Interface):
         """remove rows in `documents` table when no row in `files` or
         `document_providers` table reference them, as well as the
         corresponding `document_scores` rows"""
-
-    def justDownloadAndShutUp(db_document_id):
-        """a lesser notifyDownload, to be removed soon anyway
-        """
         
     def notifyDownload(docId, query):
         """check that a document is downloadable and update the
@@ -216,31 +212,19 @@ class AnonymousQuerier:
         cursor.close()
         self._cnx.commit()
 
-    def justDownloadAndShutUp(self, document_id):
+    def notifyDownload(self, document_id, words):
+        words = WORDS_RGX.findall(normalizeText(unicode(words)))
+        print "WORDS", words
         try:
             try:
                 cursor = self._cnx.cursor()
-                url, mime_type = Document.selectUrlAndTypeWhereDocid(cursor, document_id)
-            finally:
-                cursor.close()
-            return url, mime_type
-        except IndexError:
-            #XXX: that was not a smart thing to do, debugging-wise
-            #return ''
-            raise
-
-    def notifyDownload(self, document_id, query):
-        words = WORDS_RGX.findall(normalizeText(query))
-        try:
-            try:
-                cursor = self._cnx.cursor()
-                doc = Document.selectWhere(cursor, db_document_id=db_document_id)[0]
+                doc = Document.selectWhere(cursor, document_id=document_id)[0]
             finally:
                 cursor.close()
             self._updateDownloadStatistics(doc, words)
             return doc.url
         except IndexError:
-            return ''
+            raise
 
     def _updateDownloadStatistics(self, document, words):
         cursor = self._cnx.cursor()

@@ -151,40 +151,28 @@ class SearchForm(MaayPage):
     def child_distantfile(self, context):
         host = context.arg('host')
         port = context.arg('port')
-        #XXX: we *must* be able to get the query words here
-        #     for now we can't
+        words = context.arg('words').split()
         filename = context.arg('filename')
         docid = context.arg('docid')
         if not host or not port or not docid:
             return Maay404()
         proxy = ServerProxy('http://%s:%s' % (host, port))
         try:
-            rpcFriendlyData = proxy.downloadFile(docid)
+            rpcFriendlyData = proxy.downloadFile(docid, words)
             fileData = rpcFriendlyData.data
         except:
-            print "there was nothing to return, unfortunately ... try later ?"
-            return
-        try:
-            filepath = osp.join(self.downloads, filename)
-            f=file(filepath,'wb')
-            f.write(fileData)
-            f.close()
-        except Exception:
-            import traceback
-            print traceback.print_exc()
-            return
+            return # peer might be down
+        filepath = osp.join(self.downloads, filename)
+        f=file(filepath,'wb')
+        f.write(fileData)
+        f.close()
         return DistantFilePage(filepath)
 
 class DistantFilePage(static.File):
     def __init__(self, filepath):
         static.File.__init__(self, filepath)
-        #self.fileContent = fileContent
         self.filepath = filepath
         
-##     def openForReading(self):
-##         from cStringIO import StringIO
-##         return StringIO(self.fileContent)
-
     def __del__(self):
         try:
             os.unlink(self.filepath)
@@ -367,9 +355,9 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     def render_row(self, context, data):
         document = data
         ResultsPageMixIn.render_row(self, context, data)
-        context.fillSlots('distanturl', '/distantfile?filename=%s&docid=%s&host=%s&port=%s'\
-                          % (osp.basename(document.url), document.document_id,
-                             self.peerHost, self.peerPort))
+        context.fillSlots('distanturl', '/distantfile?filename=%s&words=%s&host=%s&port=%s&docid=%s'\
+                          % (osp.basename(document.url), self.query.words,
+                             self.peerHost, self.peerPort, document.document_id))
         return context.tag
 
     def render_nextset_url(self, context, data):

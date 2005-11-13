@@ -174,24 +174,18 @@ class MaayRPCServer(XMLRPC):
         reactor.callLater(.01, getP2pQuerier().relayAnswer, answer)
         return self.nodeId
 
-    def xmlrpc_downloadFile(self, doc_id):
-        """dummy implementation for now"""
+    def xmlrpc_downloadFile(self, doc_id, words):
         print "MayRPCServer downloadFile %s" % doc_id
-        query = None
         try:
             querier = self._sessions[ANONYMOUS_AVATARID]
-            if query:
-                filepath, mime_type = querier.notifyDownload(doc_id, query)
-            else:
-                filepath, mime_type = querier.justDownloadAndShutUp(doc_id)
+            filepath = querier.notifyDownload(doc_id, words)
             fp = file(filepath, 'rb')
             data = Binary(fp.read())
             fp.close()
         except Exception, exc:
             import traceback
             traceback.print_exc()
-            #FIXME: this is not correctly handled on the other side
-            return "Could not get %r, cause %s" % (docid, exc)
+            return "Could not get %r, cause %s" % (doc_id, exc)
         return data
     
     def cnxIsValid(self, cnxId):
