@@ -282,8 +282,15 @@ class Document(DBEntity):
                     for row in results]
         else:
             return [] 
-        
     selectContaining = classmethod(selectContaining)
+
+    def selectUrlWhereDocid(cls, cursor, document_id):
+        query = "SELECT url FROM documents WHERE document_id=%s"
+        cursor.execute(query, [document_id])
+        results = cursor.fetchall()
+        return results[0]
+    selectUrlWhereDocid = classmethod(selectUrlWhereDocid)
+
     
 class Result(Document):
     """Results are temporary relations created/destroyed on the fly

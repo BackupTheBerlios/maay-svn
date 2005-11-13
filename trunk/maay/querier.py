@@ -30,7 +30,7 @@ from zope.interface import Interface, implements
 
 from logilab.common.db import get_dbapi_compliant_module
 
-from maay.dbentity import Document, FileInfo, \
+from maay.dbentity import Document, FileInfo, DBEntity, \
      DocumentProvider, DocumentScore, Word, Node, Result
 from maay.texttool import normalizeText, WORDS_RGX, MAX_STORED_SIZE
 
@@ -217,14 +217,13 @@ class AnonymousQuerier:
         self._cnx.commit()
 
     def justDownloadAndShutUp(self, document_id):
-        print db_document_id
         try:
             try:
                 cursor = self._cnx.cursor()
-                doc = Document.selectWhere(cursor, document_id=document_id)[0]
+                url = Document.selectUrlWhereDocid(cursor, document_id)[0]
             finally:
                 cursor.close()
-            return doc.url
+            return url
         except IndexError:
             #XXX: that was not a smart thing to do, debugging-wise
             #return ''
