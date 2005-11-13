@@ -181,10 +181,9 @@ class MaayRPCServer(XMLRPC):
         try:
             querier = self._sessions[ANONYMOUS_AVATARID]
             if query:
-                filepath = querier.notifyDownload(doc_id, query)
+                filepath, mime_type = querier.notifyDownload(doc_id, query)
             else:
-                filepath = querier.justDownloadAndShutUp(doc_id)
-            print "FILEPATH", filepath
+                filepath, mime_type = querier.justDownloadAndShutUp(doc_id)
             fp = file(filepath, 'rb')
             data = Binary(fp.read())
             fp.close()
@@ -193,7 +192,7 @@ class MaayRPCServer(XMLRPC):
             traceback.print_exc()
             #FIXME: this is not correctly handled on the other side
             return "Could not get %r, cause %s" % (filepath, exc)
-        return data
+        return (data, mime_type)
     
     def cnxIsValid(self, cnxId):
         if cnxId in self._sessions:

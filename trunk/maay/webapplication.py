@@ -23,6 +23,8 @@ from datetime import datetime
 import re
 from xmlrpclib import ServerProxy
 from itertools import cycle
+from tempfile import mkdtemp
+import os.path as osp
 
 from zope.interface import Interface
 from twisted.web import static
@@ -100,6 +102,13 @@ class SearchForm(MaayPage):
         MaayPage.__init__(self, maayId)
         self.querier = querier
         self.p2pquerier = p2pquerier
+        self.downloads = mkdtemp()
+
+    def __del__(self):
+        try:
+            os.rmdir(self.downloads)
+        except:
+            print "Oooooops, did we forget to cleanup %s ?" % self.downloads
 
     def logout(self):
         print "Bye %s !" % (self.maayId,)
@@ -144,26 +153,62 @@ class SearchForm(MaayPage):
         port = context.arg('port')
         #XXX: we *must* be able to get the query words here
         #     for now we can't
-        filepath = context.arg('filepath')
+        filename = context.arg('filename')
         docid = context.arg('docid')
-        if not host or not port or not filepath:
+        if not host or not port or not docid:
             return Maay404()
         proxy = ServerProxy('http://%s:%s' % (host, port))
         try:
-            fileData = proxy.downloadFile(docid).data
+            rpcFriendlyData, mime_type = proxy.downloadFile(docid)
+            fileData = rpcFriendlyData.data
         except:
             print "there was nothing to return, unfortunately ... try later ?"
             return
-        return DistantFilePage(filepath, fileData)
+        try:
+            filepath = osp.join(self.downloads,
+                                filename + makeFileExtFromMimetype(mime_type))
+            f=file(filepath,'wb')
+            f.write(fileData)
+            f.close()
+        except Exception:
+            import traceback
+            print traceback.print_exc()
+            return
+        return DistantFilePage(filepath)
+
+#FIXME: try something more general ...
+reverse_type_map = {
+    'image/jpeg' : '.jpg',
+    'image/png'  : '.png',
+    'image/x-xpixmap' : '.xpm'
+    }
+
+def makeFileExtFromMimetype(mime_type):
+    """reverse mapping from type to extension
+       quite clunky and unsafe
+    """
+    return reverse_type_map[mime_type]
+
 
 class DistantFilePage(static.File):
-    def __init__(self, filepath, fileContent):
+    def __init__(self, filepath):
         static.File.__init__(self, filepath)
-        self.fileContent = fileContent
+        #self.fileContent = fileContent
+        self.filepath = filepath
         
-    def openForReading(self):
-        from cStringIO import StringIO
-        return StringIO(self.fileContent)
+##     def openForReading(self):
+##         from cStringIO import StringIO
+##         return StringIO(self.fileContent)
+
+    def __del__(self):
+        static.File.__del__(self)
+        try:
+            os.unlink(self.filepath)
+        except:
+            print "Ooooops, leaving garbage behind : %s" % \
+                  self.filepath
+            pass #FIXME: Might get there on Win32
+    
 
 class IndexationPage(MaayPage):
     # just for the demo. Should be moved to a adminpanel interface later.
@@ -338,8 +383,9 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     def render_row(self, context, data):
         document = data
         ResultsPageMixIn.render_row(self, context, data)
-        context.fillSlots('distanturl', '/distantfile?filepath=%s&docid=%s&host=%s&port=%s'\
-                          % (document.url, document.document_id, self.peerHost, self.peerPort))
+        context.fillSlots('distanturl', '/distantfile?filename=%s&docid=%s&host=%s&port=%s'\
+                          % (osp.basename(document.url), document.document_id,
+                             self.peerHost, self.peerPort))
         return context.tag
 
     def render_nextset_url(self, context, data):

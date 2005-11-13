@@ -220,10 +220,10 @@ class AnonymousQuerier:
         try:
             try:
                 cursor = self._cnx.cursor()
-                url = Document.selectUrlWhereDocid(cursor, document_id)[0]
+                url, mime_type = Document.selectUrlAndTypeWhereDocid(cursor, document_id)
             finally:
                 cursor.close()
-            return url
+            return url, mime_type
         except IndexError:
             #XXX: that was not a smart thing to do, debugging-wise
             #return ''

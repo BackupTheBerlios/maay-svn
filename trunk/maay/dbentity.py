@@ -284,12 +284,12 @@ class Document(DBEntity):
             return [] 
     selectContaining = classmethod(selectContaining)
 
-    def selectUrlWhereDocid(cls, cursor, document_id):
-        query = "SELECT url FROM documents WHERE document_id=%s"
+    def selectUrlAndTypeWhereDocid(cls, cursor, document_id):
+        query = "SELECT url, mime_type FROM documents WHERE document_id=%s"
         cursor.execute(query, [document_id])
         results = cursor.fetchall()
         return results[0]
-    selectUrlWhereDocid = classmethod(selectUrlWhereDocid)
+    selectUrlAndTypeWhereDocid = classmethod(selectUrlAndTypeWhereDocid)
 
     
 class Result(Document):
