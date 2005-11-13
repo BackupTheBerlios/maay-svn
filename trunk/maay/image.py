@@ -17,7 +17,6 @@
 
 __revision__ = '$Id$'
 
-from tempfile import mkdtemp
 import stat, os, os.path as osp
 
 try:
