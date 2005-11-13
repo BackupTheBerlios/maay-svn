@@ -174,9 +174,17 @@ class MaayRPCServer(XMLRPC):
         reactor.callLater(.01, getP2pQuerier().relayAnswer, answer)
         return self.nodeId
 
-    def xmlrpc_downloadFile(self, filepath):
+    def xmlrpc_downloadFile(self, doc_id):
         """dummy implementation for now"""
+        print "MayRPCServer downloadFile %s" % doc_id
+        query = None
         try:
+            querier = self._sessions[ANONYMOUS_AVATARID]
+            if query:
+                filepath = querier.notifyDownload(doc_id, query)
+            else:
+                filepath = querier.justDownloadAndShutUp(doc_id)
+            print "FILEPATH", filepath
             fp = file(filepath, 'rb')
             data = Binary(fp.read())
             fp.close()
@@ -189,5 +197,5 @@ class MaayRPCServer(XMLRPC):
     def cnxIsValid(self, cnxId):
         if cnxId in self._sessions:
             return True
-        print "MaayRPCServer cnxIsvalid Not !", cnxId
+        print "MaayRPCServer %s not valid !" % cnxId
         return False
