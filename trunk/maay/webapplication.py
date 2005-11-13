@@ -159,14 +159,13 @@ class SearchForm(MaayPage):
             return Maay404()
         proxy = ServerProxy('http://%s:%s' % (host, port))
         try:
-            rpcFriendlyData, mime_type = proxy.downloadFile(docid)
+            rpcFriendlyData = proxy.downloadFile(docid)
             fileData = rpcFriendlyData.data
         except:
             print "there was nothing to return, unfortunately ... try later ?"
             return
         try:
-            filepath = osp.join(self.downloads,
-                                filename + makeFileExtFromMimetype(mime_type))
+            filepath = osp.join(self.downloads, filename)
             f=file(filepath,'wb')
             f.write(fileData)
             f.close()
@@ -175,20 +174,6 @@ class SearchForm(MaayPage):
             print traceback.print_exc()
             return
         return DistantFilePage(filepath)
-
-#FIXME: try something more general ...
-reverse_type_map = {
-    'image/jpeg' : '.jpg',
-    'image/png'  : '.png',
-    'image/x-xpixmap' : '.xpm'
-    }
-
-def makeFileExtFromMimetype(mime_type):
-    """reverse mapping from type to extension
-       quite clunky and unsafe
-    """
-    return reverse_type_map[mime_type]
-
 
 class DistantFilePage(static.File):
     def __init__(self, filepath):
@@ -201,7 +186,6 @@ class DistantFilePage(static.File):
 ##         return StringIO(self.fileContent)
 
     def __del__(self):
-        static.File.__del__(self)
         try:
             os.unlink(self.filepath)
         except:

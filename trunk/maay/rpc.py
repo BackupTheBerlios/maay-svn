@@ -191,8 +191,8 @@ class MaayRPCServer(XMLRPC):
             import traceback
             traceback.print_exc()
             #FIXME: this is not correctly handled on the other side
-            return "Could not get %r, cause %s" % (filepath, exc)
-        return (data, mime_type)
+            return "Could not get %r, cause %s" % (docid, exc)
+        return data
     
     def cnxIsValid(self, cnxId):
         if cnxId in self._sessions:
