@@ -142,11 +142,18 @@ class SearchForm(MaayPage):
     def child_distantfile(self, context):
         host = context.arg('host')
         port = context.arg('port')
+        #XXX: we *must* be able to get the query words here
+        #     for now we can't
         filepath = context.arg('filepath')
+        docid = context.arg('docid')
         if not host or not port or not filepath:
             return Maay404()
         proxy = ServerProxy('http://%s:%s' % (host, port))
-        fileData = proxy.downloadFile(filepath).data
+        try:
+            fileData = proxy.downloadFile(docid).data
+        except:
+            print "there was nothing to return, unfortunately ... try later ?"
+            return
         return DistantFilePage(filepath, fileData)
 
 class DistantFilePage(static.File):
@@ -331,7 +338,8 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     def render_row(self, context, data):
         document = data
         ResultsPageMixIn.render_row(self, context, data)
-        context.fillSlots('distanturl', '/distantfile?filepath=%s&host=%s&port=%s' % (document.url, self.peerHost, self.peerPort))
+        context.fillSlots('distanturl', '/distantfile?filepath=%s&docid=%s&host=%s&port=%s'\
+                          % (document.url, document.document_id, self.peerHost, self.peerPort))
         return context.tag
 
     def render_nextset_url(self, context, data):
