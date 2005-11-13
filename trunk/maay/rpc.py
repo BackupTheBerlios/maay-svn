@@ -191,7 +191,8 @@ class MaayRPCServer(XMLRPC):
         except Exception, exc:
             import traceback
             traceback.print_exc()
-            return "Could not get %r" % filepath
+            #FIXME: this is not correctly handled on the other side
+            return "Could not get %r, cause %s" % (filepath, exc)
         return data
     
     def cnxIsValid(self, cnxId):
