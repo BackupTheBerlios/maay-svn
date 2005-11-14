@@ -41,7 +41,9 @@ function browseResults(offset) {
   -->
   <div id="resultsDiv">
    <div class="message" nevow:render="title">Results <nevow:slot name="start_result" /> - <nevow:slot name="end_result" /> (<nevow:slot name="count" />) for <b><nevow:slot name="words" /></b>.</div>
-  <span id="count">0</span>
+    <div class="prevnext"><a><nevow:attr name="href"
+    nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
+    name="href" nevow:render="nextset_url"/>Next</a></div>
     <table class="results" nevow:render="sequence" nevow:data="results">
       <tr nevow:pattern="item" nevow:render="row">
         <td>

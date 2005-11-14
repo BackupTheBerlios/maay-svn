@@ -20,13 +20,14 @@
 __revision__ = '$Id: server.py 281 2005-11-03 11:00:56Z aurelienc $'
 
 from datetime import datetime
-from xmlrpclib import ServerProxy
+#from xmlrpclib import ServerProxy
 from itertools import cycle
 from tempfile import mkdtemp
-import os.path as osp
+import os, os.path as osp
 
 from zope.interface import Interface
 from twisted.web import static
+from twisted.web.xmlrpc import Proxy
 from twisted.internet import reactor
 from nevow import rend, tags, loaders
 
@@ -123,14 +124,14 @@ class DownloadedDocs:
                     os.unlink(fil)
                     print "DownloadedDocs cleanup : removing %s" % fil
                 except:
-                    print "DownloadedDocs cleanup : leaving stale file %s behind"\
-                          % fil
+                    import traceback
+                    traceback.print_exc()
             try:
                 os.rmdir(tmpdir)
-                print "DownloadedDocs cleanup : removing %s" % fil
+                print "DownloadedDocs cleanup : removing %s" % tmpdir
             except:
-                print "DownloadedDocs cleanup : leaving stale tmp dir %s behind"\
-                      % tmpdir
+                import traceback
+                traceback.print_exc()
     cleanup = staticmethod(cleanup)
                     
 class SearchForm(MaayPage):
@@ -190,12 +191,15 @@ class SearchForm(MaayPage):
         docid = context.arg('docid')
         if not host or not port or not docid:
             return Maay404()
-        proxy = ServerProxy('http://%s:%s' % (host, port))
-        try:
-            rpcFriendlyData = proxy.downloadFile(docid, words)
-            fileData = rpcFriendlyData.data
-        except:
-            return # peer might be down
+        print "SearchForm distantfile"
+        proxy = Proxy('http://%s:%s' % (host, port))
+        d = proxy.callRemote('downloadFile', docid, words)
+        d.addCallback(self.foo, filename)
+        return d
+
+    def foo(self, rpcFriendlyData, filename):
+        fileData = rpcFriendlyData.data
+        print " ... downloaded !"
         tmpdir = DownloadedDocs.makeTmpDir()
         filepath = osp.join(tmpdir, filename)
         f=file(filepath,'wb')
@@ -302,14 +306,6 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
 
     def __init__(self, context, querier, p2pquerier):
         athena.LivePage.__init__(self)
-        # XXX: nevow/livepage related trick (version 0.6.0) :
-        # This resource is instanciated several times when rendering the
-        # results page (each time the browser tries to load
-        # ROOT/search/athena.js, ROOT/search/MochiKit.js, etc.) because
-        # the Livepage-Id is not yet set in the request. In these particuliar
-        # cases, we don't want to start new queries, so we do an ugly check
-        # to test whether or not we're instanciating the *real* live page
-        # (or if we're just trying to download JS files)
         # NOTE: At the time this comment is written, athena/LivePages are handled
         #       differently in nevow SVN. It's now possible to insantiate directly
         #       LivePage instances (which is great !), so we'll have to change
@@ -342,7 +338,7 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         self.p2pquerier.sendQuery(self.p2pQuery)
         self.p2pquerier.addAnswerCallback(self.p2pQuery.qid, self.onNewResults)
         self.querier.pushDocuments(self.queryId, self.results, provider=None)
-        return 0
+        return u''
 
     def remote_browseResults(self, context, offset):
         self.query.offset = offset
@@ -359,6 +355,9 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     docFactory = loaders.xmlstr("""
   <div id="resultsDiv" xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1" >
    <div class="message" nevow:render="title">Results <nevow:slot name="start_result" /> - <nevow:slot name="end_result" /> (<nevow:slot name="count" />) for <b><nevow:slot name="words" /></b>.</div>
+   <div class="prevnext"><a><nevow:attr name="href"
+    nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
+    name="href" nevow:render="nextset_url"/>Next</a></div>
     <table class="results" nevow:render="sequence" nevow:data="results">
       <tr nevow:pattern="item" nevow:render="row">
         <td>
