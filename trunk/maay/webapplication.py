@@ -45,15 +45,6 @@ class INodeConfiguration(Interface):
     """provide an interface in order to be able to remember webappconfig"""
 
 
-class Maay404(rend.FourOhFour):
-    """Maay specific resource for 404 errors"""
-    loader = loaders.xmlfile(get_path_of('notfound.html'))
-
-    def renderHTTP_notFound(self, context):
-        """Render a not found message to the given request.
-        """
-        return self.loader.load(context)[0]
-
 class MaayPage(rend.Page):
     docFactory = loaders.xmlfile(get_path_of('skeleton.html'))
     child_maaycss = static.File(get_path_of('maay.css'))
@@ -68,6 +59,26 @@ class MaayPage(rend.Page):
 
     def macro_footer(self, context):
         return loaders.xmlfile(get_path_of('footer.html'))
+
+class Maay404(MaayPage, rend.FourOhFour):
+    """Maay specific resource for 404 errors"""
+    # loader = loaders.xmlfile(get_path_of('notfound.html'))
+    bodyFactory = loaders.xmlfile(get_path_of('notfound.html'))
+    
+    def __init__(self, msg="Sorry, I could not find the requested resource."):
+        MaayPage.__init__(self)
+        self.msg = msg
+
+    def render_errormsg(self, context, data):
+        print "Rendering error msg", self.msg
+        return self.msg
+    
+    def renderHTTP_notFound(self, context):
+        """Render a not found message to the given request.
+        """
+        # XXX little trick (extends MaayPage, etc.)
+        return self.renderString(context)
+        # return self.loader.load(context)[0]
 
 class PeersList(MaayPage):
     """display list of registered peers"""
@@ -194,10 +205,11 @@ class SearchForm(MaayPage):
         print "SearchForm distantfile"
         proxy = Proxy('http://%s:%s' % (host, port))
         d = proxy.callRemote('downloadFile', docid, words)
-        d.addCallback(self.foo, filename)
+        d.addCallback(self.gotDataBack, filename)
+        d.addErrback(self.onDownloadFileError, filename)
         return d
 
-    def foo(self, rpcFriendlyData, filename):
+    def gotDataBack(self, rpcFriendlyData, filename):
         fileData = rpcFriendlyData.data
         print " ... downloaded !"
         tmpdir = DownloadedDocs.makeTmpDir()
@@ -207,6 +219,10 @@ class SearchForm(MaayPage):
         f.close()
         return DistantFilePage(tmpdir, filepath)
 
+    def onDownloadFileError(self, error, filename):
+        msg = "Error while downloading file: %s" % (filename,)
+        return Maay404(msg)
+    
 class DistantFilePage(static.File):
     def __init__(self, tmpdir, filepath):
         static.File.__init__(self, filepath)
@@ -336,13 +352,15 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         # push local results once for all
         if len(inevow.IRemainingSegments(context)) < 2:
             print "-=" * 40
-            self.results = querier.findDocuments(self.query)
+            results = querier.findDocuments(self.query)
             webappConfig = INodeConfiguration(context)
             p2pQuery = P2pQuery(webappConfig.get_node_id(),
                                 webappConfig.rpcserver_port,
                                 self.query)
             self.queryId = p2pQuery.qid
             self.p2pQuery = p2pQuery
+            self.results = results
+            # self.results = self.querier.getQueryResults(self.queryId, offset=0)
             # self.querier.pushDocuments(self.queryId, self.results, provider=None)
         
     def onNewResults(self, provider, results):
