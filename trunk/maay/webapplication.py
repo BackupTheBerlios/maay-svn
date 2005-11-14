@@ -273,7 +273,7 @@ class ResultsPageMixIn:
             print exc
             abstract = u'No abstract available for this document [%s]' % exc
         context.fillSlots('abstract', tags.xml(abstract))
-        context.fillSlots('docid', document.db_document_id)
+        context.fillSlots('docid', document.document_id)
         context.fillSlots('docurl', tags.xml(boldifyText(document.url, words)))
         context.fillSlots('words', self.query.joinwords(' ')) #WORDS
         context.fillSlots('readable_size', document.readable_size())
