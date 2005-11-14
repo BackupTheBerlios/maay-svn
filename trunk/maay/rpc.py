@@ -168,7 +168,7 @@ class MaayRPCServer(XMLRPC):
     def xmlrpc_distributedQuery(self, queryDict):
         """On node has sent a query (P2pQuerier.sendQuery)
         """
-        print "MaayRPCServer distributedQuery : %s " % queryDict
+        print "MaayRPCServer distributedQuery : %s " % queryDict['words']
         query = P2pQuery.fromDict(queryDict)
         query.host = self._lastClient.host
         querier = self._sessions[ANONYMOUS_AVATARID]
@@ -179,8 +179,8 @@ class MaayRPCServer(XMLRPC):
         return self.nodeId
 
     def xmlrpc_distributedQueryAnswer(self, queryId, senderId, provider, documents):
-        print "MaayRPCServer distributedQueryAnswer : %s %s, %s document(s) fom %s" % \
-              (queryId, senderId, len(documents), provider)
+        print "MaayRPCServer distributedQueryAnswer : %s document(s) fom %s" % \
+              (len(documents), provider)
         answer = P2pAnswer(queryId, provider, documents)
         reactor.callLater(.01, getP2pQuerier().relayAnswer, answer)
         return self.nodeId
