@@ -106,12 +106,15 @@ class DownloadedDocs:
     def makeTmpDir():
         tempdir = mkdtemp()
         DownloadedDocs.DIRS[tempdir] = []
-        reactor.callLater(20, DownloadedDocs.cleanup)
+        print "DownaloadedDocs makeTmpDir : created %s" % tempdir
         return tempdir
     makeTmpDir = staticmethod(makeTmpDir)
 
     def addFile(tempdir, thefile):
         DownloadedDocs.DIRS[tempdir].append(thefile)
+        print "DownaloadedDocs makeTmpDir : added %s to %s" \
+              % (osp.basename(thefile), tempdir)
+        reactor.callLater(30, DownloadedDocs.cleanup)
     addFile = staticmethod(addFile)
 
     def cleanup():
@@ -120,12 +123,16 @@ class DownloadedDocs:
             for fil in files:
                 try:
                     os.unlink(fil)
+                    print "DownloadedDocs cleanup : removing %s" % fil
                 except:
-                    print "cleanup : leaving stale file %s behind" % fil
+                    print "DownloadedDocs cleanup : leaving stale file %s behind"\
+                          % fil
             try:
                 os.rmdir(tmpdir)
+                print "DownloadedDocs cleanup : removing %s" % fil
             except:
-                print "cleanup : leaving stale tmp dir %s behind" % tmpdir
+                print "DownloadedDocs cleanup : leaving stale tmp dir %s behind"\
+                      % tmpdir
     cleanup = staticmethod(cleanup)
                     
 class SearchForm(MaayPage):
@@ -138,13 +145,6 @@ class SearchForm(MaayPage):
         self.querier = querier
         self.p2pquerier = p2pquerier
         
-
-    def __del__(self):
-        try:
-            os.rmdir(self.downloads)
-        except:
-            print "Oooooops, did we forget to cleanup %s ?" % self.downloads
-
     def logout(self):
         print "Bye %s !" % (self.maayId,)
         # XXX: logout message should be forwarded to presence server
@@ -212,11 +212,7 @@ class DistantFilePage(static.File):
         self.filepath = filepath
         
     def __del__(self):
-        try:
-            DownloadedDoc.addFile(self.tmpdir, self.filepath)
-        except:
-            print "Ooooops, leaving garbage behind : %s" % \
-                  self.filepath
+        DownloadedDocs.addFile(self.tmpdir, self.filepath)
     
 
 class IndexationPage(MaayPage):
