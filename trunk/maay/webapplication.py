@@ -28,6 +28,7 @@ import os.path as osp
 
 from zope.interface import Interface
 from twisted.web import static
+from twisted.internet import reactor
 from nevow import rend, tags, loaders
 
 from logilab.common.textutils import normalize_text
@@ -92,6 +93,40 @@ class PeersList(MaayPage):
             context.fillSlots(attrname, getattr(peerNode, attrname, 'N/A'))
         return context.tag
 
+
+class DownloadedDocs:
+    """manage automatic removal of locally downloaded
+       documents in a clunky way
+       note : tmpdirs should contain exactly one file
+              and last no longer than the file
+    """
+    
+    DIRS = {}
+
+    def makeTmpDir():
+        tempdir = mkdtemp()
+        DownloadedDocs.DIRS[tempdir] = []
+        reactor.callLater(20, DownloadedDocs.cleanup)
+        return tempdir
+    makeTmpDir = staticmethod(makeTmpDir)
+
+    def addFile(tempdir, thefile):
+        DownloadedDocs.DIRS[tempdir].append(thefile)
+    addFile = staticmethod(addFile)
+
+    def cleanup():
+        for tmpdir in DownloadedDocs.DIRS:
+            files = DownloadedDocs.DIRS[tmpdir]
+            for fil in files:
+                try:
+                    os.unlink(fil)
+                except:
+                    print "cleanup : leaving stale file %s behind" % fil
+            try:
+                os.rmdir(tmpdir)
+            except:
+                print "cleanup : leaving stale tmp dir %s behind" % tmpdir
+    cleanup = staticmethod(cleanup)
                     
 class SearchForm(MaayPage):
     """default search form"""
@@ -102,7 +137,7 @@ class SearchForm(MaayPage):
         MaayPage.__init__(self, maayId)
         self.querier = querier
         self.p2pquerier = p2pquerier
-        self.downloads = mkdtemp()
+        
 
     def __del__(self):
         try:
@@ -163,24 +198,25 @@ class SearchForm(MaayPage):
             fileData = rpcFriendlyData.data
         except:
             return # peer might be down
-        filepath = osp.join(self.downloads, filename)
+        tmpdir = DownloadedDocs.makeTmpDir()
+        filepath = osp.join(tmpdir, filename)
         f=file(filepath,'wb')
         f.write(fileData)
         f.close()
-        return DistantFilePage(filepath)
+        return DistantFilePage(tmpdir, filepath)
 
 class DistantFilePage(static.File):
-    def __init__(self, filepath):
+    def __init__(self, tmpdir, filepath):
         static.File.__init__(self, filepath)
+        self.tmpdir = tmpdir
         self.filepath = filepath
         
     def __del__(self):
         try:
-            os.unlink(self.filepath)
+            DownloadedDoc.addFile(self.tmpdir, self.filepath)
         except:
             print "Ooooops, leaving garbage behind : %s" % \
                   self.filepath
-            pass #FIXME: Might get there on Win32
     
 
 class IndexationPage(MaayPage):
