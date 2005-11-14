@@ -225,9 +225,6 @@ class Document(DBEntity):
     abstract = property(get_abstract)
 
     def _selectContainingQuery(cls, words, mimetype=None, offset=0, allowPrivate=False):
-##         words = [normalizeText(unicode(w))
-##                  for w in words
-##                  if WORD_MIN_LEN <= len(w) <= WORD_MAX_LEN]        
         # XXX mimetype handling is a HACK. It needs to be integrated
         #     nicely in order to handle any kind of restrictions easily
         if mimetype is not None:
@@ -260,8 +257,7 @@ class Document(DBEntity):
                  "GROUP BY DS.db_document_id "
                  "HAVING count(DS.db_document_id) = %%s "
                  "ORDER BY D.publication_time DESC " % \
-                 #"LIMIT 15 OFFSET %s" % \
-                 (', '.join(['%s'] * len(words)), restriction)) #, offset))
+                 (', '.join(['%s'] * len(words)), restriction))
         return query, words + restrictionParams + [len(words)]
 
     _selectContainingQuery = classmethod(_selectContainingQuery)
@@ -300,7 +296,7 @@ class Result(Document):
     attributes = ('db_document_id', 'document_id', 'query_id', 'mime_type',
                   'title', 'size', 'text', 'publication_time', 'url',
                   'host', 'port', 'login')
-    key = ('document_id', 'query_id', 'host')
+    key = ('document_id', 'query_id', 'host', 'port')
     tableName = 'results'
     
     def fromDocument(document, queryId, provider=None):
@@ -312,6 +308,7 @@ class Result(Document):
             stateDict['login'], stateDict['host'], stateDict['port'] = provider
         else:
             stateDict['host'] = 'localhost'
+            stateDict['port'] = 0
         stateDict['query_id'] = queryId
         return Result(**stateDict)
     fromDocument = staticmethod(fromDocument)

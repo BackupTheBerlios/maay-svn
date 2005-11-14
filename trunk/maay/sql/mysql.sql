@@ -158,7 +158,7 @@ CREATE TABLE `results` (
   `host` varchar(15),
   `port` int(11), -- check this
   `login` varchar(255),
-  PRIMARY KEY (`db_document_id`, `query_id`, `host`)
+  PRIMARY KEY (`db_document_id`, `query_id`, `host`, `port`)
 --  KEY `document_id` (`document_id`),
 --  KEY `url` (`url`)
 ) TYPE=MyISAM;
