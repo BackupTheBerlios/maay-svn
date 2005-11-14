@@ -20,7 +20,6 @@
 __revision__ = '$Id: server.py 281 2005-11-03 11:00:56Z aurelienc $'
 
 from datetime import datetime
-import re
 from xmlrpclib import ServerProxy
 from itertools import cycle
 from tempfile import mkdtemp
@@ -236,9 +235,13 @@ class ResultsPageMixIn:
         return loaders.xmlfile(get_path_of('footer.html'))
 
     def render_title(self, context, data):
+        localCount, distantCount = self.querier.countResults(self.queryId)
+        resultsCount = localCount + distantCount
+        offset = self.query.offset
         context.fillSlots('words', self.query.joinwords(' ')) #WORDS
-        context.fillSlots('start_result', min(len(self.results), self.offset + 1))
-        context.fillSlots('end_result', self.offset + len(self.results))
+        context.fillSlots('start_result', offset + 1)
+        context.fillSlots('end_result', min(resultsCount, offset+15))#self.offset + len(self.results))
+        context.fillSlots('count', resultsCount)
         return context.tag
 
     def render_searchfield(self, context, data):
@@ -260,7 +263,7 @@ class ResultsPageMixIn:
     def render_row(self, context, data):
         document = data
         words = self.query.words #WORDS (was .split())
-        context.fillSlots('mime_type', re.sub("/", "_", document.mime_type))
+        context.fillSlots('mime_type', document.mime_type.replace('/', '_'))
         context.fillSlots('doctitle',
                           tags.xml(boldifyText(document.title, words)))
         # XXX abstract attribute should be a unicode string
@@ -316,38 +319,36 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         self.query = Query.fromContext(context)
         self.offset = self.query.offset
         self.results = querier.findDocuments(self.query)
-            
+        webappConfig = INodeConfiguration(context)
+        p2pQuery = P2pQuery(webappConfig.get_node_id(),
+                            webappConfig.rpcserver_port,
+                            self.query)
+        self.queryId = p2pQuery.qid
+        self.p2pQuery = p2pQuery
+        # push local results once for all
+        self.querier.pushDocuments(self.queryId, self.results, provider=None)
+        
     def onNewResults(self, provider, results):
         results = [Document(**params) for params in results]
         self.querier.pushDocuments(self.queryId, results, provider)
         results = self.querier.getQueryResults(self.queryId, offset=self.query.offset) # XXX limit ?
-        page = PleaseCloseYourEyes(results, self.query, self.queryId).renderSynchronously()
+        page = PleaseCloseYourEyes(results, self.querier, self.query, self.queryId).renderSynchronously()
         page = unicode(page, 'utf-8')
         self.callRemote('updateResults', page)
 
     def remote_connect(self, context):
         """just here to start the connection between client and server (Ajax)"""
         #TODO: very soon, the line below will also be the p2pquerier's job
-        webappConfig = INodeConfiguration(context)
-        p2pQuery = P2pQuery(webappConfig.get_node_id(),
-                            webappConfig.rpcserver_port,
-                            self.query)
-        self.queryId = p2pQuery.qid
-        self.p2pquerier.sendQuery(p2pQuery)
-        self.p2pquerier.addAnswerCallback(p2pQuery.qid, self.onNewResults)
+        self.p2pquerier.sendQuery(self.p2pQuery)
+        self.p2pquerier.addAnswerCallback(self.p2pQuery.qid, self.onNewResults)
         self.querier.pushDocuments(self.queryId, self.results, provider=None)
         return 0
 
     def remote_browseResults(self, context, offset):
         self.query.offset = offset
-        documents = [Document(**params) for params in self.querier.findDocuments(self.query)]
-        # push local results in the results table
-        # XXX: need to avoid duplicate insertion of local results
-        #      (typically by clicking on "next" then "prev")
-        self.querier.pushDocuments(self.queryId, documents, provider=None)
         results = self.querier.getQueryResults(self.queryId, offset=offset) # XXX limit ?
-        page = unicode(PleaseCloseYourEyes(results, self.query, self.queryId).renderSynchronously(),
-                       'utf-8')
+        page = PleaseCloseYourEyes(results, self.querier, self.query, self.queryId).renderSynchronously()
+        page = unicode(page, 'utf-8')
         return page
 
 class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
@@ -357,6 +358,7 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     """
     docFactory = loaders.xmlstr("""
   <div id="resultsDiv" xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1" >
+   <div class="message" nevow:render="title">Results <nevow:slot name="start_result" /> - <nevow:slot name="end_result" /> (<nevow:slot name="count" />) for <b><nevow:slot name="words" /></b>.</div>
     <table class="results" nevow:render="sequence" nevow:data="results">
       <tr nevow:pattern="item" nevow:render="row">
         <td>
@@ -384,15 +386,14 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
   </div>
     """)
     
-    def __init__(self, results, query, queryId):
+    def __init__(self, results, querier, query, queryId):
         self.results = results
-        # self.peerLogin, self.peerHost, self.peerPort = provider
+        self.querier = querier
         self.query = query
         self.queryId = queryId
 
     def render_peer(self, context, data):
         """:type data: Result"""
-        # return '%s (%s:%s)' % (self.peerLogin, self.peerHost, self.peerPort)
         if data.login is None:
             return ''
         return '%s (%s) - ' % (data.login, data.host)

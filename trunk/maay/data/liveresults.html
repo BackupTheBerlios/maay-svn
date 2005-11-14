@@ -34,13 +34,14 @@ function browseResults(offset) {
           <td><input type="submit" class="searchButton" value="search" /></td>
 	</tr>
       </table>
-    </form>      
+    </form>
   </div>
-  <div class="message" nevow:render="title">Results <nevow:slot name="start_result" /> - <nevow:slot name="end_result" /> for <b><nevow:slot name="words" /></b>.</div>
   <!--
   <div class="sort"><a href="">Sort by date</a> - <a href="">Sort by popularity</a></div>
   -->
   <div id="resultsDiv">
+   <div class="message" nevow:render="title">Results <nevow:slot name="start_result" /> - <nevow:slot name="end_result" /> (<nevow:slot name="count" />) for <b><nevow:slot name="words" /></b>.</div>
+  <span id="count">0</span>
     <table class="results" nevow:render="sequence" nevow:data="results">
       <tr nevow:pattern="item" nevow:render="row">
         <td>

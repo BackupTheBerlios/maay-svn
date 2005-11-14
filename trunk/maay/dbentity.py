@@ -122,8 +122,8 @@ class DBEntity:
         return '%s: %s' % (self.__class__.__name__,
                            ', '.join(['%s=%s' % (attr, getattr(self, attr))
                                       for attr in self.boundAttributes()]))
-    def __repr__(self):
-        return str(self)
+##     def __repr__(self):
+##         return str(self)
 
 
 class FutureDocument:
@@ -259,9 +259,9 @@ class Document(DBEntity):
                  " %s "
                  "GROUP BY DS.db_document_id "
                  "HAVING count(DS.db_document_id) = %%s "
-                 "ORDER BY D.publication_time DESC "
-                 "LIMIT 15 OFFSET %s" % \
-                 (', '.join(['%s'] * len(words)), restriction, offset))
+                 "ORDER BY D.publication_time DESC " % \
+                 #"LIMIT 15 OFFSET %s" % \
+                 (', '.join(['%s'] * len(words)), restriction)) #, offset))
         return query, words + restrictionParams + [len(words)]
 
     _selectContainingQuery = classmethod(_selectContainingQuery)
@@ -281,7 +281,7 @@ class Document(DBEntity):
                                    row)))
                     for row in results]
         else:
-            return [] 
+            return []
     selectContaining = classmethod(selectContaining)
 
     def selectUrlAndTypeWhereDocid(cls, cursor, document_id):

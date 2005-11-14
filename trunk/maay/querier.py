@@ -147,8 +147,6 @@ class AnonymousQuerier:
     def findDocuments(self, query):
         """Find all indexed documents matching the query"""
         # TODO: order results using document_scores information
-        #words = [WORDS_RGX.findall(normalizeText(unicode(word))) #WORDS
-        #         for word in query.words]
         words = query.words
         self._updateQueryStatistics(words)
         try:
@@ -156,8 +154,11 @@ class AnonymousQuerier:
             return Document.selectContaining(cursor, words, query.filetype,
                                              query.offset, self.searchInPrivate)
         finally:
+            import traceback
+            traceback.print_exc()
             cursor.close()
-
+        return []
+        
     def _updateScores(self, cursor, db_document_id, text):
         # insert or update in table document_score
         db_scores = self._getScoresDict(cursor, db_document_id)
@@ -298,6 +299,20 @@ class AnonymousQuerier:
         cursor.close()
         return nodes
 
+    def countResults(self, queryId):
+        """returns a couple (number of local results, number of distant results)
+        for <queryId>
+        """
+        cursor = self._cnx.cursor()
+        localCountQuery = "SELECT COUNT(*) from results WHERE query_id='%s' AND host='localhost';" % (queryId,)
+        distantCountQuery = "SELECT COUNT(*) from results WHERE query_id='%s' AND host!='localhost';" % (queryId,)
+        cursor.execute(localCountQuery)
+        localCount = cursor.fetchall()[0][0]
+        cursor.execute(distantCountQuery)
+        distantCount = cursor.fetchall()[0][0]        
+        cursor.close()
+        return localCount, distantCount
+    
     def getQueryResults(self, queryId, limit=15, offset=0):
         """builds and returns Result' instances by searching in
         the temporary table built for <queryId>
