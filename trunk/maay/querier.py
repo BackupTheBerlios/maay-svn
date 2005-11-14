@@ -263,6 +263,9 @@ class AnonymousQuerier:
         """this will be used as a callback in registrationclient/login"""
         print "AnonymousQuerier registerNode (callback) %s %s:%s" % \
             (nodeId, ip, port)
+        if ip == "127.0.0.1":
+            print " ... 127.0.0.1 is not an acceptable IP, we don't register this"
+            return
         lastSeenTime = lastSeenTime or int(time.time())
         cursor = self._cnx.cursor()
         node = Node.selectOrInsertWhere(cursor, node_id=nodeId)[0]
