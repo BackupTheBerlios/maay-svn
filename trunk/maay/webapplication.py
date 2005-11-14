@@ -279,35 +279,44 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         #       differently in nevow SVN. It's now possible to insantiate directly
         #       LivePage instances (which is great !), so we'll have to change
         #       the implementation for next nevow release.
-        # NOTE2: another way to be sure that only the appopriate resource
-        #        starts the p2pquery (and registers callbacks) would be
-        #        to launch the query in the remote_conect() method
-        if len(inevow.IRemainingSegments(context)) < 2:
-            self.query = Query.fromContext(context)
-            self.offset = self.query.offset
-            #TODO: very soon, the line below will also be the p2pquerier's job
-            self.results = querier.findDocuments(self.query)
-            webappConfig = INodeConfiguration(context)
-            p2pQuery = P2pQuery(webappConfig.get_node_id(),
-                                webappConfig.rpcserver_port,
-                                self.query)
-            p2pquerier.sendQuery(p2pQuery)
-            p2pquerier.addAnswerCallback(p2pQuery.qid, self.onNewResults)
-            self.queryId = p2pQuery.qid
-            self.querier = querier
+        self.querier = querier
+        self.p2pquerier = p2pquerier
+        self.query = Query.fromContext(context)
+        self.offset = self.query.offset
+        self.results = querier.findDocuments(self.query)
             
     def onNewResults(self, provider, results):
         results = [Document(**params) for params in results]
         self.querier.pushDocuments(self.queryId, results, provider)
-        results = self.querier.getQueryResults(self.queryId) # XXX offset, limit ?
-        page = PleaseCloseYourEyes(results, provider, self.query, self.queryId).renderSynchronously()
-        self.callRemote('updateResults', u'<div>%s</div>' % page)
+        results = self.querier.getQueryResults(self.queryId, offset=self.query.offset) # XXX limit ?
+        page = PleaseCloseYourEyes(results, self.query, self.queryId).renderSynchronously()
+        page = unicode(page, 'utf-8')
+        self.callRemote('updateResults', page)
 
     def remote_connect(self, context):
         """just here to start the connection between client and server (Ajax)"""
+        #TODO: very soon, the line below will also be the p2pquerier's job
+        webappConfig = INodeConfiguration(context)
+        p2pQuery = P2pQuery(webappConfig.get_node_id(),
+                            webappConfig.rpcserver_port,
+                            self.query)
+        self.queryId = p2pQuery.qid
+        self.p2pquerier.sendQuery(p2pQuery)
+        self.p2pquerier.addAnswerCallback(p2pQuery.qid, self.onNewResults)
         self.querier.pushDocuments(self.queryId, self.results, provider=None)
         return 0
 
+    def remote_browseResults(self, context, offset):
+        self.query.offset = offset
+        documents = [Document(**params) for params in self.querier.findDocuments(self.query)]
+        # push local results in the results table
+        # XXX: need to avoid duplicate insertion of local results
+        #      (typically by clicking on "next" then "prev")
+        self.querier.pushDocuments(self.queryId, documents, provider=None)
+        results = self.querier.getQueryResults(self.queryId, offset=offset) # XXX limit ?
+        page = unicode(PleaseCloseYourEyes(results, self.query, self.queryId).renderSynchronously(),
+                       'utf-8')
+        return page
 
 class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     """This resource and the way it is called is kind of ugly.
@@ -323,8 +332,8 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
             <table>
               <tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type"/></nevow:attr></div></td>
                   <td>
-                   <a class="distantDocTitle">
-                    <nevow:attr name="href"><nevow:slot name="distanturl" /></nevow:attr>
+                   <a><nevow:attr name="class"><nevow:slot name="linkClass" /></nevow:attr>
+                    <nevow:attr name="href"><nevow:slot name="url" /></nevow:attr>
                     <nevow:slot name="doctitle">DOC TITLE</nevow:slot>
                    </a>
                   </td>
@@ -343,35 +352,39 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
   </div>
     """)
     
-    def __init__(self, results, provider, query, queryId):
+    def __init__(self, results, query, queryId):
         self.results = results
-        self.peerLogin, self.peerHost, self.peerPort = provider
+        # self.peerLogin, self.peerHost, self.peerPort = provider
         self.query = query
         self.queryId = queryId
 
     def render_peer(self, context, data):
-        return '%s (%s:%s)' % (self.peerLogin, self.peerHost, self.peerPort)
-
+        # return '%s (%s:%s)' % (self.peerLogin, self.peerHost, self.peerPort)
+        return 'XXX (code needs to be updated with new Result class'
+    
     def render_row(self, context, data):
         document = data
         ResultsPageMixIn.render_row(self, context, data)
-        context.fillSlots('distanturl', '/distantfile?filename=%s&words=%s&host=%s&port=%s&docid=%s'\
-                          % (osp.basename(document.url), self.query.words,
-                             self.peerHost, self.peerPort, document.document_id))
+        if document.host == 'localhost':
+            baseurl = '/download?docid=%s' % (document.document_id,)
+            context.fillSlots('linkClass', "docTitle")
+        else:
+            baseurl = '/distantfile?docid=%s' % (document.document_id,)
+            context.fillSlots('linkClass', "distantDocTitle")
+        if document.port:
+            baseurl += '&port=%s' % (document.port,)
+        baseurl += '&filename=%s' % osp.basename(document.url)
+        context.fillSlots('url', baseurl)
         return context.tag
 
     def render_nextset_url(self, context, data):
-        # XXX find a better implementation later
-        return 'search?words=%s&offset=%s&qid=%s' % ('+'.join(self.query.words),
-                                                     self.query.offset + 15,
-                                                     self.queryId)
+        return 'javascript: browseResults(%s);' % (self.query.offset + 15,)
+
     def render_prevset_url(self, context, data):
         offset = self.query.offset
         if offset:
             offset -= 15
-        return 'search?words=%s&offset=%s&qid=%s' % ('+'.join(self.query.words),
-                                                     offset,
-                                                     self.queryId)
+        return 'javascript: browseResults(%s);' % (offset,)
 
 
 class ResultsPageFactory(athena.LivePageFactory):

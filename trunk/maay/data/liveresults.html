@@ -9,13 +9,18 @@
 
     <script type='text/javascript' language='javascript'>
 function updateResults(source) {
-  alert('yo');
   div = document.getElementById('resultsDiv');
   div.innerHTML = source;
 }
 function startConnection() {
   var d = server.callRemote('connect');
 }
+
+function browseResults(offset) {
+  var d = server.callRemote('browseResults', offset);
+  d.addCallback(updateResults);
+}
+
     </script>
 
   </head>
