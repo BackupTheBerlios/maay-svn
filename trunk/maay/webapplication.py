@@ -140,6 +140,7 @@ class SearchForm(MaayPage):
     # XXX make sure that the requested document is really in the database
     # XXX don't forget to update the download statistics of the document
     def child_download(self, context):
+        print "I HOPE WE NEVER GET THERE"
         docid = context.arg('docid')
         query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'))
         docurl = self.querier.notifyDownload(docid, query.words)
@@ -204,13 +205,13 @@ class ResultsPageMixIn:
         return loaders.xmlfile(get_path_of('footer.html'))
 
     def render_title(self, context, data):
-        context.fillSlots('words', self.query.words)
+        context.fillSlots('words', self.query.joinwords(' ')) #WORDS
         context.fillSlots('start_result', min(len(self.results), self.offset + 1))
         context.fillSlots('end_result', self.offset + len(self.results))
         return context.tag
 
     def render_searchfield(self, context, data):
-        context.fillSlots('words', self.query.words)
+        context.fillSlots('words', self.query.joinwords(' ')) #WORDS
         return context.tag
 
     def render_prevset_url(self, context, data):
@@ -227,7 +228,7 @@ class ResultsPageMixIn:
 
     def render_row(self, context, data):
         document = data
-        words = self.query.words.split()
+        words = self.query.words #WORDS (was .split())
         context.fillSlots('mime_type', re.sub("/", "_", document.mime_type))
         context.fillSlots('doctitle',
                           tags.xml(boldifyText(document.title, words)))
@@ -243,7 +244,7 @@ class ResultsPageMixIn:
         context.fillSlots('abstract', tags.xml(abstract))
         context.fillSlots('docid', document.db_document_id)
         context.fillSlots('docurl', tags.xml(boldifyText(document.url, words)))
-        context.fillSlots('words', self.query.words)
+        context.fillSlots('words', self.query.joinwords(' ')) #WORDS
         context.fillSlots('readable_size', document.readable_size())
         date = datetime.fromtimestamp(document.publication_time)
         context.fillSlots('publication_date', date.strftime('%d %b %Y'))
@@ -371,9 +372,9 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
         else:
             baseurl = '/distantfile?docid=%s' % (document.document_id,)
             context.fillSlots('linkClass', "distantDocTitle")
-        if document.port:
             baseurl += '&port=%s' % (document.port,)
         baseurl += '&filename=%s' % osp.basename(document.url)
+        baseurl += '&words=%s' % '+'.join(self.query.words)
         context.fillSlots('url', baseurl)
         return context.tag
 

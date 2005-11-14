@@ -34,7 +34,7 @@ class QuerierTC(unittest.TestCase):
                                   password='maay')
         self.querier = MaayQuerier(connection=self.cnx)
         self.nodeId = '0'*40
-        self.querier.registerNode(self.nodeId, "127.0.0.1", 6789, 10)
+        self.querier.registerNode(self.nodeId, "192.168.0.123", 6789, 10)
 
     def tearDown(self):
         cursor = self.cnx.cursor()

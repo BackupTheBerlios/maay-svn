@@ -52,7 +52,8 @@ class P2pQueryTC(unittest.TestCase):
                            'sender' : 'http://localhost:3423',
                            'port' : 3423,
                            'ttl' : 5, # default value
-                           'words' : 'foo',
+                           'words' : [u'foo'],
+                           'version' : 1,
                            'mime_type' : ''})
 
     def testComplexQueryAsKwargs(self):
@@ -66,7 +67,8 @@ class P2pQueryTC(unittest.TestCase):
                            'sender' : 'http://localhost:3423',
                            'port' : 3423,
                            'ttl' : 2,
-                           'words' : 'foo bar',
+                           'words' : [u'foo', u'bar'],
+                           'version' : 1,
                            'mime_type' : 'application/pdf'})
         
     

@@ -41,8 +41,18 @@ def hashIt(item, uname=''.join(platform.uname())):
     hasher.update('%s' % time.time())
     return hasher.hexdigest()
 
+class QueryVersionMismatch(Exception):
+    """we beginning a versionning nightmare trip on queries
+       maybe I'll be shot for this, but who knows"""
+    def __init__(self, local_version, query_version):
+        self.local_version = local_version
+        self.query_version = query_version
+
 # XXX should P2pQuery derive from query.Query? (auc : no)
 class P2pQuery:
+
+    _version = 1
+    
     def __init__(self, sender, port, query, ttl=5, qid=None, host=None):
         """
         :param sender: really a nodeId
@@ -89,10 +99,16 @@ class P2pQuery:
                 'ttl':self.ttl,
                 'words': self.query.words,
                 'mime_type': self.query.filetype or '',
+                'version' : P2pQuery._version
                 }
 
     def fromDict(dic):
-        _query = Query(dic['words'], filetype=dic['mime_type'])
+        """dual of asKwargs"""
+        if dic.has_key('version'):
+            if dic['version'] > P2pQuery._version:
+                raise QueryVersionMismatch(query_version=dic['version'],
+                                           local_version=P2pQuery._version)
+        _query = Query(' '.join(dic['words']), filetype=dic['mime_type'])
         return P2pQuery(qid=dic['qid'],
                         sender=dic['sender'],
                         port=dic['port'],
@@ -101,7 +117,7 @@ class P2pQuery:
     fromDict = staticmethod(fromDict)
     
     def getWords(self):
-        return self.query.words.split()
+        return self.query.words
 
 
 class P2pAnswer:

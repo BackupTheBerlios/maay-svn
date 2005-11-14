@@ -20,6 +20,30 @@ def normalizeMimetype(fileExtension):
     import mimetypes
     return mimetypes.types_map.get('.%s' % fileExtension)
 
+def parseWords(rawWords):
+    """takes a (u)string
+       returns a list of ustrings and dict of restrictions
+    """
+    assert(isinstance(rawWords, str) or isinstance(rawWords, unicode))
+    rawWords = rawWords.split()
+    words = []
+    restrictions = {}
+    for word in rawWords:
+        try:
+            restType, restValue = [s.strip() for s in word.split(':')]
+        except ValueError:
+            if isinstance(word, str):
+                word = unicode(word, 'utf-8')
+            words.append(word)
+        else:
+            if restType in Query.restrictions:
+                # Python does not support unicode keywords !
+                # (note: restType is pure ASCII, so no pb with str())
+                restrictions[str(restType)] = restValue
+            else:
+                words.append(word)
+    return words, restrictions
+
 class Query(object):
     restrictions = ('filetype', 'filename', 'searchtype')
     def __init__(self, words, offset=0, filetype=None, filename=None):
@@ -30,22 +54,8 @@ class Query(object):
 
     def fromRawQuery(rawQuery, offset=0):
         """:type rawQuery: str"""
-        rawWords = rawQuery.split()
-        words = []
-        restrictions = {}
-        for word in rawWords:
-            try:
-                restType, restValue = [s.strip() for s in word.split(':')]
-            except ValueError:
-                words.append(word)
-            else:
-                if restType in Query.restrictions:
-                    # Python does not support unicode keywords !
-                    # (note: restType is pure ASCII, so no pb with str())
-                    restrictions[str(restType)] = restValue
-                else:
-                    words.append(word)
-        return Query(u' '.join(words), offset, **restrictions)
+        _ , restrictions = parseWords(rawQuery)
+        return Query(rawQuery, offset, **restrictions)
     fromRawQuery = staticmethod(fromRawQuery)
 
     def fromContext(context):
@@ -56,6 +66,19 @@ class Query(object):
         return Query.fromRawQuery(rawQuery, offset)
     fromContext = staticmethod(fromContext)
 
+    ###### Words accessors
+    def getwords(self):
+        return getattr(self, '_words', None)
+    
+    def setwords(self, words):
+        self._words, _ = parseWords(words)
+
+    words = property(getwords, setwords)
+
+    def joinwords(self, join):
+        return join.join(self._words)
+
+    ###### Filetype accessors
     def getFiletype(self):
         return getattr(self, '_filetype', None)
 

@@ -147,7 +147,9 @@ class AnonymousQuerier:
     def findDocuments(self, query):
         """Find all indexed documents matching the query"""
         # TODO: order results using document_scores information
-        words = WORDS_RGX.findall(normalizeText(unicode(query.words)))
+        #words = [WORDS_RGX.findall(normalizeText(unicode(word))) #WORDS
+        #         for word in query.words]
+        words = query.words
         self._updateQueryStatistics(words)
         try:
             cursor = self._cnx.cursor()
@@ -213,7 +215,8 @@ class AnonymousQuerier:
         self._cnx.commit()
 
     def notifyDownload(self, document_id, words):
-        words = WORDS_RGX.findall(normalizeText(unicode(words)))
+        #words = [WORDS_RGX.findall(normalizeText(unicode(word)))
+        #         for word in words]
         print "WORDS", words
         try:
             try:
