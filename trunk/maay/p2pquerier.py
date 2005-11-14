@@ -294,7 +294,17 @@ class P2pQuerier:
             doc.text = untagText(removeSpace(abstract))
 
         # provider is a triple (login, IP, xmlrpc-port)
-        provider = (os.getlogin(),
+        # FIXME: method os.getlogin() raises an exception (under Linux).
+        # >>> os.getlogin()
+        # Traceback (most recent call last):
+        #   File "<stdin>", line 1, in ?
+        #   OSError: [Errno 2] No such file or directory
+        try:
+            login = os.getlogin()
+        except OSError:
+            login = "anonymous"
+
+        provider = (login,
                     socket.gethostbyname(socket.gethostname()),
                     P2pQuerier._ourRPCPort)
             

@@ -1,8 +1,36 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <nevow:invisible xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
-<h1>Indexation Page</h1>
-  <div class="message">"<span nevow:render="message" />"</div><br /><br />
-<a href="/indexation?start=1">Index now</a><br /><br />
-<a href="/">return to search page</a>
+<table>
+  <tr>
+    <td><a href="/"><img border="0" src="images/smallmaay.png" /></a></td>
+    <td><h1>Indexation Page</h1></td>
+  </tr>
+</table>
+  <br />
+  <div class="message"><b>Status: </b><span nevow:render="message" /></div>
+  <hr />
+  <h2>Private Directories</h2>
+  <h3>Indexed</h3>
+    <div nevow:render="sequence" nevow:data="indexedprivatedirectories">
+      <div class="indexedDirectoryName" nevow:pattern="item" nevow:render="directory"><nevow:slot name="name" /></div>
+    </div>
+  <h3>Skipped</h3>
+    <div nevow:render="sequence" nevow:data="skippedprivatedirectories">
+      <div class="skippedDirectoryName" nevow:pattern="item" nevow:render="directory"><nevow:slot name="name" /></div>
+    </div>
+  <h2>Public Directories</h2>
+  <h3>Indexed</h3>
+    <div nevow:render="sequence" nevow:data="indexedprivatedirectories">
+      <div class="indexedDirectoryName" nevow:pattern="item" nevow:render="directory"><nevow:slot name="name" /></div>
+    </div>
+    <h3>Skipped</h3>
+    <div nevow:render="sequence" nevow:data="skippedprivatedirectories">
+      <div class="skippedDirectoryName" nevow:pattern="item" nevow:render="directory"><nevow:slot name="name" /></div>
+    </div>
+  <hr />
+  <form action="/indexation" method="PUT">
+    <input type="hidden" name="start" value="1" />
+    <input type="submit" value="Index now" /> 
+  </form>
 </nevow:invisible>
