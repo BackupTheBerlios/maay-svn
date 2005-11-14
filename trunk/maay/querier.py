@@ -221,7 +221,7 @@ class AnonymousQuerier:
         try:
             try:
                 cursor = self._cnx.cursor()
-                doc = Document.selectWhere(cursor, document_id=document_id)[0]
+                doc = Document.selectWhere(cursor, db_document_id=document_id)[0]
             finally:
                 cursor.close()
             self._updateDownloadStatistics(doc, words)
