@@ -67,7 +67,6 @@ class MaayRPCServer(XMLRPC):
         #XXX: check the correctness of this stuff
         self._lastClient = request.transport.getPeer()
         return XMLRPC.render(self, request)
-
       
     def _attachUser(self, (interface, querier, _), username, password):
         print "MaayRPCServer _attachUser", username, type(querier)
@@ -79,6 +78,15 @@ class MaayRPCServer(XMLRPC):
         print " ... registering querier for %s (digest=%s)" % (username, digest)
         self._sessions[digest] = querier
         return digest, ''
+
+    def __cnxIsValid(self, cnxId):
+        if cnxId in self._sessions:
+            return True
+        print "MaayRPCServer %s not valid !" % cnxId
+        return False
+
+
+    ###### Indexer stuff
 
     def xmlrpc_authenticate(self, username, password):
         """server authentication method"""
@@ -96,7 +104,7 @@ class MaayRPCServer(XMLRPC):
         return d
 
     def xmlrpc_lastIndexationTimeAndState(self, cnxId, filename):
-        if self.cnxIsValid(cnxId):
+        if self._cnxIsValid(cnxId):
             filename = unicode(filename)
             querier = self._sessions[cnxId]
             fileInfos = querier.getFileInformations(filename)
@@ -114,20 +122,20 @@ class MaayRPCServer(XMLRPC):
         return time_, state
 
     def xmlrpc_getIndexedFiles(self, cnxId):
-        if self.cnxIsValid(cnxId):
+        if self._cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
             return querier.getIndexedFiles()
         return []
         
     def xmlrpc_removeFileInfo(self, cnxId, filename):
-        if self.cnxIsValid(cnxId):
+        if self._cnxIsValid(cnxId):
             filename = unicode(filename)
             querier = self._sessions[cnxId]
             return querier.removeFileInfo(filename)
         return 0
 
     def xmlrpc_removeUnreferencedDocuments(self, cnxId):
-        if self.cnxIsValid(cnxId):
+        if self._cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
             return querier.removeUnreferencedDocuments()
         return -1
@@ -148,11 +156,14 @@ class MaayRPCServer(XMLRPC):
             print exc
             print futureDoc.text
             return 1
-        if self.cnxIsValid(cnxId):
+        if self._cnxIsValid(cnxId):
             querier = self._sessions[cnxId]
             querier.indexDocument(self.nodeId, futureDoc)
 
         return 0
+
+
+    ###### Peer stuff
 
     def xmlrpc_distributedQuery(self, queryDict):
         """On node has sent a query (P2pQuerier.sendQuery)
@@ -188,8 +199,3 @@ class MaayRPCServer(XMLRPC):
             return "Could not get %r, cause %s" % (doc_id, exc)
         return data
     
-    def cnxIsValid(self, cnxId):
-        if cnxId in self._sessions:
-            return True
-        print "MaayRPCServer %s not valid !" % cnxId
-        return False
