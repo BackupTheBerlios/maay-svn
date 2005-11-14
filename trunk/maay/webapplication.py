@@ -372,6 +372,7 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
         else:
             baseurl = '/distantfile?docid=%s' % (document.document_id,)
             context.fillSlots('linkClass', "distantDocTitle")
+            baseurl += '&host=%s' % (document.host,)
             baseurl += '&port=%s' % (document.port,)
         baseurl += '&filename=%s' % osp.basename(document.url)
         baseurl += '&words=%s' % '+'.join(self.query.words)
