@@ -93,7 +93,6 @@ class PeersList(MaayPage):
             context.fillSlots(attrname, getattr(peerNode, attrname, 'N/A'))
         return context.tag
 
-
 class DownloadedDocs:
     """manage automatic removal of locally downloaded
        documents in a clunky way
@@ -373,7 +372,7 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
               </tr>
             </table>
             <div class="resultDesc"><nevow:slot name="abstract" /></div>
-            <span class="resultUrl">(<span nevow:render="peer" />) - <nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
+            <span class="resultUrl"><span nevow:render="peer" /><nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
           </div>
         </td>
       </tr>
@@ -392,8 +391,11 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
         self.queryId = queryId
 
     def render_peer(self, context, data):
+        """:type data: Result"""
         # return '%s (%s:%s)' % (self.peerLogin, self.peerHost, self.peerPort)
-        return 'XXX (code needs to be updated with new Result class'
+        if data.login is None:
+            return ''
+        return '%s (%s) - ' % (data.login, data.host)
     
     def render_row(self, context, data):
         document = data
