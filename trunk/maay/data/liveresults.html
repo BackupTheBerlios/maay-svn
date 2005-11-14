@@ -21,6 +21,21 @@ function browseResults(offset) {
   d.addCallback(updateResults);
 }
 
+function onlyLocalResults() {
+  var d = server.callRemote('setLocalFlag', 1);
+  d.addCallback(updateResults);
+}
+
+function onlyDistantResults() {
+  var d = server.callRemote('setDistantFlag', 1);
+  d.addCallback(updateResults);
+}
+
+function allResults() {
+  var d = server.callRemote('unsetFlags');
+  d.addCallback(updateResults);
+}
+
     </script>
 
   </head>
@@ -37,9 +52,12 @@ function browseResults(offset) {
     </form>
   </div>
   <!--
-  <div class="sort"><a href="">Sort by date</a> - <a href="">Sort by popularity</a></div>
+    <div class="sort"><a href="">Sort by date</a> - <a href="">Sort by popularity</a></div>
   -->
   <div id="resultsDiv">
+   <a href="javascript: onlyLocalResults();"><span nevow:render="localcount" /> local results</a><br/>
+   <a href="javascript: onlyDistantResults();"><span nevow:render="distantcount" /> distant results</a><br/>
+   <a href="javascript: allResults();"><span nevow:render="totalcount" /> results</a><br/>
    <div class="message" nevow:render="title">Results <nevow:slot name="start_result" /> - <nevow:slot name="end_result" /> (<nevow:slot name="count" />) for <b><nevow:slot name="words" /></b>.</div>
     <div class="prevnext"><a><nevow:attr name="href"
     nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr

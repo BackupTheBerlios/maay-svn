@@ -39,8 +39,8 @@ a.docTitle {
   display: block;
 }
 
-a.distantDocTitle {
-  display: block;
+.distantDocTitle {
+  /* display: block; */
   background-color: yellow;
 }
 

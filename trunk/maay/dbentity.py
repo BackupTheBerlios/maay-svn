@@ -313,12 +313,16 @@ class Result(Document):
         return Result(**stateDict)
     fromDocument = staticmethod(fromDocument)
 
-    def _selectQuery(cls, limit, offset, whereColumns=()):
+    def _selectQuery(cls, limit, offset, onlyLocal=False, onlyDistant=False, whereColumns=()):
         if whereColumns:
             wheres = ['%s=%%(%s)s' % (attr, attr) for attr in whereColumns]
             where =  ' WHERE ' + ' AND '.join(wheres)
         else:
             where = ''
+        if onlyDistant:
+            where += " AND host != 'localhost' "
+        elif onlyLocal:
+            where += " AND host = 'localhost' "
         query = 'SELECT %s FROM %s%s ORDER BY publication_time LIMIT %s OFFSET %s' % (
             ', '.join(cls.attributes),
             cls.tableName,
@@ -326,8 +330,8 @@ class Result(Document):
         return query
     _selectQuery = classmethod(_selectQuery)
 
-    def selectWhere(cls, cursor, limit, offset, **args):
-        query = cls._selectQuery(limit, offset, args.keys())
+    def selectWhere(cls, cursor, limit, offset, onlyLocal=False, onlyDistant=False, **args):
+        query = cls._selectQuery(limit, offset, onlyLocal, onlyDistant, args.keys())
         cursor.execute(query, args)
         results = cursor.fetchall()
         return [cls(**dict(zip(cls.attributes, row))) for row in results]

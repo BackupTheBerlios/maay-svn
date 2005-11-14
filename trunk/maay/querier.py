@@ -313,12 +313,14 @@ class AnonymousQuerier:
         cursor.close()
         return localCount, distantCount
     
-    def getQueryResults(self, queryId, limit=15, offset=0):
+    def getQueryResults(self, queryId, limit=15, offset=0,
+                        onlyLocal=False, onlyDistant=False):
         """builds and returns Result' instances by searching in
         the temporary table built for <queryId>
         """
         cursor = self._cnx.cursor()
-        results = Result.selectWhere(cursor, limit, offset, query_id=queryId)
+        results = Result.selectWhere(cursor, limit, offset,
+                                     onlyLocal, onlyDistant, query_id=queryId)
         cursor.close()
         return results
         
