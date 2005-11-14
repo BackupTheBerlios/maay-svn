@@ -267,6 +267,7 @@ class Document(DBEntity):
     _selectContainingQuery = classmethod(_selectContainingQuery)
 
     def selectContaining(cls, cursor, words, mimetype=None, offset=0, allowPrivate=False):
+        print "Document selectContaining %s" % words
         if not words:
             return []
         query, params = cls._selectContainingQuery(words, mimetype,

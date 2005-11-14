@@ -218,7 +218,7 @@ class AnonymousQuerier:
     def notifyDownload(self, document_id, words):
         #words = [WORDS_RGX.findall(normalizeText(unicode(word)))
         #         for word in words]
-        print "WORDS", words
+        print "Querier notifyDownloads %s with %s" % (document_id, words)
         try:
             try:
                 cursor = self._cnx.cursor()
