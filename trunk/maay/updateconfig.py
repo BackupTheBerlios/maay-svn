@@ -18,7 +18,7 @@
 import os
 import sys
 
-config = """[INDEXER]
+indexer_config = """[INDEXER]
 # Host on which the maay node is running
 host=localhost
 #Port on which the maay node is listening
@@ -45,6 +45,15 @@ public-index-dir=%(public)s
 public-skip-dir=%(public_skip)s
 """
 
+node_config = """[NODE]
+db-name=maay
+db-host=localhost
+user=maay
+password=maay
+presence-host=%(presence)s
+presence-port=2345
+"""
+
 def createConfigFile(myDesktop, myDocuments):
     f=open("indexer.ini", "w")
     values = {'private'     : '%s,%s' % (myDesktop, myDocuments),
@@ -52,8 +61,16 @@ def createConfigFile(myDesktop, myDocuments):
               'public'      : '%s\\Maay Documents' % myDesktop,
               'public_skip' : '',
               }
-    f.write(config % values)
+    f.write(indexer_config % values)
     f.close()
+
+    f = open("node.ini", "w")
+    values = {'presence': get_presence_name()}
+    f.write(node_config % values)
+    f.close()
+
+def get_presence_name():
+    for host in ('172.17.1.4', '192.168.74.105', )
     
 if __name__ == '__main__':
     createConfigFile(sys.argv[1], sys.argv[2])
