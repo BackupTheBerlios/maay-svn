@@ -28,6 +28,7 @@ import sha
 import time
 import os
 import socket
+import sys
 
 from zope.interface import implements
 
@@ -267,7 +268,10 @@ def run():
         print "-------------Starting Node mainloop-------------"
         # REM: twisted raise an error if reactor is not run in the main thread.
         # This occurs when maay is runned as a windows service.
-        reactor.run(installSignalHandlers=0)
+        if sys.platform == 'win32':
+            reactor.run(installSignalHandlers=0)
+        else:
+            reactor.run()
     finally:
         print "---------------Shutting down Node---------------"
         
