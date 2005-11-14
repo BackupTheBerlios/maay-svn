@@ -79,7 +79,7 @@ class MaayRPCServer(XMLRPC):
         self._sessions[digest] = querier
         return digest, ''
 
-    def __cnxIsValid(self, cnxId):
+    def _cnxIsValid(self, cnxId):
         if cnxId in self._sessions:
             return True
         print "MaayRPCServer %s not valid !" % cnxId
