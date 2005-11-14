@@ -225,9 +225,9 @@ class Document(DBEntity):
     abstract = property(get_abstract)
 
     def _selectContainingQuery(cls, words, mimetype=None, offset=0, allowPrivate=False):
-        words = [normalizeText(unicode(w))
-                 for w in words
-                 if WORD_MIN_LEN <= len(w) <= WORD_MAX_LEN]        
+##         words = [normalizeText(unicode(w))
+##                  for w in words
+##                  if WORD_MIN_LEN <= len(w) <= WORD_MAX_LEN]        
         # XXX mimetype handling is a HACK. It needs to be integrated
         #     nicely in order to handle any kind of restrictions easily
         if mimetype is not None:
