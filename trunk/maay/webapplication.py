@@ -357,9 +357,6 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
             self.results = self.querier.getQueryResults(self.queryId, offset=0)
             
     def childFactory(self, ctx, name):
-        print "~"*80
-        print self._javascript
-        print name, get_path_of(self._javascript[name])
         if name in self._javascript:
             return static.File(get_path_of(self._javascript[name]))
 
