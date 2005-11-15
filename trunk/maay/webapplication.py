@@ -441,17 +441,24 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     """
     docFactory = loaders.xmlstr("""
   <div id="resultsDiv" xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1" >
-   <a href="javascript: onlyLocalResults();"><span nevow:render="localcount" /> local results</a><br/>
-   <a href="javascript: onlyDistantResults();"><span nevow:render="distantcount" /> distant results</a><br/>
-   <a href="javascript: allResults();"><span nevow:render="totalcount" /> results</a><br/>
    <div class="message" nevow:render="title">Results <b><nevow:slot name="start_result" /></b> - <b><nevow:slot name="end_result" /></b> of <b><nevow:slot name="count" /></b> for <b><nevow:slot name="words" /></b>.</div>
+   <table>
+     <tr>
+       <td><div class="localPublicResult"><a href="javascript: onlyLocalResults();"><span nevow:render="localcount" /> local</a></div></td>
+       <td> - </td>
+       <td> <div class="distantResult"><a href="javascript: onlyDistantResults();"><span nevow:render="distantcount" /> distant</a></div></td>
+       <td>-</td>
+       <td><a href="javascript: allResults();"><span nevow:render="totalcount" /> all</a></td>
+     </tr>
+   </table>
    <div class="prevnext"><a><nevow:attr name="href"
     nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
     name="href" nevow:render="nextset_url"/>Next</a></div>
     <table class="results" nevow:render="sequence" nevow:data="results">
       <tr nevow:pattern="item" nevow:render="row">
         <td>
-          <div class="resultItem">
+          <div>
+            <nevow:attr name="class"><nevow:slot name="resultClass" /></nevow:attr>
             <table>
               <tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type"/></nevow:attr></div></td>
                   <td>
@@ -492,13 +499,17 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     
     def render_row(self, context, data):
         document = data
+        print data
         ResultsPageMixIn.render_row(self, context, data)
         if document.host == 'localhost':
             baseurl = '/download?docid=%s' % (document.document_id,)
             context.fillSlots('linkClass', "docTitle")
+            # TODO: make a difference between private and public results
+            context.fillSlots('resultClass', "localPublicResult")
         else:
             baseurl = '/distantfile?docid=%s' % (document.document_id,)
             context.fillSlots('linkClass', "distantDocTitle")
+            context.fillSlots('resultClass', "distantResult")
             baseurl += '&host=%s' % (document.host,)
             baseurl += '&port=%s' % (document.port,)
         baseurl += '&filename=%s' % osp.basename(document.url)

@@ -21,11 +21,11 @@
     </div>
   <h2>Public Directories</h2>
   <h3>Indexed</h3>
-    <div nevow:render="sequence" nevow:data="indexedprivatedirectories">
+    <div nevow:render="sequence" nevow:data="indexedpublicdirectories">
       <div class="indexedDirectoryName" nevow:pattern="item" nevow:render="directory"><nevow:slot name="name" /></div>
     </div>
     <h3>Skipped</h3>
-    <div nevow:render="sequence" nevow:data="skippedprivatedirectories">
+    <div nevow:render="sequence" nevow:data="skippedpublicdirectories">
       <div class="skippedDirectoryName" nevow:pattern="item" nevow:render="directory"><nevow:slot name="name" /></div>
     </div>
   <hr />

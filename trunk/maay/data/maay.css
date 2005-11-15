@@ -3,6 +3,18 @@ body,td,div,.p,a{font-family:arial,sans-serif }
 h1 { font-family: arial,helvetica; font-size: 14pt; color: #000000; font-weight:bold }
 h2 {  font-family: Arial, Helvetica, sans-serif; font-size: 12pt; font-style:italic ; font-weight: bold ; color: #444444}
 h3 {  font-family: Arial, Helvetica, sans-serif; font-size: 10pt; font-weight: bold; color: #888888}
+/** header ********/
+div.headlinks {
+  text-align: right;
+}
+
+a.headlink {
+  /* display: block; */
+  font-size: 70%;
+  color: #444444;
+  text-align: right;
+}
+
 
 
 /** footer ********/
@@ -29,10 +41,32 @@ table.searchHome {
   text-align: center;
 }
 
-div.resultItem {
+div.localPublicResult {
   margin-top: 5px;
   margin-bottom: 5px;
+  border-left-style: solid;
+  border-left-width: 4px;
+  border-left-color: #00ff00;
 }
+
+div.localPrivateResult {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-left-style: solid;
+  border-left-width: 4px;
+  border-left-color: #00ff00;
+}
+
+
+
+div.distantResult {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-left-style: solid;
+  border-left-width: 4px;
+  border-left-color: #ff0000;
+}
+
 
 div.resultDesc {
   /* display: block; */
