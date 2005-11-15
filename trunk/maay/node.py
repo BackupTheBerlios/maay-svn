@@ -267,16 +267,20 @@ def run():
     reactor.listenTCP(nodeConfig.webserver_port, website)
     reactor.listenTCP(nodeConfig.rpcserver_port, rpcserver)
     try:
-        print "-------------Starting Node mainloop-------------"
-        # REM: twisted raise an error if reactor is not run in the main thread.
-        # This occurs when maay is runned as a windows service.
-        if sys.platform == 'win32':
-            reactor.run(installSignalHandlers=0)
-        else:
+        try:
+            print "-------------Starting Node mainloop-------------"
             reactor.run()
+        except ValueError:
+            # Note: twisted raise an error if reactor is not run in the
+            # main thread. This occurs when maay is runned as a windows
+            # service.
+            if sys.platform == 'win32':
+                reactor.run(installSignalHandlers=0)
+            else:
+                raise
     finally:
         print "---------------Shutting down Node---------------"
-        
+
 
 if __name__ == '__main__':
     run()
