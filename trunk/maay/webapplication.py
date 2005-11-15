@@ -22,7 +22,6 @@
 __revision__ = '$Id$'
 
 from datetime import datetime
-#from xmlrpclib import ServerProxy
 from itertools import cycle
 from tempfile import mkdtemp
 import os, os.path as osp
@@ -380,6 +379,20 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
             self.querier.pushDocuments(self.queryId, results, provider=None)
             self.results = self.querier.getQueryResults(self.queryId, offset=0)
             
+    def childFactory(self, ctx, name):
+        print "~"*80
+        print self._javascript
+        print name, get_path_of(self._javascript[name])
+        if name in self._javascript:
+            return static.File(get_path_of(self._javascript[name]))
+
+# XXX: do we need to override the following 2 methods too ?
+##     def child_MochiKit(self, ctx):
+##         return static.File(get_path_of('MochiKit'))
+
+##     def child_MochiKitLogConsole(self, ctx):
+##         return static.File(get_path_of('MochiKit'))
+        
     def onNewResults(self, provider, results):
         results = [Document(**params) for params in results]
         self.querier.pushDocuments(self.queryId, results, provider)
