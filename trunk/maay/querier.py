@@ -25,6 +25,7 @@ __revision__ = '$Id$'
 __metaclass__ = type
 
 import time
+from mx.DateTime import now, DateTimeDelta
 import traceback
 from math import sqrt, log
 
@@ -41,6 +42,7 @@ class MaayAuthenticationError(Exception):
 
 ANONYMOUS_AVATARID = '__anonymous__'
 WEB_AVATARID = '__may__'
+ONE_HOUR = DateTimeDelta(0, 1)
     
 class IQuerier(Interface):
     """defines the High-Level interface to Maay SQL database"""
@@ -123,7 +125,6 @@ class AnonymousQuerier:
             cursor.execute(query, args)
             results = cursor.fetchall()
         except:
-            import traceback
             traceback.print_exc()
             print "GOT ERROR while executing %r/%s ... rollback" % (query, args)
             cursor.close()
@@ -156,7 +157,6 @@ class AnonymousQuerier:
             return Document.selectContaining(cursor, words, query.filetype,
                                              query.offset, self.searchInPrivate)
         finally:
-            import traceback
             traceback.print_exc()
             cursor.close()
         return []
@@ -338,9 +338,23 @@ class AnonymousQuerier:
             cursor.close()
             self._cnx.commit()
         except:
-            import traceback
             traceback.print_exc()
             self._cnx.rollback()
+
+    def purgeOldResults(self):
+        """removes old records in the results table"""
+        tresholdDate = now() - ONE_HOUR
+        query = 'DELETE FROM results WHERE record_ts < %(treshold)s'
+        cursor = self._cnx.cursor()
+        try:
+            cursor.execute(query, {'treshold' : tresholdDate})
+        except:
+            traceback.print_exc()
+            cursor.close()
+            self._cnx.rollback()
+        else:
+            cursor.close()
+            self._cnx.commit()
         
 class MaayQuerier(AnonymousQuerier):
     """High-Level interface to Maay SQL database.

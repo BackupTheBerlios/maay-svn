@@ -376,6 +376,8 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
                                 self.query)
             self.queryId = p2pQuery.qid
             self.p2pQuery = p2pQuery
+            # purge old results
+            self.querier.purgeOldResults()
             self.querier.pushDocuments(self.queryId, results, provider=None)
             self.results = self.querier.getQueryResults(self.queryId, offset=0)
             
