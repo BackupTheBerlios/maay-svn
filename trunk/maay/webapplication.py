@@ -106,46 +106,49 @@ class PeersList(MaayPage):
             context.fillSlots(attrname, getattr(peerNode, attrname, 'N/A'))
         return context.tag
 
-class DownloadedDocs:
-    """manage automatic removal of locally downloaded
-       documents in a clunky way
-       note : tmpdirs should contain exactly one file
-              and last no longer than the file
-    """
+## class DownloadedDocs:
+##     """manage automatic removal of locally downloaded
+##        documents in a clunky way
+##        note : tmpdirs should contain exactly one file
+##               and last no longer than the file
+##     """
     
-    DIRS = {}
+##     DIRS = {}
 
-    def makeTmpDir():
-        tempdir = mkdtemp()
-        DownloadedDocs.DIRS[tempdir] = []
-        print "DownaloadedDocs makeTmpDir : created %s" % tempdir
-        return tempdir
-    makeTmpDir = staticmethod(makeTmpDir)
+##     def makeTmpDir():
+##         tempdir = mkdtemp()
+##         DownloadedDocs.DIRS[tempdir] = []
+##         print "DownaloadedDocs makeTmpDir : created %s" % tempdir
+##         return tempdir
+##     makeTmpDir = staticmethod(makeTmpDir)
 
-    def addFile(tempdir, thefile):
-        DownloadedDocs.DIRS[tempdir].append(thefile)
-        print "DownaloadedDocs makeTmpDir : added %s to %s" \
-              % (osp.basename(thefile), tempdir)
-        reactor.callLater(30, DownloadedDocs.cleanup)
-    addFile = staticmethod(addFile)
+##     def addFile(tempdir, thefile):
+##         DownloadedDocs.DIRS[tempdir].append(thefile)
+##         print "DownaloadedDocs makeTmpDir : added %s to %s" \
+##               % (osp.basename(thefile), tempdir)
+##         reactor.callLater(30, DownloadedDocs.cleanup)
+##     addFile = staticmethod(addFile)
 
-    def cleanup():
-        for tmpdir in DownloadedDocs.DIRS:
-            files = DownloadedDocs.DIRS[tmpdir]
-            for fil in files:
-                try:
-                    os.unlink(fil)
-                    print "DownloadedDocs cleanup : removing %s" % fil
-                except:
-                    import traceback
-                    traceback.print_exc()
-            try:
-                os.rmdir(tmpdir)
-                print "DownloadedDocs cleanup : removing %s" % tmpdir
-            except:
-                import traceback
-                traceback.print_exc()
-    cleanup = staticmethod(cleanup)
+##     def cleanup():
+##         for tmpdir in DownloadedDocs.DIRS:
+##             files = DownloadedDocs.DIRS[tmpdir]
+##             for fil in files:
+##                 try:
+##                     os.unlink(fil)
+##                     print "DownloadedDocs cleanup : removing %s" % fil
+##                 except:
+##                     import traceback
+##                     traceback.print_exc()
+##             try:
+##                 os.rmdir(tmpdir)
+##                 print "DownloadedDocs cleanup : removing %s" % tmpdir
+##             except:
+##                 import traceback
+##                 traceback.print_exc()
+##     cleanup = staticmethod(cleanup)
+
+_idxcfg = IndexerConfiguration()
+_idxcfg.load()
                     
 class SearchForm(MaayPage):
     """default search form"""
@@ -156,6 +159,7 @@ class SearchForm(MaayPage):
         MaayPage.__init__(self, maayId)
         self.querier = querier
         self.p2pquerier = p2pquerier
+        self.download_dir = _idxcfg.download_index_dir
         
     def logout(self):
         print "Bye %s !" % (self.maayId,)
@@ -186,15 +190,15 @@ class SearchForm(MaayPage):
     
     # XXX make sure that the requested document is really in the database
     # XXX don't forget to update the download statistics of the document
-    def child_download(self, context):
-        print "I HOPE WE NEVER GET THERE"
-        docid = context.arg('docid')
-        query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'))
-        docurl = self.querier.notifyDownload(docid, query.words)
-        if docurl:
-            return static.File(docurl)
-        else:
-            return Maay404()
+##     def child_download(self, context):
+##         print "I HOPE WE NEVER GET THERE"
+##         docid = context.arg('docid')
+##         query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'))
+##         docurl = self.querier.notifyDownload(docid, query.words)
+##         if docurl:
+##             return static.File(docurl)
+##         else:
+##             return Maay404()
 
     def child_distantfile(self, context):
         host = context.arg('host')
@@ -214,27 +218,21 @@ class SearchForm(MaayPage):
     def gotDataBack(self, rpcFriendlyData, filename):
         fileData = rpcFriendlyData.data
         print " ... downloaded !"
-        tmpdir = DownloadedDocs.makeTmpDir()
-        filepath = osp.join(tmpdir, filename)
+        filepath = osp.join(self.download_dir, filename)
         f=file(filepath,'wb')
         f.write(fileData)
         f.close()
-        return DistantFilePage(tmpdir, filepath)
+        return DistantFilePage(filepath)
 
     def onDownloadFileError(self, error, filename):
         msg = "Error while downloading file: %s" % (filename,)
         return Maay404(msg)
     
 class DistantFilePage(static.File):
-    def __init__(self, tmpdir, filepath):
+    def __init__(self, filepath):
         static.File.__init__(self, filepath)
-        self.tmpdir = tmpdir
         self.filepath = filepath
         
-    def __del__(self):
-        DownloadedDocs.addFile(self.tmpdir, self.filepath)
-    
-
 class IndexationPage(MaayPage):
     # just for the demo. Should be moved to a adminpanel interface later.
     """index page"""

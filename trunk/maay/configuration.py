@@ -252,7 +252,17 @@ class NodeConfiguration(Configuration):
                 continue
         raise ValueError('Unable to find a writable directory to store the node id')
 
-################ Indexer stuff 
+################ Indexer stuff
+
+    
+def _download_index_dir():
+    if sys.platform == 'win32':
+        theDir = "C:\Documents and Settings\All Users\Documents\MaayDownloads"
+    else:
+        theDir = osp.expanduser('~/maay-downloads/')
+    if not osp.exists(theDir):
+        os.makedirs(theDir)
+    return theDir
 
 class IndexerConfiguration(Configuration):
     options = Configuration.options + [
@@ -301,14 +311,19 @@ class IndexerConfiguration(Configuration):
           'help': 'index this directory with the public indexer',
           'default' : []
           }),
-         
         ('public-skip-dir',
          {'type': 'csv',
           'metavar': '<csv>', 'short': 'S',
           'help': 'the public indexer will skip this directory',
           'default' : []
           }),
-
+        ('download-index-dir',
+         {'type': 'string',
+          'metavar': '<downloads>',
+          'help': 'downloaded files will go there and be immediately indexed',
+          'default' : _download_index_dir()
+          }),
+        
         ('verbose',
          {'type': 'yn',
           'metavar': '<y or n>', 'short': 'v',
@@ -320,7 +335,7 @@ class IndexerConfiguration(Configuration):
           'help' : 'purge the set of indexed documents and returns immediately',
           'metavar' : '<y or n>',
           'default' : False,
-          }),
+          })
         ]
 
     config_file = 'indexer.ini'
