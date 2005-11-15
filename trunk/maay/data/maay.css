@@ -15,7 +15,9 @@ a.headlink {
   text-align: right;
 }
 
-
+img {
+  border:0px
+}
 
 /** footer ********/
 a.footlink {
