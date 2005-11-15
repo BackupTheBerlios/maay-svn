@@ -10,7 +10,6 @@ AppVerName=Maay-0.2
 DefaultDirName={pf}\Maay
 DefaultGroupName=Maay
 UninstallDisplayIcon={app}\maay_node.exe
-Compression=bzip
 SolidCompression=yes
 LicenseFile=COPYING
 ; Require 50 MB for the database files. We can tune this later.
@@ -30,6 +29,7 @@ Source: "maay\data\*.html"; DestDir: "{app}\data"
 Source: "maay\data\images\*.gif"; DestDir: "{app}\data\images"
 Source: "maay\data\images\*.png"; DestDir: "{app}\data\images"
 Source: "maay\data\images\*.ico"; DestDir: "{app}\data\images"
+Source: "maay\data\*.js"; DestDir: "{app}\data\"
 Source: "maay\sql\mysql.sql"; DestDir: "{app}"
 Source: "thirdparty\mysql\data\*"; DestDir: "{app}\mysql\data" ; Flags: recursesubdirs
 Source: "thirdparty\mysql\share\*"; DestDir: "{app}\mysql\share" ; Flags: recursesubdirs
@@ -39,12 +39,13 @@ Source: "thirdparty\mysql\bin\mysql.exe"; DestDir: "{app}\mysql\bin"
 Source: "thirdparty\antiword\*"; DestDir: "c:\antiword" ; Flags: recursesubdirs
 Source: "thirdparty\pdftohtml-0.36\*"; DestDir: "{app}\pdftohtml" ; Flags: recursesubdirs
 Source: "maay\configuration\win32\*.ini"; DestDir: "{app}"
-Source: "README.txt"; DestDir: "{app}"
+Source: "doc\README.html"; DestDir: "{app}\documentation"
+Source: "doc\default.css"; DestDir: "{app}\documentation"
 Source: "ChangeLog"; DestDir: "{app}"
 Source: "ReleaseNotes"; DestDir: "{app}"
 
 [Icons]
-Name: "{group}\README.txt"; Filename: "{app}\README.txt"; Comment: "Required reading before launching Maay"
+Name: "{group}\Documentation.html"; Filename: "{app}\documentation\README.html"; Comment: "Required reading before launching Maay"
 Name: "{group}\ReleaseNotes.txt"; Filename: "{app}\ReleaseNotes"; Comment: "Required reading before launching Maay"
 Name: "{group}\Maay Node"; Filename: "{app}\maay_node.exe"; WorkingDir: "{app}"; Comment: "The Maay node component"
 Name: "{group}\Maay Indexer"; Filename: "{app}\maay_indexer.exe"; WorkingDir: "{app}"; Comment: "The Maay indexer component"
@@ -57,18 +58,18 @@ Name: "{group}\image.ini"; Filename: "{app}\image.ini"; Comment: "Maay indexer c
 Filename: "{app}\mysql\bin\mysqld-max-nt.exe"; Parameters:"--install MySQL --defaults-file=""{app}\mysql\my-maay.ini"""; StatusMsg: "Registering MySQL as a service"; WorkingDir:"{app}\mysql"; Flags:runhidden
 Filename: "NET"; Parameters:"start MySQL"; StatusMsg: "Starting MySQL server"; WorkingDir:"{app}\mysql"; Flags:runhidden
 Filename: "{app}\createdb.exe"; StatusMsg: "Installing database"; WorkingDir:"{app}"; Flags:runhidden
-Filename: "{app}\updateconfig.exe"; Parameters:"""{userdesktop}"" ""{userdocs}"""; WorkingDir:"{app}"; Flags:runhidden
+Filename: "{app}\updateconfig.exe"; Parameters:"""{userdesktop}"" ""{userdocs}"""; WorkingDir:"{app}"; StatusMsg: "Auto configuration";
 Filename: "{app}\maay.exe"; Parameters:"-install"; StatusMsg: "Registering Maay as a service"; WorkingDir:"{app}"; Flags:runhidden
 Filename: "NET"; Parameters: "start Maay"; StatusMsg: "Starting Maay node"; Flags:runhidden
 ;Filename: "{app}\maay_node.exe"; StatusMsg: "Launching maay node"; WorkingDir:"{app}"; Flags:postinstall nowait
 
 
 [UninstallRun]
-Filename: "NET"; Parameters: "stop MySQL"; StatusMsg: "Stopping MySQL database"; Flags:runhidden
 Filename: "NET"; Parameters: "stop Maay"; StatusMsg: "Stopping Maay node"; Flags:runhidden
+Filename: "NET"; Parameters: "stop MySQL"; StatusMsg: "Stopping MySQL database"; Flags:runhidden
 Filename: "{app}\mysql\bin\mysqld-max-nt.exe"; Parameters:"--remove MySQL"; StatusMsg: "Unregistering MySQL as a service"; WorkingDir:"{app}\mysql"; Flags:runhidden
 Filename: "{app}\maay.exe"; Parameters:"-remove"; StatusMsg: "Unregistering Maay as a service"; WorkingDir:"{app}\mysql"; Flags:runhidden
 
 [UninstallDelete]
-Type: filesandordirs; Name: {app}\mysql\
+Type: filesandordirs; Name: {app}\mysql\data
 Type: files; Name: {app}\node_id
