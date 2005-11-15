@@ -89,7 +89,7 @@ def _filter_files_with(file_list, access_criterium):
 
 def _download_index_dir():
     if sys.platform == 'win32':
-        theDir = "C:\Documents and Settings\All Users\Documents\MaayDownloads"
+        theDir = osp.join(osp.expanduser('~'),'MaayDownloads')
     else:
         theDir = osp.expanduser('~/maay-downloads/')
     if not osp.exists(theDir):
@@ -117,10 +117,12 @@ class Configuration(BaseConfiguration):
         BaseConfiguration.__init__(self, options=self.options,
                                    config_file=self.config_file,
                                    name=name)
-        self.load_command_line_configuration()
-        self.config_name = self['config-name']
-
+        
     def load(self):
+        # line below to take early into account the config name var
+        self.load_command_line_configuration()
+
+        print "Configuration load %s" % self.config_name
         if self.config_file:
             for directory in self.get_config_dirs():
                 path = os.path.join(directory, self.config_file)
@@ -133,7 +135,6 @@ class Configuration(BaseConfiguration):
         if sys.platform == "win32": # XXX: fix Win32 with self.config_name attr
             return [os.path.normpath(os.path.join(_get_data_dir(), '..'))]
         else:
-            #XXX: should '.' really be an acceptable config dir ?
             return _filter_files_with([osp.join('/etc/', self.config_name),
                                        os.path.expanduser('~/.' + self.config_name),
                                        '.'],
