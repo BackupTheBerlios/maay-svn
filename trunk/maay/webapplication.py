@@ -277,13 +277,52 @@ class IndexationPage(MaayPage):
         return context.tag
 
 class ResultsPageMixIn:
-            
+
     def data_results(self, context, data):
         return self.results
     
     def macro_footer(self, context):
         return loaders.xmlfile(get_path_of('footer.html'))
 
+    def macro_prevnext(self, context):
+        return loaders.stan(
+          tags.invisible()[
+            tags.invisible(render=tags.directive("onFirstSlice"))[
+              tags.invisible(pattern="Previous")[
+                tags.a(href=tags.invisible(render=self.prevset_url))['Previous'],
+                tags.xml(" &nbsp; "),
+                ],
+              ],
+            tags.invisible(render=tags.directive("onLastSlice"))[
+              tags.a(pattern="Next", href=tags.invisible(render=self.nextset_url))['Next']
+            ],
+          ],
+        )
+
+    def render_onLastSlice(self, context, data):
+        """returns a specific pattern to tell if we're on last slice or not"""
+        q = inevow.IQ(context)
+        nextPattern = q.onePattern('Next')
+        localCount, distantCount = self.querier.countResults(self.queryId)
+        if self.onlyDistant:
+            resultsCount = distantCount
+        elif self.onlyLocal:
+            resultsCount = localCount
+        else:
+            resultsCount = localCount + distantCount
+        offset = self.query.offset
+        if (offset + 15) > resultsCount:
+            return context.tag().clear()
+        return nextPattern or context.tag().clear()
+
+    def render_onFirstSlice(self, context, data):
+        """returns a specific pattern to tell if we're on first slice or not"""
+        q = inevow.IQ(context)
+        falsePattern = q.onePattern('Previous')
+        if (self.query.offset <= 0):
+            return context.tag().clear()
+        return falsePattern or context.tag().clear()
+    
     def render_title(self, context, data):
         localCount, distantCount = self.querier.countResults(self.queryId)
         if self.onlyDistant:
@@ -295,7 +334,7 @@ class ResultsPageMixIn:
         offset = self.query.offset
         context.fillSlots('words', self.query.joinwords(' ')) #WORDS
         context.fillSlots('start_result', offset + 1)
-        context.fillSlots('end_result', min(resultsCount, offset+15))#self.offset + len(self.results))
+        context.fillSlots('end_result', min(resultsCount, offset+15))
         context.fillSlots('count', resultsCount)
         return context.tag
 
@@ -315,17 +354,14 @@ class ResultsPageMixIn:
         context.fillSlots('words', self.query.joinwords(' ')) #WORDS
         return context.tag
 
-    def render_prevset_url(self, context, data):
-        words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'), 'utf-8')))
-        offset = int(context.arg('offset', 0))
+    def nextset_url(self, context, data):
+        return 'javascript: browseResults(%s);' % (self.query.offset + 15,)
+
+    def prevset_url(self, context, data):
+        offset = self.query.offset
         if offset:
             offset -= 15
-        return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
-
-    def render_nextset_url(self, context, data):
-        words = WORDS_RGX.findall(normalizeText(unicode(context.arg('words'), 'utf-8')))
-        offset = int(context.arg('offset', 0)) + 15
-        return 'search?words=%s&offset=%s' % ('+'.join(words), offset)
+        return 'javascript: browseResults(%s);' % (offset,)
 
     def render_row(self, context, data):
         document = data
@@ -351,12 +387,6 @@ class ResultsPageMixIn:
         context.fillSlots('publication_date', date.strftime('%d %b %Y'))
         return context.tag
     
-class StaticResultsPage(MaayPage, ResultsPageMixIn):
-    bodyFactory = loaders.xmlfile(get_path_of('resultpage.html'))
-
-    def __init__(self, results):
-        self.results = results
-
 from nevow import athena, inevow
 from twisted.python import log
 
@@ -381,7 +411,6 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         self.onlyDistant = False
         # push local results once for all
         if len(inevow.IRemainingSegments(context)) < 2:
-            print "-=" * 40
             results = querier.findDocuments(self.query)
             webappConfig = INodeConfiguration(context)
             p2pQuery = P2pQuery(webappConfig.get_node_id(),
@@ -389,14 +418,15 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
                                 self.query)
             self.queryId = p2pQuery.qid
             self.p2pQuery = p2pQuery
-            self.results = results
-            # self.results = self.querier.getQueryResults(self.queryId, offset=0)
-            # self.querier.pushDocuments(self.queryId, self.results, provider=None)
-        
+            self.querier.pushDocuments(self.queryId, results, provider=None)
+            self.results = self.querier.getQueryResults(self.queryId, offset=0)
+            
     def onNewResults(self, provider, results):
         results = [Document(**params) for params in results]
         self.querier.pushDocuments(self.queryId, results, provider)
-        results = self.querier.getQueryResults(self.queryId, offset=self.query.offset, onlyLocal=self.onlyLocal, onlyDistant=self.onlyDistant) # XXX limit ?
+        results = self.querier.getQueryResults(self.queryId, offset=self.query.offset,
+                                               onlyLocal=self.onlyLocal,
+                                               onlyDistant=self.onlyDistant)
         page = PleaseCloseYourEyes(results, self.querier, self.query, self.queryId,
                                    self.onlyLocal, self.onlyDistant).renderSynchronously()
         page = unicode(page, 'utf-8')
@@ -407,12 +437,14 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         #TODO: very soon, the line below will also be the p2pquerier's job
         self.p2pquerier.sendQuery(self.p2pQuery)
         self.p2pquerier.addAnswerCallback(self.p2pQuery.qid, self.onNewResults)
-        self.querier.pushDocuments(self.queryId, self.results, provider=None)
+        # self.querier.pushDocuments(self.queryId, self.results, provider=None)
         return u''
     
     def remote_browseResults(self, context, offset):
         self.query.offset = offset
-        results = self.querier.getQueryResults(self.queryId, offset=offset, onlyLocal=self.onlyLocal, onlyDistant=self.onlyDistant) # XXX limit ?
+        results = self.querier.getQueryResults(self.queryId, offset=offset,
+                                               onlyLocal=self.onlyLocal,
+                                               onlyDistant=self.onlyDistant)
         page = PleaseCloseYourEyes(results, self.querier, self.query, self.queryId,
                                    self.onlyLocal, self.onlyDistant).renderSynchronously()
         page = unicode(page, 'utf-8')
@@ -421,16 +453,19 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
     def remote_setLocalFlag(self, context, flag):
         self.onlyLocal = flag
         self.onlyDistant = False
+        self.query.offset = 0
         return self.remote_browseResults(context, self.query.offset)
 
     def remote_setDistantFlag(self, context, flag):
         self.onlyDistant = flag
         self.onlyLocal = False
+        self.query.offset = 0
         return self.remote_browseResults(context, self.query.offset)
 
     def remote_unsetFlags(self, context):
         self.onlyDistant = False
         self.onlyLocal = False
+        self.query.offset = 0
         return self.remote_browseResults(context, self.query.offset)
     
 
@@ -442,6 +477,7 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     docFactory = loaders.xmlstr("""
   <div id="resultsDiv" xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1" >
    <div class="message" nevow:render="title">Results <b><nevow:slot name="start_result" /></b> - <b><nevow:slot name="end_result" /></b> of <b><nevow:slot name="count" /></b> for <b><nevow:slot name="words" /></b>.</div>
+    <div class="prevnext"><nevow:invisible nevow:macro="prevnext" /></div>
    <table>
      <tr>
        <td><div class="localPublicResult"><a href="javascript: onlyLocalResults();"><span nevow:render="localcount" /> local</a></div></td>
@@ -451,9 +487,6 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
        <td><a href="javascript: allResults();"><span nevow:render="totalcount" /> all</a></td>
      </tr>
    </table>
-   <div class="prevnext"><a><nevow:attr name="href"
-    nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
-    name="href" nevow:render="nextset_url"/>Next</a></div>
     <table class="results" nevow:render="sequence" nevow:data="results">
       <tr nevow:pattern="item" nevow:render="row">
         <td>
@@ -475,9 +508,7 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
         </td>
       </tr>
     </table>
-    <div class="prevnext"><a><nevow:attr name="href"
-    nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
-    name="href" nevow:render="nextset_url"/>Next</a></div>
+    <div class="prevnext"><nevow:invisible nevow:macro="prevnext" /></div>
     <nevow:invisble nevow:macro="footer" />
   </div>
     """)
@@ -499,7 +530,6 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     
     def render_row(self, context, data):
         document = data
-        print data
         ResultsPageMixIn.render_row(self, context, data)
         if document.host == 'localhost':
             baseurl = '/download?docid=%s' % (document.document_id,)

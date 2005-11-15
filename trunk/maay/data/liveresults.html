@@ -59,9 +59,7 @@ function allResults() {
    <a href="javascript: onlyDistantResults();"><span nevow:render="distantcount" /> distant results</a><br/>
    <a href="javascript: allResults();"><span nevow:render="totalcount" /> results</a><br/>
    <div class="message" nevow:render="title">Results <nevow:slot name="start_result" /> - <nevow:slot name="end_result" /> (<nevow:slot name="count" />) for <b><nevow:slot name="words" /></b>.</div>
-    <div class="prevnext"><a><nevow:attr name="href"
-    nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
-    name="href" nevow:render="nextset_url"/>Next</a></div>
+   <div class="prevnext"><nevow:invisible nevow:macro="prevnext" /></div>
     <table class="results" nevow:render="sequence" nevow:data="results">
       <tr nevow:pattern="item" nevow:render="row">
         <td>
@@ -73,10 +71,8 @@ function allResults() {
         </td>
       </tr>
     </table>
-    <div class="prevnext"><a><nevow:attr name="href"
-    nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
-    name="href" nevow:render="nextset_url"/>Next</a></div>
-    <nevow:invisble nevow:macro="footer" />
+    <div class="prevnext"><nevow:invisible nevow:macro="prevnext" /></div>
+    <nevow:invisible nevow:macro="footer" />
   </div>
  </body>
 </html>
