@@ -48,9 +48,9 @@ of them should be available in your OS distribution too :
 
  * logilab common libraries 0.12.1 or above (http://www.logilab.org/projects/common)
  * mysql-python (http://sourceforge.net/projects/mysql-python)
- * python-twisted 2.0 or above ((http://twistedmatrix.com/)
- * python-twisted-web (http://twistedmatrix.com/)
- * python-nevow 0.6 or above (http://nevow.com/) 
+ * python-twisted 2.0 or above ((http://twistedmatrix.com/projects/core/)
+ * python-twisted-web 0.5 or above (http://twistedmatrix.com/projects/web/)
+ * python-nevow 0.6 or above (http://divmod.org/projects/nevow) 
  * python-imaging (http://www.pythonware.com/products/pil/)
  * mxDatetime (http://www.egenix.com/files/python/mxDateTime.html)
 
@@ -82,7 +82,8 @@ store the indexation data::
  # mysql -u root mysql
  mysql> \. sql/mysql.sql
 
-You're done !
+You're done! See a bit further down in this document for how to start
+using Maay. 
 
 How do I install Maay from a package?
 =====================================
