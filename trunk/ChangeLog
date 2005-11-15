@@ -1,7 +1,14 @@
+Maay-0.2.0 2005-11-15
+	* Added P2P queries
+        * Added presence server
+        * Can launch indexation through web interface
+        * Maay node runs as a windows service
+        * Many bugfixes and improvements
+
 Maay-snapshot20051007 2005-10-07
-        * fixed a problem with db creation on windows
-        * fixed word converter PATH issue
-        * installer now offers to launche maay-server after installation
+        * Fixed a problem with db creation on windows
+        * Fixed word converter PATH issue
+        * Installer now offers to launche maay-server after installation
 
 Maay-snapshot20051006 2005-10-06
 	* Some bug fixes on Windows
