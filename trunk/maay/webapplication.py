@@ -35,7 +35,7 @@ from nevow import rend, tags, loaders
 from logilab.common.textutils import normalize_text
 
 from maay.querier import WEB_AVATARID
-from maay.configuration import get_path_of, NodeConfiguration
+from maay.configuration import get_path_of, NodeConfiguration, IndexerConfiguration
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
 from maay.query import Query
 from maay.p2pquerier import P2pQuerier, P2pQuery
@@ -225,7 +225,6 @@ class IndexationPage(MaayPage):
         if not self.indexerConfig.public_skip_dir:
             return ["No skipped public directory."]
         return self.indexerConfig.public_skip_dir
-
 
     def render_directory(self, context, name):
         print "directory = %s" % name
