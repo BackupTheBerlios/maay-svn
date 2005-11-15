@@ -56,6 +56,7 @@ user=maay
 password=maay
 presence-host=%(presence)s
 presence-port=%(port)d
+download-index-dir=%(download)s
 """
 import socket
 
@@ -72,7 +73,8 @@ def createConfigFile(myDesktop, myDocuments):
     f = open("node.ini", "w")
     presence, port = probe_presence_config()
     values = {'presence': presence,
-              'port': port}
+              'port': port,
+              'download': '%s\\Maay Documents\\downloaded' % myDesktop,}
     f.write(node_config % values)
     f.close()
 

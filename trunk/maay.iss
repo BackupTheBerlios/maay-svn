@@ -21,6 +21,7 @@ InfoAfterFile=README.txt
 
 [Dirs]
 Name: "{userdesktop}\Maay Documents";
+Name: "{userdesktop}\Maay Documents\downloaded";
 
 [Files]
 Source: "dist\*"; DestDir: "{app}"
