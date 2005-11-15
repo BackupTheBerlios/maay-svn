@@ -77,10 +77,14 @@ def createConfigFile(myDesktop, myDocuments):
     f.close()
 
 def probe_presence_config():
-    for addr in (('maay.rd.francetelecom.fr', 2345), # private FT server
-                 ('192.33.178.29', 2345), # public FT server
-                 ('172.17.1.4', 2345),    # private logilab server
-                 ('192.168.74.105', 2345),# private logilab server
+    default = ('192.33.178.29', 2345)
+    private_ft = ('maay.rd.francetelecom.fr', 2345)
+    crater = ('172.17.1.4', 2345)
+    jenkins = ('192.168.74.105', 2345)
+    for addr in (private_ft,
+                 default, # public FT server
+                 crater,    # private logilab server
+                 jenkins,# private logilab server
                  ):
         print 'probing', addr
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -90,8 +94,10 @@ def probe_presence_config():
         except socket.error, exc:
             continue
         else:
+            print "found presence server listening at %s:%d" % addr
             return addr
-    return '192.33.178.29', 2345
+    print "using default configuration: %s:%d" % default
+    return default
         
     
 if __name__ == '__main__':
