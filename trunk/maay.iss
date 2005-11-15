@@ -6,13 +6,13 @@
 
 [Setup]
 AppName=Maay
-AppVerName=Maay snapshot 2005-10-07
+AppVerName=Maay-0.2
 DefaultDirName={pf}\Maay
 DefaultGroupName=Maay
 UninstallDisplayIcon={app}\maay_node.exe
 Compression=bzip
 SolidCompression=yes
-LicenseFile=thirdparty\mysql\COPYING.txt
+LicenseFile=COPYING
 ; Require 50 MB for the database files. We can tune this later.
 ExtraDiskSpaceRequired=50000000
 ; Win9x is not supported

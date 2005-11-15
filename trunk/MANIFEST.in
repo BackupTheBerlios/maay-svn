@@ -1,3 +1,4 @@
+# revision: $Id$
 recursive-include maay/test/ *.py *.txt *.txt.bz2 *.txt.gz *.xml *.html *.ini
 recursive-include maay/data/ *.html *.css *.gif *.png *.jpg *.ico
 recursive-include maay/sql *.sql
