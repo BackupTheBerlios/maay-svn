@@ -15,6 +15,8 @@
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
 """ helper to create the indexer.ini configuration file at install time on windows"""
+
+__revision__ = '$Id$'
 import os
 import sys
 
@@ -51,8 +53,9 @@ db-host=localhost
 user=maay
 password=maay
 presence-host=%(presence)s
-presence-port=2345
+presence-port=%(port)d
 """
+import socket
 
 def createConfigFile(myDesktop, myDocuments):
     f=open("indexer.ini", "w")
@@ -65,12 +68,29 @@ def createConfigFile(myDesktop, myDocuments):
     f.close()
 
     f = open("node.ini", "w")
-    values = {'presence': get_presence_name()}
+    presence, port = probe_presence_config()
+    values = {'presence': presence,
+              'port': port}
     f.write(node_config % values)
     f.close()
 
-def get_presence_name():
-    for host in ('172.17.1.4', '192.168.74.105', )
+def probe_presence_config():
+    for addr in (('maay.rd.francetelecom.fr', 2345), # private FT server
+                 ('192.33.178.29', 2345), # public FT server
+                 ('172.17.1.4', 2345),    # private logilab server
+                 ('192.168.74.105', 2345),# private logilab server
+                 ):
+        print 'probing', addr
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.connect(addr)
+            s.close()
+        except socket.error, exc:
+            continue
+        else:
+            return addr
+    return '192.33.178.29', 2345
+        
     
 if __name__ == '__main__':
     createConfigFile(sys.argv[1], sys.argv[2])
