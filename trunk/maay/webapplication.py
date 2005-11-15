@@ -36,7 +36,7 @@ from nevow import rend, tags, loaders
 from logilab.common.textutils import normalize_text
 
 from maay.querier import WEB_AVATARID
-from maay.configuration import get_path_of, IndexerConfiguration
+from maay.configuration import get_path_of, NodeConfiguration
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
 from maay.query import Query
 from maay.p2pquerier import P2pQuerier, P2pQuery
@@ -72,7 +72,6 @@ class Maay404(MaayPage, rend.FourOhFour):
         self.msg = msg
 
     def render_errormsg(self, context, data):
-        print "Rendering error msg", self.msg
         return self.msg
     
     def renderHTTP_notFound(self, context):
@@ -106,7 +105,7 @@ class PeersList(MaayPage):
             context.fillSlots(attrname, getattr(peerNode, attrname, 'N/A'))
         return context.tag
 
-_idxcfg = IndexerConfiguration()
+_idxcfg = NodeConfiguration()
 _idxcfg.load()
                     
 class SearchForm(MaayPage):

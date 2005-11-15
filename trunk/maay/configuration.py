@@ -87,13 +87,30 @@ def _filter_files_with(file_list, access_criterium):
     return [file_obj for file_obj in file_list
             if os.access(file_obj, access_criterium)]
 
+def _download_index_dir():
+    if sys.platform == 'win32':
+        theDir = "C:\Documents and Settings\All Users\Documents\MaayDownloads"
+    else:
+        theDir = osp.expanduser('~/maay-downloads/')
+    if not osp.exists(theDir):
+        os.makedirs(theDir)
+    return theDir
+
 class Configuration(BaseConfiguration):
     options = [
         ('config-name',
          {'type' : "string", 'metavar' : "<config-name>", 'short' : "C",
          'help' : "allow to specify a config directory name",
           'default' : "maay",
-        })]
+        }),
+        ('download-index-dir',
+         {'type': 'string',
+          'metavar': '<downloads>',
+          'help': 'downloaded files will go there and be immediately indexed',
+          'default' : _download_index_dir()
+          })
+
+        ]
     config_file = None
 
     def __init__(self, name=None):
@@ -253,17 +270,7 @@ class NodeConfiguration(Configuration):
         raise ValueError('Unable to find a writable directory to store the node id')
 
 ################ Indexer stuff
-
     
-def _download_index_dir():
-    if sys.platform == 'win32':
-        theDir = "C:\Documents and Settings\All Users\Documents\MaayDownloads"
-    else:
-        theDir = osp.expanduser('~/maay-downloads/')
-    if not osp.exists(theDir):
-        os.makedirs(theDir)
-    return theDir
-
 class IndexerConfiguration(Configuration):
     options = Configuration.options + [
         ('host',
@@ -316,12 +323,6 @@ class IndexerConfiguration(Configuration):
           'metavar': '<csv>', 'short': 'S',
           'help': 'the public indexer will skip this directory',
           'default' : []
-          }),
-        ('download-index-dir',
-         {'type': 'string',
-          'metavar': '<downloads>',
-          'help': 'downloaded files will go there and be immediately indexed',
-          'default' : _download_index_dir()
           }),
         
         ('verbose',
