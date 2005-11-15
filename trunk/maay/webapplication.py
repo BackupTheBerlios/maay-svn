@@ -45,15 +45,6 @@ class INodeConfiguration(Interface):
     """provide an interface in order to be able to remember webappconfig"""
 
 
-class Maay404(rend.FourOhFour):
-    """Maay specific resource for 404 errors"""
-    loader = loaders.xmlfile(get_path_of('notfound.html'))
-
-    def renderHTTP_notFound(self, context):
-        """Render a not found message to the given request.
-        """
-        return self.loader.load(context)[0]
-
 class MaayPage(rend.Page):
     docFactory = loaders.xmlfile(get_path_of('skeleton.html'))
     child_maaycss = static.File(get_path_of('maay.css'))
@@ -68,6 +59,26 @@ class MaayPage(rend.Page):
 
     def macro_footer(self, context):
         return loaders.xmlfile(get_path_of('footer.html'))
+
+class Maay404(MaayPage, rend.FourOhFour):
+    """Maay specific resource for 404 errors"""
+    # loader = loaders.xmlfile(get_path_of('notfound.html'))
+    bodyFactory = loaders.xmlfile(get_path_of('notfound.html'))
+    
+    def __init__(self, msg="Sorry, I could not find the requested resource."):
+        MaayPage.__init__(self)
+        self.msg = msg
+
+    def render_errormsg(self, context, data):
+        print "Rendering error msg", self.msg
+        return self.msg
+    
+    def renderHTTP_notFound(self, context):
+        """Render a not found message to the given request.
+        """
+        # XXX little trick (extends MaayPage, etc.)
+        return self.renderString(context)
+        # return self.loader.load(context)[0]
 
 class PeersList(MaayPage):
     """display list of registered peers"""
@@ -194,10 +205,11 @@ class SearchForm(MaayPage):
         print "SearchForm distantfile"
         proxy = Proxy('http://%s:%s' % (host, port))
         d = proxy.callRemote('downloadFile', docid, words)
-        d.addCallback(self.foo, filename)
+        d.addCallback(self.gotDataBack, filename)
+        d.addErrback(self.onDownloadFileError, filename)
         return d
 
-    def foo(self, rpcFriendlyData, filename):
+    def gotDataBack(self, rpcFriendlyData, filename):
         fileData = rpcFriendlyData.data
         print " ... downloaded !"
         tmpdir = DownloadedDocs.makeTmpDir()
@@ -207,6 +219,10 @@ class SearchForm(MaayPage):
         f.close()
         return DistantFilePage(tmpdir, filepath)
 
+    def onDownloadFileError(self, error, filename):
+        msg = "Error while downloading file: %s" % (filename,)
+        return Maay404(msg)
+    
 class DistantFilePage(static.File):
     def __init__(self, tmpdir, filepath):
         static.File.__init__(self, filepath)
@@ -268,13 +284,30 @@ class ResultsPageMixIn:
 
     def render_title(self, context, data):
         localCount, distantCount = self.querier.countResults(self.queryId)
-        resultsCount = localCount + distantCount
+        if self.onlyDistant:
+            resultsCount = distantCount
+        elif self.onlyLocal:
+            resultsCount = localCount
+        else:
+            resultsCount = localCount + distantCount
         offset = self.query.offset
         context.fillSlots('words', self.query.joinwords(' ')) #WORDS
         context.fillSlots('start_result', offset + 1)
         context.fillSlots('end_result', min(resultsCount, offset+15))#self.offset + len(self.results))
         context.fillSlots('count', resultsCount)
         return context.tag
+
+    def render_localcount(self, context, data):
+        localCount, _ = self.querier.countResults(self.queryId)
+        return localCount
+
+    def render_distantcount(self, context, data):
+        _, distantCount = self.querier.countResults(self.queryId)
+        return distantCount
+
+    def render_totalcount(self, context, data):
+        localCount, distantCount = self.querier.countResults(self.queryId)
+        return localCount + distantCount
 
     def render_searchfield(self, context, data):
         context.fillSlots('words', self.query.joinwords(' ')) #WORDS
@@ -342,21 +375,28 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         self.p2pquerier = p2pquerier
         self.query = Query.fromContext(context)
         self.offset = self.query.offset
-        self.results = querier.findDocuments(self.query)
-        webappConfig = INodeConfiguration(context)
-        p2pQuery = P2pQuery(webappConfig.get_node_id(),
-                            webappConfig.rpcserver_port,
-                            self.query)
-        self.queryId = p2pQuery.qid
-        self.p2pQuery = p2pQuery
+        self.onlyLocal = False
+        self.onlyDistant = False
         # push local results once for all
-        self.querier.pushDocuments(self.queryId, self.results, provider=None)
+        if len(inevow.IRemainingSegments(context)) < 2:
+            print "-=" * 40
+            results = querier.findDocuments(self.query)
+            webappConfig = INodeConfiguration(context)
+            p2pQuery = P2pQuery(webappConfig.get_node_id(),
+                                webappConfig.rpcserver_port,
+                                self.query)
+            self.queryId = p2pQuery.qid
+            self.p2pQuery = p2pQuery
+            self.results = results
+            # self.results = self.querier.getQueryResults(self.queryId, offset=0)
+            # self.querier.pushDocuments(self.queryId, self.results, provider=None)
         
     def onNewResults(self, provider, results):
         results = [Document(**params) for params in results]
         self.querier.pushDocuments(self.queryId, results, provider)
-        results = self.querier.getQueryResults(self.queryId, offset=self.query.offset) # XXX limit ?
-        page = PleaseCloseYourEyes(results, self.querier, self.query, self.queryId).renderSynchronously()
+        results = self.querier.getQueryResults(self.queryId, offset=self.query.offset, onlyLocal=self.onlyLocal, onlyDistant=self.onlyDistant) # XXX limit ?
+        page = PleaseCloseYourEyes(results, self.querier, self.query, self.queryId,
+                                   self.onlyLocal, self.onlyDistant).renderSynchronously()
         page = unicode(page, 'utf-8')
         self.callRemote('updateResults', page)
 
@@ -367,13 +407,30 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         self.p2pquerier.addAnswerCallback(self.p2pQuery.qid, self.onNewResults)
         self.querier.pushDocuments(self.queryId, self.results, provider=None)
         return u''
-
+    
     def remote_browseResults(self, context, offset):
         self.query.offset = offset
-        results = self.querier.getQueryResults(self.queryId, offset=offset) # XXX limit ?
-        page = PleaseCloseYourEyes(results, self.querier, self.query, self.queryId).renderSynchronously()
+        results = self.querier.getQueryResults(self.queryId, offset=offset, onlyLocal=self.onlyLocal, onlyDistant=self.onlyDistant) # XXX limit ?
+        page = PleaseCloseYourEyes(results, self.querier, self.query, self.queryId,
+                                   self.onlyLocal, self.onlyDistant).renderSynchronously()
         page = unicode(page, 'utf-8')
         return page
+
+    def remote_setLocalFlag(self, context, flag):
+        self.onlyLocal = flag
+        self.onlyDistant = False
+        return self.remote_browseResults(context, self.query.offset)
+
+    def remote_setDistantFlag(self, context, flag):
+        self.onlyDistant = flag
+        self.onlyLocal = False
+        return self.remote_browseResults(context, self.query.offset)
+
+    def remote_unsetFlags(self, context):
+        self.onlyDistant = False
+        self.onlyLocal = False
+        return self.remote_browseResults(context, self.query.offset)
+    
 
 class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     """This resource and the way it is called is kind of ugly.
@@ -382,7 +439,10 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     """
     docFactory = loaders.xmlstr("""
   <div id="resultsDiv" xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1" >
-   <div class="message" nevow:render="title">Results <nevow:slot name="start_result" /> - <nevow:slot name="end_result" /> of <nevow:slot name="count" /> for <b><nevow:slot name="words" /></b>.</div>
+   <a href="javascript: onlyLocalResults();"><span nevow:render="localcount" /> local results</a><br/>
+   <a href="javascript: onlyDistantResults();"><span nevow:render="distantcount" /> distant results</a><br/>
+   <a href="javascript: allResults();"><span nevow:render="totalcount" /> results</a><br/>
+   <div class="message" nevow:render="title">Results <b><nevow:slot name="start_result" /></b> - <b><nevow:slot name="end_result" /></b> of <b><nevow:slot name="count" /></b> for <b><nevow:slot name="words" /></b>.</div>
    <div class="prevnext"><a><nevow:attr name="href"
     nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
     name="href" nevow:render="nextset_url"/>Next</a></div>
@@ -413,11 +473,14 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
   </div>
     """)
     
-    def __init__(self, results, querier, query, queryId):
+    def __init__(self, results, querier, query, queryId,
+                 onlyLocal=False, onlyDistant=False):
         self.results = results
         self.querier = querier
         self.query = query
         self.queryId = queryId
+        self.onlyLocal = onlyLocal
+        self.onlyDistant = onlyDistant
 
     def render_peer(self, context, data):
         """:type data: Result"""
