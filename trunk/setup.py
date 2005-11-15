@@ -50,11 +50,11 @@ maay_indexer = Target(description = "The maay indexer application (CLI)",
 			    script = 'maay/indexer.py',
 			    dest_base = "maay_indexer")
 createdb = Target(description = "Database creation utility",
-			    script = 'maay/createdb.py',
+			    script = 'maay/win23/createdb.py',
 			    dest_base = "createdb")
 
 updateConfig = Target(description = "Configuration update program",
-			    script = 'maay/updateconfig.py',
+			    script = 'maay/win32/updateconfig.py',
 			    dest_base = "updateconfig")
 
 maay_service = Target(description = "The Maay service",
