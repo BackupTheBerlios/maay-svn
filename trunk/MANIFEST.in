@@ -6,4 +6,5 @@ include maay/bin/maay-server
 include maay/bin/maay-indexer
 include ReleaseNotes
 include ChangeLog
+include COPYING
 recursive-include  doc/ *.html *.css
