@@ -51,7 +51,8 @@ of them should be available in your OS distribution too :
  * python-twisted 2.0 or above ((http://twistedmatrix.com/)
  * python-twisted-web (http://twistedmatrix.com/)
  * python-nevow 0.6 or above (http://nevow.com/) 
- * python-imaging (www.pythonware.com/products/pil/)
+ * python-imaging (http://www.pythonware.com/products/pil/)
+ * mxDatetime (http://www.egenix.com/files/python/mxDateTime.html)
 
 You will also need a few helper applications to perform the conversion
 of various binary formats to something that Maay can index. There is
@@ -62,12 +63,12 @@ somewhere. You will need to download and install :
  * antiword (http://www.winfield.demon.nl/)
  * unrtf (http://www.gnu.org/software/unrtf/unrtf.html)
 
-The indexation part uses a MySQL database (version 4.1). You
-will need to install such a database or get in touch with your
-DBA. The following assumes a local mysql installation, with no root
-password. Maay has not been tested with MySQL 5.0, but it should
-work. Please report if you encounter problems with this version of
-MySQL. 
+The indexation part uses a MySQL database, version 4.1
+(http://www.mysql.org/). You will need to install such a database or
+get in touch with your DBA. The following assumes a local mysql
+installation, with no root password. Maay has not been tested with
+MySQL 5.0, but it should work. Please report if you encounter problems
+with this version of MySQL.
 
 Once everything else is installed, you can point you web browser to
 http://developer.berlios.de/projects/maay/ and download the latest
@@ -126,7 +127,6 @@ Where can I get help?
 
 For now the best place to ask for help is on the development mailing
 list of Maay. You can subscribe from
-
 http://lists.berlios.de/mailman/listinfo/maay-dev
 
 You may also use the bug tracker on the Berlios project page at 
