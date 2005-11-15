@@ -17,6 +17,9 @@
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 """ helper to create the maay mysql instance on windows platform"""
+
+__revision__ = '$Id$'
+
 import os
 
 def do_delete():

@@ -19,6 +19,8 @@
 
 """querier test cases"""
 
+__revision__ = '$Id$'
+
 import unittest
 from mimetypes import guess_type
 

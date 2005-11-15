@@ -19,6 +19,7 @@
 
 """unit tests for Text and HTML parsers"""
 
+__revision__ = '$Id$'
 
 
 import unittest

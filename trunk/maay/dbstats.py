@@ -18,7 +18,10 @@
 #     License along with this library; if not, write to the Free Software
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-"""Helper script to display how many rows are stored in the various maay tables on localhost"""
+"""Helper script to display how many rows are stored in the various
+maay tables on localhost"""
+
+__revision__ = '$Id$'
 
 from MySQLdb import connect
 from pylab import hist, show

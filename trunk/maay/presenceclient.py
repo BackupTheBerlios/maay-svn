@@ -16,6 +16,8 @@
 #     License along with this library; if not, write to the Free Software
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+__revision__ = '$Id$'
+
 from twisted.internet import reactor
 from twisted.internet.protocol import ClientCreator
 from twisted.protocols.basic import LineReceiver

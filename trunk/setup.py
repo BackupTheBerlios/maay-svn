@@ -18,12 +18,13 @@
 
 
 __revision__ = "$Id$"
+
 from distutils.core import setup
 import sys
 from glob import glob
 
 version = '0.2.0'
-author = "France Telecom R&D and Logilab"
+author = "France Telecom R&D"
 author_email = "maay-dev@lists.berlios.de"
 copyright = "Copyright (c)2004-2005 France Telecom R&D"
 description = "a network of peers for document search"
@@ -31,7 +32,7 @@ name = "Maay"
 url = "http://maay.netofpeers.net/"
 packages = ['maay']
 data_files = [('maay/data', glob('maay/data/*')+glob('maay/data/images/*')),
-                  ('maay/sql', glob('maay/sql/*.sql')),]
+              ('maay/sql', glob('maay/sql/*.sql')),]
 scripts = ['maay/bin/maay-node', 'maay/bin/maay-indexer']
 
 
@@ -74,7 +75,7 @@ if sys.platform == 'win32':
 		description = description,
 		author = author,
                 author_email = author_email,
-		copyright = copyright,
+#		copyright = copyright,
 		url = url
                 )
 

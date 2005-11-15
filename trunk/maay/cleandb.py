@@ -20,6 +20,7 @@
 """Utility script to clean the database. This forces full reindexation
 on the following indexer run
 """
+__revision__ = '$Id$'
 
 from maay.indexer import IndexerConfiguration
 from logilab.common.db import get_dbapi_compliant_module

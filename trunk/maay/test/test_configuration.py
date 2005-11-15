@@ -18,6 +18,8 @@
 
 """small unit tests for Configuration class"""
 
+__revision__ = '$Id$'
+
 import unittest
 import sys
 import os

@@ -19,6 +19,7 @@
 """this module provides a simple document abstraction"""
 
 __revision__ = '$Id$'
+
 __all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore',
            'Word', 'Node', 'NodeInterest', 'Result']
 

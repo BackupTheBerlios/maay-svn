@@ -19,7 +19,7 @@
 
 "querier test cases"""
 
-__revision__ = ''
+__revision__ = '$Id$'
 
 import unittest
 import sha

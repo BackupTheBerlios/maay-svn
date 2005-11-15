@@ -19,7 +19,7 @@
 
 """maay local web UI script"""
 
-__revision__ = '$Id: server.py 281 2005-11-03 11:00:56Z aurelienc $'
+__revision__ = '$Id$'
 
 from datetime import datetime
 #from xmlrpclib import ServerProxy

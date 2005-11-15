@@ -25,7 +25,7 @@ Protocol is XMLRPC, which provides :
 - to the peers : [distributedQuery, distributedQueryAnswer]               
 """
 
-__revision__ = ''
+__revision__ = '$Id$'
 
 from time import time
 from random import randint
