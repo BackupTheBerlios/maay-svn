@@ -1,10 +1,14 @@
-Release Notes for version 0.2.0
+Release Notes for version 0.2.1
 
 See README.txt for installation and quick start instructions. 
 
-This release is beta-level software. There are known problems 
-with the web interface when accessed through Microsoft Internet 
-Explorer. Using Firefox or Mozilla should work fine. 
+This release is beta-level software, which contains several bug fixes
+and improvements over 0.2.0. 
+
+There may be some problems with the web interface when accessed
+through Microsoft Internet Explorer. Please give some feedback on
+using Maay with this web browser.  Using Firefox or Mozilla should
+work fine.
 
 The windows installer will install and set up all the required
 dependencies (including mysql and twisted). It uses Inno Setup and
