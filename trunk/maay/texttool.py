@@ -440,9 +440,10 @@ def makeAbstract(text, words):
     EXCERPT_MAX_HALF_LEN = EXCERPT_MAX_LEN / 2
 
     if not excerptPositions:
-        if text_length >= 200:
+        if text_length > 200:
             end = 200
-            while text[end].isalpha(): end -= 1
+            while text[end].isalpha():
+                end -= 1
             return text[:end] + " <b>...</b>"
         else:
             return text

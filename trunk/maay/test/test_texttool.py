@@ -229,6 +229,12 @@ class AbstractTC(unittest.TestCase):
         expected = ' <b>...</b>  Inc., 51 Franklin St, Fifth Floor, <b>Boston</b>, MA  02110-1301 USA'
         self.assertEquals(expected, abstract)
 
+    def testLength200AndUnknownWord(self):
+        try:
+            abstract = makeAbstract(self.text[:200], [u'tralala'])
+        except IndexError:
+            self.fail('bug #5648 is present')
+
 
 if __name__ == '__main__':
     unittest.main()
