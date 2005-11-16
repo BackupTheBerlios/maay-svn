@@ -217,7 +217,7 @@ class IndexationPage(MaayPage):
         return self.indexerConfig.private_skip_dir
 
     def data_indexedpublicdirectories(self, context, data):
-        if not self.indexerConfig.private_skip_dir:
+        if not self.indexerConfig.public_index_dir:
             return ["No indexed public directory."]
         return self.indexerConfig.public_index_dir
 
@@ -318,6 +318,7 @@ class ResultsPageMixIn:
         context.fillSlots('readable_size', document.readable_size())
         date = datetime.fromtimestamp(document.publication_time)
         context.fillSlots('publication_date', date.strftime('%d %b %Y'))
+        context.fillSlots('resultClass', "localPublicResult")
         return context.tag
     
 from nevow import athena, inevow
