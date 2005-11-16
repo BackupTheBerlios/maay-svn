@@ -23,7 +23,7 @@ from distutils.core import setup
 import sys
 from glob import glob
 
-version = '0.2.0'
+version = '0.2.1'
 author = "France Telecom R&D"
 author_email = "maay-dev@lists.berlios.de"
 copyright = "Copyright (c)2004-2005 France Telecom R&D"
