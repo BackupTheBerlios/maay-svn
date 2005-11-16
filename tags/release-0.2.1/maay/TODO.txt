@@ -1,0 +1,36 @@
+* Tasks
+
+#B   _ trouver d'où viennent les string index out of range côté serveur (2005.09.30)
+#B   X permettre le téléchargement d'un document (2005.09.29)
+#B   _ Faire marcher le P2P (2005.09.30)
+#B   _ ajouter d'autres convertisseurs (XML, code source) (2005.09.30)
+#B   X traiter les changements d'état des fichiers indexés (en particulier suppression) (2005.09.27)
+#B   X Faire fonctionner le xmlrpc avec utf-8 (2005.09.27)
+#B   X vérifier qu'on utilise de l'UTF-8 partout (2005.09.27)
+#B   X gérer les documents compressés (2005.09.28)
+#B   X Regarder la conversion pdf->html (2005.09.28)
+#B   X utiliser des macros pour gérer l'aspect commun de toutes les pages (2005.10.18)
+#B   _ s'assurer qu'on gère correctement les child_* des différentes ressources (2005.10.18)
+
+* Notes
+
+* What's Next
+
+ - "le serveur d'enregistrement" est un serveur de présence (vocabulaire)
+ - autologin (<=> ne travailler qu'en mode loggé)
+ - GC des noeuds morts (ping ? heartbeats ? etc.)
+ - serveur de présence ne doit être utilisé qu'à l'amorçage. Chaque
+   noeud maintient ensuite à jour sa liste de voisins
+ - Désinstalleur windows
+ - Ne pas mettre dans le wizzard d'installation de question du genre
+   "où souhaitez vous installer Maay ?"
+ - Par défaut : private-index-dir : $HOME, public-index-dir : $HOME/Desktop/MaayPublic
+ - Dans le cadre de la recherche P2P, on cherche partout (local et distribué), mais sur
+   la page de résultats, on doit voir apparaître les informations suivantes :
+
+     * Deux liens : "X résultats locaux", "Y résultats distants" qui amènent respectivement
+       sur une liste de résutlat exclusivement locaux et distants.
+     * Un indicateur visuel pour chaque résultat qui permet de savoir que c'est un
+       résultat distant, et de qui ça vient.
+
+

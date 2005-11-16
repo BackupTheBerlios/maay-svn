@@ -1,0 +1,111 @@
+body,td,div,.p,a{font-family:arial,sans-serif }
+
+h1 { font-family: arial,helvetica; font-size: 12pt; color: #000000; font-weight:bold }
+h2 {  font-family: Arial, Helvetica, sans-serif; font-size: 12pt; font-style:italic ; font-weight: bold ; color: #444444}
+h3 {  font-family: Arial, Helvetica, sans-serif; font-size: 10pt; font-weight: bold; color: #888888}
+
+/** login page ********/
+table.loginTable {
+  width: 100%;
+}
+
+/** search page *******/
+input.searchButton {
+  background: #FFF0FF;
+  border: 1px outset #ff2222;
+  margin: 5px 10px 5px 0px;
+}
+
+table.searchHome {
+  width: 100%;
+  text-align: center;
+}
+
+div.resultItem {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+div.resultDesc {
+  /* display: block; */
+  font-size: 90%;
+  font-family: "New Century Schoolbook", serif;
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 80%;
+}
+
+a.docTitle {
+  display: block;
+}
+
+span.resultUrl {
+  font-size: 80%;
+  font-family: "New Century Schoolbook", serif;
+  color: green;
+  text-decoration: none;
+}
+
+div.prevnext {
+  width: 100%;
+  font-size: 80%;
+}
+
+div.prevnext a {
+  font-size: 110%;
+  font-weight: bold;
+  color: blue;
+}
+
+table.peersTable {
+  margin-top: 20px;
+  width: 100%;
+  border: 1px solid black;
+}
+
+table.peersTable th {
+  border-bottom: 1px dotted grey;
+  text-align: left;
+  margin: 0px;
+}
+
+table.peersTable td.nodeId {
+  background: lightgrey;
+}
+
+image{
+  border: 0px;
+}
+
+div.sort {
+  font-size: 60%;
+  text-align: right;
+}
+
+/** icon *******/
+div.text_html {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/html_icon.png);
+}
+
+div.text_plain {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/txt_icon.png);
+}
+
+div.text_x-python {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/python_icon.png);
+}

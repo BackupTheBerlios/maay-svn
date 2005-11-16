@@ -1,0 +1,24 @@
+Release Notes for snapshot 2005-10-06
+
+This release is a development snapshot, it is not as tested as an 
+official release, and is only provided as a convenience to our users. 
+Expect the application to crash.
+
+Known problems: the Microsoft Word document converter does not work on Windows.
+
+Refer to previous release notes below.
+
+-----------------------------------------------------------
+Release Notes for version 0.1.0
+
+See README.txt for installation and quick start instructions. 
+
+This release is alpha-level software. We support local indexation and
+search, and no P2P features are yet available.
+
+The windows installer will install and set up all the required
+dependencies (including mysql and twisted). It uses Inno Setup and
+Py2exe.
+
+
+

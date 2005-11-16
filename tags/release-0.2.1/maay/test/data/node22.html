@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<link rel="STYLESHEET" href="whatsnew23.css" type='text/css'>
+<link rel="SHORTCUT ICON" href="../icons/pyfav.gif">
+<link rel='start' href='../index.html' title='Python Documentation Index'>
+<link rel="first" href="whatsnew23.html" title='What's New in Python 2.3'>
+<link rel='contents' href='contents.html' title="Contents">
+<link rel='last' href='about.html' title='About this document...'>
+<link rel='help' href='about.html' title='About this document...'>
+<LINK REL="next" href="acks.html">
+<LINK REL="prev" href="section-other.html">
+<LINK REL="parent" HREF="whatsnew23.html">
+<LINK REL="next" href="acks.html">
+<meta name='aesop' content='information'>
+<META NAME="description" CONTENT="Porting to Python 2.3">
+<META NAME="keywords" CONTENT="whatsnew23">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+<title>21 Porting to Python 2.3</title>
+</head>
+<body>
+<DIV CLASS="navigation">
+<table align="center" width="100%" cellpadding="0" cellspacing="2">
+<tr>
+<td><a rel="prev" title="20 Other Changes and" 
+  href="section-other.html"><img src='../icons/previous.gif'
+  border='0' height='32'  alt='Previous Page' width='32'></A></td>
+<td><a rel="parent" title="What's New in Python" 
+  HREF="whatsnew23.html"><img src='../icons/up.gif'
+  border='0' height='32'  alt='Up One Level' width='32'></A></td>
+<td><a rel="next" title="22 Acknowledgements" 
+  href="acks.html"><img src='../icons/next.gif'
+  border='0' height='32'  alt='Next Page' width='32'></A></td>
+<td align="center" width="100%">What's New in Python 2.3</td>
+<td><a rel="contents" title="Table of Contents" 
+  href="contents.html"><img src='../icons/contents.gif'
+  border='0' height='32'  alt='Contents' width='32'></A></td>
+<td><img src='../icons/blank.gif'
+  border='0' height='32'  alt='' width='32'></td>
+</tr></table>
+<b class="navlabel">Previous:</b>
+<a class="sectref" rel="prev" href="section-other.html">20 Other Changes and</A>
+<b class="navlabel">Up:</b>
+<a class="sectref" rel="parent" HREF="whatsnew23.html">What's New in Python</A>
+<b class="navlabel">Next:</b>
+<a class="sectref" rel="next" href="acks.html">22 Acknowledgements</A>
+<br><hr>
+</DIV>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION0002200000000000000000">
+21 Porting to Python 2.3</A>
+</H1>
+
+<P>
+This section lists previously described changes that may require
+changes to your code:
+
+<P>
+
+<UL>
+<LI><tt class="keyword">yield</tt> is now always a keyword; if it's used as a
+variable name in your code, a different name must be chosen.
+
+<P>
+</LI>
+<LI>For strings <var>X</var> and <var>Y</var>, <code><var>X</var> in <var>Y</var></code> now works
+if <var>X</var> is more than one character long.
+
+<P>
+</LI>
+<LI>The <tt class="function">int()</tt> type constructor will now return a long
+integer instead of raising an <tt class="exception">OverflowError</tt> when a string
+or floating-point number is too large to fit into an integer.
+
+<P>
+</LI>
+<LI>If you have Unicode strings that contain 8-bit characters, you
+must declare the file's encoding (UTF-8, Latin-1, or whatever) by
+adding a comment to the top of the file.  See
+section&nbsp;<A href="section-encodings.html#section-encodings">3</A> for more information.
+
+<P>
+</LI>
+<LI>Calling Tcl methods through <tt class="module">_tkinter</tt> no longer 
+returns only strings. Instead, if Tcl returns other objects those
+objects are converted to their Python equivalent, if one exists, or
+wrapped with a <tt class="class">_tkinter.Tcl_Obj</tt> object if no Python equivalent
+exists.
+
+<P>
+</LI>
+<LI>Large octal and hex literals such as
+<code>0xffffffff</code> now trigger a <tt class="exception">FutureWarning</tt>. Currently
+they're stored as 32-bit numbers and result in a negative value, but
+in Python 2.4 they'll become positive long integers. 
+
+<P>
+There are a few ways to fix this warning.  If you really need a
+positive number, just add an "<tt class="samp">L</tt>" to the end of the literal.  If
+you're trying to get a 32-bit integer with low bits set and have
+previously used an expression such as <code>~(1 &lt;&lt; 31)</code>,
+it's probably
+clearest to start with all bits set and clear the desired upper bits.
+For example, to clear just the top bit (bit 31), you could write
+<code>0xffffffffL &amp;~(1L&lt;&lt;31)</code>.
+
+<P>
+</LI>
+<LI>You can no longer disable assertions by assigning to <code>__debug__</code>.
+
+<P>
+</LI>
+<LI>The Distutils <tt class="function">setup()</tt> function has gained various new
+keyword arguments such as <var>depends</var>.  Old versions of the
+Distutils will abort if passed unknown keywords.  A solution is to check
+for the presence of the new <tt class="function">get_distutil_options()</tt> function
+in your <span class="file">setup.py</span> and only uses the new keywords
+with a version of the Distutils that supports them:
+
+<P>
+<div class="verbatim"><pre>
+from distutils import core
+
+kw = {'sources': 'foo.c', ...}
+if hasattr(core, 'get_distutil_options'):
+    kw['depends'] = ['foo.h']
+ext = Extension(**kw)
+</pre></div>
+
+<P>
+</LI>
+<LI>Using <code>None</code> as a variable name will now result in a
+<tt class="exception">SyntaxWarning</tt> warning.
+
+<P>
+</LI>
+<LI>Names of extension types defined by the modules included with
+Python now contain the module and a "<tt class="character">.</tt>" in front of the type
+name.
+
+<P>
+</LI>
+</UL>
+
+<P>
+
+<DIV CLASS="navigation">
+<p><hr>
+<table align="center" width="100%" cellpadding="0" cellspacing="2">
+<tr>
+<td><a rel="prev" title="20 Other Changes and" 
+  rel="prev" title="20 Other Changes and" 
+  href="section-other.html"><img src='../icons/previous.gif'
+  border='0' height='32'  alt='Previous Page' width='32'></A></td>
+<td><a rel="parent" title="What's New in Python" 
+  rel="parent" title="What's New in Python" 
+  HREF="whatsnew23.html"><img src='../icons/up.gif'
+  border='0' height='32'  alt='Up One Level' width='32'></A></td>
+<td><a rel="next" title="22 Acknowledgements" 
+  rel="next" title="22 Acknowledgements" 
+  href="acks.html"><img src='../icons/next.gif'
+  border='0' height='32'  alt='Next Page' width='32'></A></td>
+<td align="center" width="100%">What's New in Python 2.3</td>
+<td><a rel="contents" title="Table of Contents" 
+  rel="contents" title="Table of Contents" 
+  href="contents.html"><img src='../icons/contents.gif'
+  border='0' height='32'  alt='Contents' width='32'></A></td>
+<td><img src='../icons/blank.gif'
+  border='0' height='32'  alt='' width='32'></td>
+</tr></table>
+<b class="navlabel">Previous:</b>
+<a class="sectref" rel="prev" href="section-other.html">20 Other Changes and</A>
+<b class="navlabel">Up:</b>
+<a class="sectref" rel="parent" HREF="whatsnew23.html">What's New in Python</A>
+<b class="navlabel">Next:</b>
+<a class="sectref" rel="next" href="acks.html">22 Acknowledgements</A>
+<hr>
+<span class="release-info">Release 1.01.</span>
+</DIV>
+<!--End of Navigation Panel-->
+<ADDRESS>
+See <i><a href="about.html">About this document...</a></i> for information on suggesting changes.
+</ADDRESS>
+</BODY>
+</HTML>
