@@ -121,8 +121,6 @@ class Configuration(BaseConfiguration):
     def load(self):
         # line below to take early into account the config name var
         self.load_command_line_configuration()
-
-        print "Configuration load %s" % self.config_name
         if self.config_file:
             for directory in self.get_config_dirs():
                 path = os.path.join(directory, self.config_file)
