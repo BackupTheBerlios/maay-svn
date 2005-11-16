@@ -37,7 +37,7 @@ Source: "thirdparty\mysql\share\*"; DestDir: "{app}\mysql\share" ; Flags: recurs
 Source: "thirdparty\mysql\bin\mysqlshutdown.exe"; DestDir: "{app}\mysql\bin"
 Source: "thirdparty\mysql\bin\mysqld-max-nt.exe"; DestDir: "{app}\mysql\bin"
 Source: "thirdparty\mysql\bin\mysql.exe"; DestDir: "{app}\mysql\bin"
-Source: "thirdparty\antiword\*"; DestDir: "c:\antiword" ; Flags: recursesubdirs
+Source: "thirdparty\antiword\*"; DestDir: "\antiword" ; Flags: recursesubdirs
 Source: "thirdparty\pdftohtml-0.36\*"; DestDir: "{app}\pdftohtml" ; Flags: recursesubdirs
 Source: "maay\configuration\win32\*.ini"; DestDir: "{app}"
 Source: "doc\README.html"; DestDir: "{app}\documentation"

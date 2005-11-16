@@ -60,7 +60,7 @@ def _update_env_path(maay_dir):
     path = []
     if os.environ.get('PATH'):
         path.append(os.environ.get('PATH'))
-    for directory in (u'pdftohtml', os.path.join(u'mysql', u'bin'), ur'c:\antiword'):
+    for directory in (u'pdftohtml', os.path.join(u'mysql', u'bin'), ur'\antiword'):
         if path and directory not in path[0]:
             path.append(os.path.join(maay_dir, directory))
     os.environ['PATH'] =  os.pathsep.join(path)
@@ -70,7 +70,7 @@ def _update_env_path(maay_dir):
 ## def XXX_update_env_path(maay_dir):
 ##     assert sys.platform == 'win32', 'This method must not be called on non windows platforms'
 ##     path = os.environ.get('PATH', '').split(os.pathsep)
-##     for otherPath in (u'pdftohtml', os.path.join(u'mysql', u'bin'), ur'c:\antiword'):
+##     for otherPath in (u'pdftohtml', os.path.join(u'mysql', u'bin'), ur'\antiword'):
 ##         if otherPath not in path:
 ##             path.append(os.path.join(maay_dir, otherPath))
 ##     os.environ['PATH'] = os.pathsep.join(path)
