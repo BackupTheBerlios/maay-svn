@@ -21,14 +21,9 @@
 __revision__ = '$Id$'
 
 import stat, os, os.path as osp
+import sys
 
-try:
-    import Image
-except:
-    print "Python Imaging Library not installed for your version of Python.",
-    print "Thumbnail support will not work."
-
-import os.path as osp
+import Image
 
 ############# Thumbnail bizness
 
@@ -50,6 +45,39 @@ def make_thumbnail(file_path, target_dir, size=128):
 
 
 ############## EXIF stuff
+from maay.configuration import ImageConfiguration as ImConfig
+from maay.texttool import AbstractParser
+
+class ExifParser(AbstractParser):
+    """A parser for Exif information found in image files"""
+
+    def __init__(self):
+        self.thumbnails_dir = None
+
+    def get_thumbnails_dir(self):
+        if not self.thumbnails_dir:
+            self.thumbnails_dir = ImConfig().get_thumbnails_dir()
+        return self.thumbnails_dir
+
+    def parseFile(self, filepath, pristineFilename, encoding=None):
+        """returns a 4-uple (title, normalized_text, links, offset)
+        TODO: port original code from htmltotext
+        :param encoding: if None, then need to be guessed
+        """
+        title = unicode(pristineFilename, sys.getfilesystemencoding())
+        try:
+            result = 'EXIF : ' + get_ustring_from_exif(filepath)
+##             try:
+##                 thumb = make_thumbnail(filepath, self.get_thumbnails_dir())
+##             except Exception, e:
+##                 print "Can't make thumbnail. Cause : %s" % e
+##                 traceback.print_exc()
+##                 thumb = None
+##             return title, result, [thumb], 0
+            return title, result, [], 0
+        except Exception, e:
+            print "No EXIF nor thumbnails. Cause : %s" % e
+        return title, u'No EXIF information available', [], 0
 
 # Mapping from number to (descriptor, type)
 exif_dict = {

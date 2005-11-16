@@ -50,7 +50,7 @@ from tempfile import mkdtemp
 import gzip
 import bz2
 
-from maay.texttool import TextParser, ExifParser, MaayHTMLParser as HTMLParser, ParsingError
+from maay.texttool import TextParser, MaayHTMLParser as HTMLParser, ParsingError
 
 # REGISTRY is a mimetype / converterList map
 REGISTRY = {}
@@ -123,15 +123,20 @@ class HTMLConverter(BaseConverter):
     def getParser(self):
         return HTMLParser() # This is really MaayHTMLParser from texttool
 
-class ImageConverter(BaseConverter):
-    """provides base Image converter
-       In the future, it may hold EXIF information retrieval methods"""
-    OUTPUT_TYPE = 'image'
-    MIME_TYPES = ('image/jpeg','image/png', 'image/x-xpixmap')
+try:
+    from maay.image import ExifParser
+    class ImageConverter(BaseConverter):
+        """provides base Image converter
+           In the future, it may hold EXIF information retrieval methods"""
+        OUTPUT_TYPE = 'image'
+        MIME_TYPES = ('image/jpeg','image/png', 'image/x-xpixmap')
 
-    def getParser(self):
-        return ExifParser()
-
+        def getParser(self):
+            return ExifParser()
+except ImportError:
+    print "Python Imaging Library not installed for your version of Python.",
+    print "Thumbnail support will not work."
+    
 
 def uncompressFile(filepath, outputDir):
     """returns a filepath for the same, uncompressed, file
