@@ -27,8 +27,9 @@ __metaclass__ = type
 import time
 from mx.DateTime import now, DateTimeDelta
 import traceback
-from math import sqrt, log
+from math import sqrt, log as mathlog
 
+from twisted.python import log
 from zope.interface import Interface, implements
 
 from logilab.common.db import get_dbapi_compliant_module
@@ -284,7 +285,12 @@ class AnonymousQuerier:
 
     def registerNodeActivity(self, nodeId):
         cursor = self._cnx.cursor()
-        node = Node.selectWhere(cursor, node_id=nodeId)[0]
+        nodes = Node.selectWhere(cursor, node_id=nodeId)
+        if nodes:
+            node = nodes[0]
+        else:
+            log.debug('No matching node found for id {%s}' % nodeId,
+                      category='[warning]')
         node.last_seen_time = int(time.time())
         node.commit(cursor, update=True)
         cursor.close()
@@ -496,4 +502,4 @@ class MaayQuerier(AnonymousQuerier):
         return doc
 
 def hoeffding_deviation(occurence, confidence=0.9):
-     return sqrt(-log(confidence / 2) / (2 * occurence))
+     return sqrt(-mathlog(confidence / 2) / (2 * occurence))
