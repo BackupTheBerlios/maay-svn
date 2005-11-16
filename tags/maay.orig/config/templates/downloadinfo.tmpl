@@ -1,0 +1,68 @@
+#set global $title="Téléchargement"
+#include "config/templates/includes/header.tmpl"
+
+#set global $selected_top_menu_id=$constants.DOWNLOAD_MENU_ID
+#include "config/templates/includes/top_menus.tmpl"
+
+#set $document_id = $download.getDocumentID()
+#set $documentInfo = $database.getDocumentInfo($document_id)
+
+  <table width=100% bgcolor=#3366cc>
+    <tr>
+  	  <td valign=center><font color=#ffffff>Téléchargement en cours de <b>$documentInfo.title</b></font>
+	  </td>
+	</tr>
+  </table>
+  <br>
+  Le document apparaîtra lorsque le téléchargement sera fini.<br>
+  ID du document : <a href="/maay/documentinfo?did=$document_id">$document_id</a><br>
+  Etat : $download.getStateStr()<br>
+  Transferré: $download.getTransferred() bytes /  $documentInfo.size bytes<br>
+  <br>
+
+#set $providers = $download.getProviders()
+#if $len(providers) > 0
+
+## display providers list
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+	  <td align=center>ID</td>
+	  <td align=center>IP</td>
+	  <td align=center nowrap>Port</td>
+	  <td align=center nowrap>Etat</td>
+	</tr>
+
+#set $providers = $download.getProviders()
+#for $provider in $providers
+    <tr bgcolor=#ffffff>
+	  <td><a href="/maay/nodeinfo?nid=$provider.node_id">$provider.node_id</a></td>
+	  <td>$provider.ip</td>
+	  <td>$provider.port</td>
+	  <td>$provider.getStateStr()</td>
+	</tr>
+#end for
+	</table>
+    <br>
+#end if
+Cette page se rafraichit automatiquement pour afficher l'état courant du téléchargement. Si ce n'est pas le cas, <a href="/maay/document?did=$document_id&qid=$query_id">cliquez ici</a>, pour forcer le rafraichissement.
+  <br>
+  Vous pouvez annuler le téléchargement en <a href=/maay/canceldownload?did=$document_id>cliquant ici</a>.
+
+  <script language="javascript">
+  	// <!--
+		function beginDownload()
+		{
+			document.location.href="/maay/document?did=$document_id&qid=$query_id"
+		}
+
+		function waitDownload()
+		{
+		   setTimeout('beginDownload();', 3000);
+	       return 1;
+		}
+		window.onLoad=waitDownload();
+	// -->
+  </script>
+
+
+#include "config/templates/includes/footer.tmpl"

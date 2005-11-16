@@ -1,0 +1,39 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#: win32maayservice.py:34 win32maayservice.py:43
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-02-25 14:36+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid ""
+"\r\n"
+"  Maay windows service\r\n"
+msgstr ""
+
+#: win32maayservice.py:71
+msgid "win32maayservice.exe"
+msgstr ""
+
+#: win32maayservice.py:71
+msgid "--interactive"
+msgstr ""
+
+#: win32maayservice.py:71
+msgid "install"
+msgstr ""
+
+#: win32maayservice.py:81
+msgid "__main__"
+msgstr ""

@@ -1,0 +1,50 @@
+#set global $title="Configuration sécurité"
+#include "config/templates/includes/header.tmpl"
+
+#set global $selected_top_menu_id=$constants.PREFERENCES_MENU_ID
+#include "config/templates/includes/top_menus.tmpl"
+
+#set global $selected_pref_menu_id=$constants.SECURITY_PREFERENCE_MENU_ID
+#include "config/templates/includes/preferences_header.tmpl"
+
+<h1>Règles d'accès</h1>
+<form action="/maay/prefsecurity">
+#set $c=""
+#if $remoteAccess 
+#set $c="checked"
+#end if
+  <input type="checkbox" name="remoteaccess" $c > Accès distant (avec authentication par mot de passe)<br>
+#set $c=""
+#if $localAuthentification
+#set $c="checked"
+#end if
+  <input type="checkbox" name="localauth" $c > Authentication locale<br>
+  <input type="submit" name="changesetting" value="Modification des règles d'accès">
+</form>
+<h1>Compte utilisateur</h1>
+Vous pouvez modifier le login ainsi que le password du compte.
+<form action="/maay/prefsecurity">
+<table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=1>
+  <tr bgcolor="#ffffff">
+    <td>Login</td><td><input type="text" name="login" value="$login" size="10"></td>
+  </tr>
+  <tr bgcolor="#ffffff">
+    <td>Mot de passe</td><td><input type="password" name="password" size="10"></td>
+  </tr>
+  <tr bgcolor="#ffffff">
+    <td>Nouveau login</td><td><input type="text" name="newlogin" size="10"></td>
+  </tr>
+  <tr bgcolor="#ffffff">
+    <td>Nouveau mot de passe</td><td><input type="password" name="newpassword1" size="10"></td>
+  </tr>
+  <tr bgcolor="#ffffff">
+    <td>Nouveau mot de passe (vérification)</td><td><input type="password" name="newpassword2" size="10"></td>
+  </tr>
+  <tr bgcolor="#ffffff"><td colspan=2 align=right><input type="submit" name="changeauth" value="Modification du compte"></td></tr>
+      </table>
+</form>
+  Par défaut, le login et le mot de passe sont "maay".
+
+#include "config/templates/includes/preferences_footer.tmpl"
+
+#include "config/templates/includes/footer.tmpl"

@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <title>Maayify page at $documentInfo.title</title>
+    <link href="/css/style.css" rel=stylesheet type="text/css">
+  </head>
+    <body onLoad="window.focus();window.raise();">
+<form>
+<table>
+<tr><td>Titre</td><td>$documentInfo.title</td></tr>
+<tr><td>IDentifiant du document</td><td>$documentInfo.document_id</td></tr>
+<tr><td>Mots clés</td><td><input type="text" name="keywords" size="80">
+<br><font class=small><i>écrire les mots clés séparés par un espace. i.e. search engine</i></font></td></tr>
+<tr><td colspan=2><input type="submit" name="maayify" value="Annoter cette page"></td>
+</table>
+<input type="hidden" name="did" size="80" value="$documentInfo.document_id">
+</form>
+</body>
+</html>
+

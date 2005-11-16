@@ -1,0 +1,44 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Maay\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: 2005-02-25 15:04+0100\n"
+"Last-Translator: Frederic DANG NGOC <frederic.dangngoc@rd.francetelecom.com>\n"
+"Language-Team: France Telecom R&D Division\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: French\n"
+"X-Poedit-Country: France\n"
+"X-Poedit-SourceCharset: iso-8859-1\n"
+
+msgid "Searches"
+msgstr "Recherches"
+
+msgid "Documents"
+msgstr "Documents"
+
+msgid "Downloads"
+msgstr "Téléchargements"
+
+msgid "Neighbors"
+msgstr "Voisins"
+
+msgid "Words"
+msgstr "Mots"
+
+msgid "System"
+msgstr "Système"
+
+msgid "Preferences"
+msgstr "Préférences"
+
+msgid "Help"
+msgstr "Aide"
+
+msgid "Logout"
+msgstr "Se déconnecter"
+
+msgid "Logs"
+msgstr "Traces"
+

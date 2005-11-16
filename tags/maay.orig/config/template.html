@@ -1,0 +1,1573 @@
+
+<!--< rem 						COMMON TEMPLATE								>-->
+<!--< rem																	>-->
+
+<!--< begin header >-->
+<html>
+  <head>
+    <title><!--< value HTML_TITLE_PREFIX >--> - <!--< value title >--></title>
+    <link href="/css/style.css" rel=stylesheet type="text/css">
+  </head>
+  <body>
+<!--< end header >-->
+
+<!--< begin menu_header >-->
+  <table width=100% cellpadding=1 cellspacing=1 bgcolor="#000000">
+  <tr>
+  <td>
+  <table cellpadding=1 cellspacing=1 bgcolor="#444444">
+    <tr>
+	  <td align=center bgcolor=#000000 width="80"><img src=/images/smallmaay.png></td>
+<!--< end menu_header >-->
+
+<!--< begin menu_unselected >-->
+	  <td align=center bgcolor=#000000 width="80" onClick="parent.location='<!--< value path >-->'" style=cursor:pointer;cursor:hand;><a href="<!--< value path >-->" class="w"><!--< value label >--></a></td>
+<!--< end menu_unselected >-->
+
+<!--< begin menu_selected >-->
+	  <td align=center bgcolor=#228822 width="80" onClick="parent.location='<!--< value path >-->'" style=cursor:pointer;cursor:hand;><a href="<!--< value path >-->" class="ws"><!--< value label >--></a></td>
+<!--< end menu_selected >-->
+
+<!--< begin menu_footer >-->
+	</tr>
+  </table>
+  </td>
+  </tr>
+  </table>
+  <table width=100% cellpadding=10>
+  <tr>
+  <td>
+<!--< end menu_footer >-->
+
+
+
+<!--< begin footer >-->
+  </td>
+  </tr>
+  </table>
+  </body>
+</html>
+<!--< end footer >-->
+
+<!--< rem																	>-->
+<!--< rem					SEARCH PAGE TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin searchbar_header >-->
+
+<script language="javascript">
+<!--
+function mailpage(title, did)
+{
+ 	body = 'Je te recommande cette page : ' + title + '.\r\n'
+ 	+ 'Tu peux le télécharger à l\'URL suivante :\r\nhttp://<!--< value ip >-->:<!--< value port >-->/maay/remotedownload?did=' + did + '\r\n';
+
+ location.href =
+ 	'mailto:?subject=page recommandée:' + escape(title)
+ 	+ '&body=' + escape(body)
+}
+
+function maayify(document_id)
+{
+javascript:window.open('http://127.0.0.1:6446/maay/maayify?did='+document_id, 'Maayify this page', 'toolbar=no,width=600,height=250');w.raise();w.focus();
+}
+
+//-->
+<!--
+ 	+ 'Tu peux le telecharger en <a href="http://<!--< value ip >-->:<!--< value port >-->/maay/document?did=' + did
+ 	-->
+
+</script>
+    <table cellspacing=0 cellpadding=0 border=0 width=100%>
+      <tr height=19>
+        <td width=100><!--< value SEARCH_TAB_SEARCH >-->:&nbsp;</td>
+<!--< end searchbar_header >-->
+
+<!--< begin searchtab_selected >-->
+        <td bgcolor=<!--< value color >--> valign=center nowrap onClick="document.location='/maay/closeresultspool?qid=<!--< value queryID >-->';return false;" style=cursor:pointer;cursor:hand;>
+          &nbsp;<a href='/maay/closeresultspool?qid=<!--< value queryID >-->'><img src='/images/x.png' border=0 align=absbottom title="close <!--< value queryStr >-->"></a>
+        </td>
+        <td bgcolor=<!--< value color >--> valign=center nowrap onClick="document.location='/maay/resultspool?qid=<!--< value queryID >-->';return false;" style=cursor:pointer;cursor:hand;>
+          &nbsp;<a class=q href=/maay/resultspool?qid=<!--< value queryID >-->>
+            <font color=#ffffff><b><!--< value queryStr >-->&nbsp;</b>(<!--< value resultCount >-->)</font>
+          </a>&nbsp;
+        </td>
+        <td width=15>&nbsp;</td>
+<!--< end searchtab_selected >-->
+
+<!--< begin searchtab_unselected >-->
+        <td bgcolor=<!--< value lightColor >--> valign=center nowrap onClick="document.location='/maay/closeresultspool?qid=<!--< value queryID >-->';return false;" style=cursor:pointer;cursor:hand;>
+          &nbsp;<a href="/maay/closeresultspool?qid=<!--< value queryID >-->"><img src='/images/x.png' border=0 align=absbottom alt="close <!--< value queryStr >-->"></a>
+        </td>
+        <td bgcolor=<!--< value lightColor >--> valign=center nowrap onClick="document.location='/maay/resultspool?qid=<!--< value queryID >-->';return false;" style=cursor:pointer;cursor:hand;>
+          &nbsp;<a class=q href="/maay/resultspool?qid=<!--< value queryID >-->"><font color=<!--< value color >-->>
+            <!--< value queryStr >-->&nbsp; (<!--< value resultCount >-->)</font>
+          </a>&nbsp;
+        </td>
+        <td width=15>&nbsp;</td>
+<!--< end searchtab_unselected >-->
+
+<!--< begin searchbar_footer >-->
+<td width=100%>&nbsp;</td>
+      </tr>
+      <tr>
+        <td colspan="<!--< value colspan >-->" height="1" bgcolor="<!--< value color >-->"></td>
+      </tr>
+	  <tr>
+	    <td colspan="<!--< value colspan >-->">
+  	      <table width=100% bgcolor="<!--< value lightColor >-->">
+		    <tr bgcolor="<!--< value lightColor >-->">
+				<td>
+				<table>
+				<tr><td><font size="+1"><!--< value range >-->:</font></td><!--< value filters >-->
+				</tr></table>
+</td>
+              <td align="right" valign="top"><!--< value SEARCH_RESULTS >--> <b><!--< value startResult >--></b> - <b><!--< value endResult >--></b> <!--< value SEARCH_RESULTS_OF >--> <b><!--< value resultCount >--></b>.</td>
+	       </tr>
+		   <tr>
+		     <td colspan=2 align="left">
+			   <table width=100%>
+			   <tr>
+			   <td>
+<!--< value SEARCH_RESULTS_SEARCH_DONE_ON >--><b><!--< value time >--></b> <!--< value SEARCH_RESULTS_FOR >--> <b><!--< value query >--></b>
+		       <br>
+		       <a href="/maay/search?qid=<!--< value queryID >-->" class=s><!--< value SEARCH_RELAUNCH >--></a>
+			   </td>
+			   <td align=right align=bottom>
+			                  <!--< value SEARCH_RESULTS_SORTED_BY >--> : <a href="/maay/resultspool?qid=<!--< value queryID >-->&s=0&r=<!--< value searchRange >-->" class=s><!--< value SEARCH_RESULTS_SORTED_RELEVANCE >--></a>
+							                 &nbsp;<a href="/maay/resultspool?qid=<!--< value queryID >-->&s=1&r=<!--< value searchRange >-->" class=s><!--< value SEARCH_RESULTS_SORTED_DATE >--></a>
+			   </td>
+			 </td>
+		   </tr>
+		  </table>
+	    </td>
+	  </tr>
+    </table>
+<!--< end searchbar_footer >-->
+
+<!--< begin searchbar_filetypefilter >-->
+<table bgcolor="#cccccc" width="100%">
+<tr>
+<td>Afficher (non fonctionnel): <a href="">Tout</a> - <a href="">Documents textes</a> - <a href="">Documents multimédias</a> - <a href="">Archives</a></td>
+</tr>
+</table>
+<!--< end searchbar_filetypefilter >-->
+
+<!--< begin searchbar_filter_unselected >-->
+<td><table><tr><td bgcolor=<!--< value color >-->><img height=10 width=10 border=0></td></tr></table></td><td><a href="/maay/resultspool?qid=<!--< value queryID >-->&r=<!--< value searchRange >-->" class="biggray"><!--< value searchResultCount >--> <!--< value searchRangeName >--></a></td>
+<!--< end searchbar_filter_unselected >-->
+
+<!--< begin searchbar_filter_disabled >-->
+<td><table><tr><td bgcolor=<!--< value color >-->><img height=10 width=10 border=0></td></tr></table></td><td><font class="biggray"><!--< value searchResultCount >--> <!--< value searchRangeName >--></font></td>
+<!--< end searchbar_filter_disabled >-->
+
+<!--< begin searchbar_filter_selected >-->
+<td><table><tr><td bgcolor=<!--< value color >-->><img height=10 width=10 border=0></td></tr></table></td><td><font class="bigblack"><!--< value searchResultCount >--> <!--< value searchRangeName >--></font></td>
+<!--< end searchbar_filter_selected >-->
+
+
+<!--< begin searchresultpage_header >-->
+<center>
+<table>
+  <tr>
+    <td valign=bottom><!--< value RESULT_PAGE_SEARCH >--></td>
+<!--< end searchresultpage_header >-->
+
+<!--< begin searchresultpage_left0 >-->
+    <td valign=top align=right><img src="/images/m___.png"></td>
+<!--< end searchresultpage_left0 >-->
+
+<!--< begin searchresultpage_left >-->
+    <td valign=top align=right><a href="/maay/resultspool?qid=<!--< value queryID >-->&p=<!--< value page >-->&r=<!--< value searchRange >-->"><img src="/images/previous.png" border=0><img src="/images/m___.png" border=0><br><b><!--< value SEARCH_RESULTS_PREVIOUS_PAGE >--></b></a></td>
+<!--< end searchresultpage_left >-->
+
+<!--< begin searchresultpage_bar0 >-->
+    <td valign=top align=center><img src="/images/_a__.png"><br><font color=red><b><!--< value page >--></b></font></td>
+<!--< end searchresultpage_bar0 >-->
+
+<!--< begin searchresultpage_bar1 >-->
+    <td valign=top align=center><a href="/maay/resultspool?qid=<!--< value queryID >-->&p=<!--< value page >-->&r=<!--< value searchRange >-->"><img src="/images/__a_.png" border=0><br><!--< value page >--></td>
+<!--< end searchresultpage_bar1 >-->
+
+<!--< begin searchresultpage_right0 >-->
+    <td valign=top align=left><img src="/images/___y.png"></td>
+<!--< end searchresultpage_right0 >-->
+
+<!--< begin searchresultpage_right >-->
+    <td valign=top align=left><a href="/maay/resultspool?qid=<!--< value queryID >-->&p=<!--< value page >-->&r=<!--< value searchRange >-->"><img src="/images/___y.png" border=0><img src="/images/next.png" border=0><br><b><!--< value SEARCH_RESULTS_NEXT_PAGE >--></b></a></td>
+<!--< end searchresultpage_right >-->
+
+<!--< begin searchresultpage_footer >-->
+  </tr>
+</table>
+</center>
+<!--< end searchresultpage_footer >-->
+
+<!--< begin searchform >-->
+  <form action="search">
+  <center>
+  <table>
+  	<tr>
+  	<td align=right>
+  	<a href="/maay/resultspool?sm=1"><font class="verysmall" align=right><!--< value SEARCH_ADVANCED_MODE >--> &gt;&gt;</font></a>
+  	</td>
+  	</tr>
+
+    <tr>
+      <td align=center><!--< value SEARCH_FORM_SEARCH >-->
+	  <input type="text" name="q" size=30 value="<!--< value query >-->">
+	<!--< value SEARCH_FORM_FOR >-->
+    <select name="r">
+      <option value=10>10</option>
+      <option value=20>20</option>
+      <option value=50>50</option>
+      <option value=100>100</option>
+    </select>
+    <!--< value SEARCH_FORM_RESULTS >-->
+	</td>
+	</tr>
+	<tr>
+	<td align=center>
+    <input type="submit" name="desktopsearch" value="<!--< value SEARCH_BUTTON_DESKTOP_SEARCH >-->" style="background-color: <!--< value DESKTOP_SEARCH_COLOR >-->;color:white">
+    <input type="submit" name="maaysearch" value="<!--< value SEARCH_BUTTON_MAAY_SEARCH >-->" style="background-color: <!--< value MAAY_SEARCH_COLOR >-->;color:white">
+    <input type="submit" name="intranetsearch" value="<!--< value SEARCH_BUTTON_INTRANET_SEARCH >-->" style="background-color: <!--< value INTRANET_SEARCH_COLOR >-->;color:white">
+    <input type="submit" name="googlesearch" value="<!--< value SEARCH_BUTTON_INTERNET_SEARCH >-->" style="background-color: <!--< value INTERNET_SEARCH_COLOR >-->;color:white">
+	</td>
+	</tr>
+
+	</table>
+	</center>
+	<br>
+  </form>
+<!--< end searchform >-->
+
+
+<!--< begin searchform_advanced >-->
+  <form action="search">
+  <center>
+  <table>
+  	<tr>
+  	<td align=right colspan=4>
+  	<a href="/maay/resultspool?sm=0"><font class="verysmall" align=right><!--< value SEARCH_NORMAL_MODE >--> &lt;&lt;</font></a>
+  	</td>
+  	</tr>
+
+    <tr>
+      <td rowspan=3 valign=top><!--< value SEARCH_FORM_SEARCH >--></td>
+      <td valign=top><!--< value SEARCH_FORM_BY_WORDS >--></td><td><input type="text" name="q" size=40 value="<!--< value wordsQuery >-->"></td>
+      <td rowspan=3 valign=top><!--< value SEARCH_FORM_FOR >-->
+    	<select name="r">
+      	  <option value=10>10</option>
+	      <option value=20>20</option>
+          <option value=50>50</option>
+	      <option value=100>100</option>
+	    </select>
+	    <!--< value SEARCH_FORM_RESULTS >-->
+      </td>
+    </tr>
+    <tr>
+      <td valign=top><!--< value SEARCH_FORM_BY_DOCUMENT_ID >--></td><td><input type="text" name="did"  value="<!--< value documentIDQuery >-->" size=40><br><font class="verysmall"><i>e.g. 7694a66420cf9fe06ee049570885c27fe961b926</i><br>This feature does not work on Intranet and Internet Search</font></td>
+    </tr>
+    <tr>
+      <td valign=top><!--< value SEARCH_FORM_BY_URL >--></td><td><input type="text" name="url"  value="<!--< value urlQuery >-->" size=40><br><font class="verysmall"><i>e.g. http://maay.rd.francetelecom.fr/maay/</i></font></td>
+	</tr>
+
+	<tr>
+	<td colspan=4 align=center>
+    <input type="submit" name="desktopsearch" value="<!--< value SEARCH_BUTTON_DESKTOP_SEARCH >-->" style="background-color: <!--< value DESKTOP_SEARCH_COLOR >-->;color:white">
+    <input type="submit" name="maaysearch" value="<!--< value SEARCH_BUTTON_MAAY_SEARCH >-->" style="background-color: <!--< value MAAY_SEARCH_COLOR >-->;color:white">
+    <input type="submit" name="intranetsearch" value="<!--< value SEARCH_BUTTON_INTRANET_SEARCH >-->" style="background-color: <!--< value INTRANET_SEARCH_COLOR >-->;color:white">
+    <input type="submit" name="googlesearch" value="<!--< value SEARCH_BUTTON_INTERNET_SEARCH >-->" style="background-color: <!--< value INTERNET_SEARCH_COLOR >-->;color:white">
+	</td>
+	</tr>
+	</table>
+	</center>
+	<br>
+  </form>
+
+<!--< end searchform_advanced >-->
+
+<!--< begin searchdesktopresult_header >-->
+<a href="/maay/search?q=<!--< value query >-->&desktopsearch=t"><!--< value resultCount >--> results stored on your computer</a>
+<table>
+  <tr>
+    <td width=30>&nbsp;</td>
+    <td>
+<!--< end searchdesktopresult_header >-->
+
+<!--< begin searchdesktopresult_footer >-->
+    </td>
+  </tr>
+</table>
+<!--< end searchdesktopresult_footer >-->
+
+
+<!--< begin searchresult >-->
+  <table width=600 border=0 cellspacing=0 cellpadding = 0>
+    <tr>
+	  <td rowspan=2 bgcolor="<!--< value color >-->" width=4>&nbsp;</td>
+	  <td rowspan=2 width=10>&nbsp;</td>
+	  <td>
+  		<!--< value searchresulticon >--><a href="/maay/document?did=<!--< value documentID >-->&qid=<!--< value queryID >-->"><!--< value title >--></a><br>
+	  </td>
+    </tr>
+    <tr>
+	  <td>
+	  <!--< value excerpt >-->
+	  <br>
+	  <!--< value searchresultdescriptions >-->
+	  <!--< value searchresultscores >-->
+      <!--< value searchresultmatching >-->
+	  <!--< value searchresultfiles >-->
+	  <!--< value searchresulturl >-->
+	  <font class=green><!--< value size >--> - <!--< value date >--> - <!--< value mimeType >--></font>
+	  - <a href="javascript:maayify('<!--< value documentID >-->')"><img src="/images/annotate.png" alt="annotate this page" border=0></a> - <a href="javascript:mailpage('<!--< value plainTitle >-->', '<!--< value documentID >-->')"><img src="/images/email.png" alt="mail this page" border=0></a>
+	  <!--< value searchresultinfo >-->
+      </td>
+	</tr>
+  </table>
+  <br>
+<!--< end searchresult >-->
+
+<!--< begin searchresulticon >-->
+  <img src="/images/<!--< value iconname >-->">
+<!--< end searchresulticon >-->
+
+<!--< begin minisearchresult >-->
+  <table width=600 border=0 cellspacing=0 cellpadding = 0>
+    <tr>
+	  <td rowspan=2 bgcolor="<!--< value color >-->" width=4>&nbsp;</td>
+	  <td rowspan=2 width=10>&nbsp;</td>
+	  <td>
+  		<a href="/maay/document?did=<!--< value documentID >-->&qid=<!--< value queryID >-->"><!--< value title >--></a>
+	    <!--< value excerpt >-->
+	  </td>
+	</tr>
+  </table>
+  <br>
+<!--< end minisearchresult >-->
+
+
+<!--< begin searchresultinfo >-->
+	  - <a href="/maay/documentinfo?did=<!--< value documentID >-->"><img src="/images/info.png" alt="info" border=0></a>
+<!--< end searchresultinfo >-->
+
+<!--< begin searchresult_searchengine >-->
+  <table width=600 border=0 cellspacing=0 cellpadding = 0>
+    <tr>
+	  <td rowspan=2 bgcolor="<!--< value color >-->" width=4>&nbsp;</td>
+	  <td rowspan=2 width=10>&nbsp;</td>
+	  <td>
+  		<a href="/maay/url?qid=<!--< value queryID >-->&url=<!--< value url >-->"><!--< value title >--></a><br>
+	  </td>
+    </tr>
+    <tr>
+	  <td>
+	  <!--< value excerpt >-->
+	  <br>
+	  <font class=green><!--< value url >--><!--< value extra >--></font>
+<!--	  <font class=gray> - <a href="/maay/versions?url=<!--< value quotedUrl >-->&qid=<!--< value queryID >-->" class=gray><!--< value cachedVersionCount >--> Cached</a></font><br> -->
+	  <font class=gray> - <a href="/maay/versions?url=<!--< value quotedUrl >-->&qid=<!--< value queryID >-->" class=gray>Cached versions</a></font><br>
+
+      </td>
+	</tr>
+  </table>
+  <br>
+<!--< end searchresult_searchengine >-->
+
+
+<!--< begin searchresultscores >-->
+	  <font class=gray><b>Scores: </b><!--< value scores >--></font><br>
+<!--< end searchresultscores >-->
+
+<!--< begin searchresultmatching >-->
+	  <font class=gray><b>Matching:</b> <!--< value matching >--></font><br>
+<!--< end searchresultmatching >-->
+
+<!--< begin searchresultdescriptions >-->
+	  <font class=gray><b>Relevant words: </b><!--< value descriptions >--></font><br>
+<!--< end searchresultdescriptions >-->
+
+<!--< begin searchresultfile >-->
+	  <a class=gray href="/maay/redir?url=<!--< value quotedUrl >-->"><font class=green><!--< value urlText >--></font></a></font><br>
+<!--< end searchresultfile >-->
+
+<!--< begin searchresulturl >-->
+	  <a class=gray href="/maay/url?url=<!--< value quotedUrl >-->&qid=<!--< value queryID >-->"><font class=green><!--< value urltext >--></font></a>
+<!--	  <font class=gray> - <a href="/maay/versions?url=<!--< value quotedUrl >-->&qid=<!--< value queryID >-->" class=gray><!--< value cachedVersionCount >--> Cached</a></font><br> -->
+	  <font class=gray> - <a href="/maay/versions?url=<!--< value quotedUrl >-->&qid=<!--< value queryID >-->" class=gray>Cached versions</a></font><br>
+
+<!--< end searchresulturl >-->
+
+
+<!--< rem																	>-->
+<!--< rem						NODE LIST TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin nodelist_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=1>
+    <tr bgcolor="#efefef">
+	  <td align=center>Node ID</td>
+	  <td align=center>Node IP</td>
+	  <td align=center>Node Port</td>
+	  <td align=center>Last seen time</td>
+	  <td align=center>Bandwidth</td>
+	  <td align=center>Claim Count</td>
+	  <td align=center>Affinity</td>
+	</tr>
+<!--< end nodelist_header >-->
+
+<!--< begin nodelist_row >-->
+    <tr bgcolor=#ffffff>
+	  <td><a href="/maay/nodeinfo?nid=<!--< value nodeID >-->"><!--< value nodeID >--></a></td>
+	  <td><!--< value nodeIP >--></td>
+	  <td><!--< value nodePort >--></td>
+	  <td><!--< value lastSeenTime >--></td>
+	  <td><!--< value bandwidth >--></td>
+	  <td><!--< value claimCount >--></td>
+	  <td align=right><!--< value affinity >--></td>
+	</tr>
+<!--< end nodelist_row >-->
+
+<!--< begin nodelist_footer >-->
+  </table>
+<!--< end nodelist_footer >-->
+
+
+<!--< rem																	>-->
+<!--< rem						REPOSITORY TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin repositorybar_header >-->
+    <table cellspacing=0 cellpadding=0 border=0 width=100%>
+      <tr height=19>
+        <td width=100>View:&nbsp;</td>
+<!--< end repositorybar_header >-->
+
+<!--< begin repositorytab_selected >-->
+        <td bgcolor=#3366cc valign=center nowrap onClick="document.location='/maay/repository?v=<!--< value view >-->';return false;" style=cursor:pointer;cursor:hand; align=center>
+          <a class=q href=/maay/repository?v=<!--< value queryID >-->>
+          <font color=#ffffff><b><!--< value description >-->&nbsp;</b></font>
+          </a>
+        </td>
+        <td width=15>&nbsp;</td>
+<!--< end repositorytab_selected >-->
+
+<!--< begin repositorytab_unselected >-->
+        <td bgcolor=#efefef valign=center nowrap onClick="document.location='/maay/repository?v=<!--< value view >-->';return false;" style=cursor:pointer;cursor:hand; align=center>
+          <a class=q href=/maay/repository?v=<!--< value queryID >-->>
+          <!--< value description >-->&nbsp;
+          </a>
+        </td>
+        <td width=15>&nbsp;</td>
+<!--< end repositorytab_unselected >-->
+
+<!--< begin repositorybar_footer >-->
+      </tr>
+      <tr>
+        <td colspan="<!--< value colspan >-->" height=1 bgcolor=#3366cc></td>
+      </tr>
+    </table>
+<!--< end repositorybar_footer >-->
+
+
+<!--< rem																	>-->
+<!--< rem					DOCUMENT LIST TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin documentlist_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+	  <td align=center><!--< value REPOSITORY_DOCUMENT_TITLE >--></td>
+	  <td align=center><!--< value REPOSITORY_DOCUMENT_MIME_TYPE >--></td>
+	  <td align=center nowrap><!--< value REPOSITORY_DOCUMENT_SIZE >--></td>
+	  <td align=center nowrap><!--< value REPOSITORY_DOCUMENT_PUBLICATION_DATE >--></td>
+	  <td align=center nowrap><!--< value REPOSITORY_DOCUMENT_DOWNLOAD_COUNT >--></td>
+	  <td align=center nowrap><!--< value REPOSITORY_DOCUMENT_MATCHING >--></td>
+	</tr>
+	<br>
+<!--< end documentlist_header >-->
+
+
+<!--< begin documentlist_row >-->
+    <tr bgcolor=#ffffff>
+	  <td align=left><a alt="<!--< value documentTitle >-->" href="/maay/documentinfo?did=<!--< value documentID >-->"><!--< value documentTitleExcerpt >--></a></td>
+	  <td><!--< value mimeType >--></td>
+	  <td align=right><!--< value documentSize >--></td>
+	  <td><!--< value publicationTime >--></td>
+	  <td align=right><!--< value downloadCount >--></td>
+	  <td align=right><!--< value matching >--></td>
+	</tr>
+<!--< end documentlist_row >-->
+
+<!--< begin documentlist_footer >-->
+  </table>
+<!--< end documentlist_footer >-->
+
+
+<!--< rem																	>-->
+<!--< rem					DOCUMENT INFO TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin documentinfo_general >-->
+  <h1>Document Information on document '<i><!--< value title >--></i>'</h1>
+  <br>
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+	  <td colspan=2>General Information</td>
+    </tr>
+    <tr bgcolor="#ffffff">
+	  <td><b>Document ID</b></td>
+	  <td><!--< value documentID >--></td>
+	</tr>
+    <tr bgcolor="#ffffff">
+	  <td><b>Publication Time</b></td>
+	  <td><!--< value publicationTime >--></td>
+	</tr>
+    <tr bgcolor="#ffffff">
+	  <td><b>Title</b></td>
+	  <td><!--< value title >--></td>
+	</tr>
+    <tr bgcolor="#ffffff">
+	  <td><b>Size</b></td>
+	  <td><!--< value size >--> bytes</td>
+	</tr>
+    <tr bgcolor="#ffffff">
+	  <td><b>Mime Type</b></td>
+	  <td><!--< value mimeType >--></td>
+	</tr>
+    <tr bgcolor="#ffffff">
+	  <td><b>State</b></td>
+	  <td><!--< value state >--></td>
+	</tr>
+    <tr bgcolor="#ffffff">
+	  <td><b>Download Count</b></td>
+	  <td><!--< value downloadCount >--></td>
+	</tr>
+    <tr bgcolor="#ffffff">
+	  <td><b>URL</b></td>
+	  <td><!--< value url >--></td>
+	</tr>
+    <tr bgcolor="#ffffff">
+	  <td><b>URL to distribute to any users</b></td>
+	  <td><!--< value local_url >--></td>
+	</tr>
+    <tr bgcolor="#ffffff">
+	  <td><b>URL to distribute to maay users</b></td>
+	  <td>http://127.0.0.1:<!--< value MAAY_PORT >-->/maay/document?did=<!--< value documentID >--></td>
+	</tr>
+    <tr bgcolor="#ffffff">
+	  <td><b>Matching</b></td>
+	  <td><!--< value matching >--></td>
+	</tr>
+  </table>
+  <br>
+  <a href="/maay/document?did=<!--< value documentID >-->"> View document</a><br>
+  <a href="/maay/doctext?did=<!--< value documentID >-->" target="__blank"> View text document</a><br>
+  <br><br>
+<!--< end documentinfo_general >-->
+
+<!--< begin documentinfo_links_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+	  <td colspan=3>Links</td>
+    </tr>
+    <tr bgcolor="#ffffff">
+	  <td><b>Path</b></td>
+	  <td><b>Link time</b></td>
+	  <td><b>Document ID</b></td>
+    </tr>
+<!--< end documentinfo_links_header >-->
+
+<!--< begin documentinfo_links_row >-->
+    <tr bgcolor="#ffffff">
+	  <td><!--< value path >--></td>
+	  <td><!--< value linkTime >--></td>
+      <td><a href="/maay/documentinfo?did=<!--< value documentID >-->"><!--< value documentID >--></a></td>
+	</tr>
+<!--< end documentinfo_links_row >-->
+
+<!--< begin documentinfo_links_footer >-->
+  </table>
+  <br><br>
+<!--< end documentinfo_links_footer >-->
+
+<!--< begin documentinfo_fileinfo_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+	  <td colspan=3>Files</td>
+    </tr>
+
+<!--< end documentinfo_fileinfo_header >-->
+
+<!--< begin documentinfo_fileinfo_row >-->
+    <tr bgcolor="#ffffff">
+	  <td><a href="/maay/redir?url=<!--< value filename >-->"><!--< value filename >--></a></td>
+	  <td><!--< value filetime >--></td>
+	  <td><!--< value state >--></td>
+	</tr>
+<!--< end documentinfo_fileinfo_row >-->
+
+<!--< begin documentinfo_fileinfo_footer >-->
+  </table>
+  <br><br>
+<!--< end documentinfo_fileinfo_footer >-->
+
+
+
+<!--< begin documentinfo_providers_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+	  <td colspan=2>Document Providers</td>
+    </tr>
+<!--< end documentinfo_providers_header >-->
+
+<!--< begin documentinfo_providers_row >-->
+    <tr bgcolor="#ffffff">
+	  <td><a href="/maay/nodeinfo?nid=<!--< value nodeID >-->"><!--< value nodeID >--></a></td>
+	  <td><!--< value lastProvidingTime >--></td>
+	</tr>
+<!--< end documentinfo_providers_row >-->
+
+<!--< begin documentinfo_providers_footer >-->
+  </table>
+  <br><br>
+<!--< end documentinfo_providers_footer >-->
+
+
+<!--< begin documentinfo_keywords_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+      <td>Word</td>
+	  <td>Download</td>
+	  <td>Relevance</td>
+	  <td>Popularity</td>
+	  <td>Position</td>
+    </tr>
+<!--< end documentinfo_keywords_header >-->
+
+<!--< begin documentinfo_keywords_row >-->
+    <tr bgcolor="#ffffff">
+      <td><a href="/maay/wordinfo?w=<!--< value quotedword >-->"><!--< value word >--></a></td>
+      <td><!--< value downloadCount >--></td>
+      <td><!--< value relevance >--></td>
+      <td><!--< value popularity >--></td>
+      <td><!--< value position >--></td>
+    </tr>
+<!--< end documentinfo_keywords_row >-->
+
+<!--< begin documentinfo_keywords_footer >-->
+  </table>
+  <br><br>
+
+<!--< end documentinfo_keywords_footer >-->
+
+
+<!--< rem																	>-->
+<!--< rem						NODE INFO TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin nodeinfo >-->
+  <center><b>Node Information of '<!--< value nodeID >-->'</b></center>
+  <br><br><br>
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+      <td align=center colspan=2>Node informations</td>
+    </tr>
+    <tr bgcolor=#ffffff>
+      <td>Node ID</td><td><!--< value nodeID >--></td>
+	</tr>
+    <tr bgcolor=#ffffff>
+      <td>Node IP</td><td><!--< value nodeIP >--></td>
+    </tr>
+    <tr bgcolor=#ffffff>
+      <td>Node Port</td><td><!--< value nodePort >--></td>
+    </tr>
+    <tr bgcolor=#ffffff>
+      <td>Last seen time</td><td><!--< value lastSeenTime >--></td>
+    </tr>
+    <tr bgcolor=#ffffff>
+      <td>Bandwidth</td><td><!--< value bandwidth >--></td>
+    </tr>
+    <tr bgcolor=#ffffff>
+      <td>Claim Count</td><td><!--< value claimCount >--></td>
+    </tr>
+    <tr bgcolor=#ffffff>
+      <td>Passion</td><td><!--< value affinity >--></td>
+    </tr>
+
+  </table>
+  <br><br>
+<!--< end nodeinfo >-->
+
+<!--< begin interestlist_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+      <td align=center>Word</td>
+	  <td>Claim count</td>
+	  <td>Specialization</td>
+	  <td>Expertise</td>
+    </tr>
+<!--< end interestlist_header >-->
+
+<!--< begin interestlist_row >-->
+    <tr bgcolor="#ffffff">
+      <td><a href="/maay/wordinfo?w=<!--< value escaped_word >-->"><!--< value word >--></a></td>
+	  <td align=right><!--< value claimCount >--></td>
+	  <td align=right><!--< value relevance >--></td>
+	  <td align=right><!--< value popularity >--></td>
+    </tr>
+<!--< end interestlist_row >-->
+
+<!--< begin interestlist_footer >-->
+  </table>
+<!--< end interestlist_footer >-->
+
+
+<!--< rem																	>-->
+<!--< rem						WORD LIST TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin wordlist_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=1>
+    <tr bgcolor="#efefef">
+	  <td align=center>Word</td>
+	  <td align=center>Claim Count</td>
+	  <td align=center>Download Count</td>
+	</tr>
+<!--< end wordlist_header >-->
+
+<!--< begin wordlist_row >-->
+    <tr bgcolor=#ffffff>
+	  <td><a href="/maay/wordinfo?w=<!--< value escaped_word >-->"><!--< value word >--></a></td>
+	  <td align=right><!--< value claimCount >--></td>
+	  <td align=right><!--< value downloadCount >--></td>
+	</tr>
+<!--< end wordlist_row >-->
+
+<!--< begin wordlist_footer >-->
+  </table>
+<!--< end wordlist_footer >-->
+
+<!--< rem																	>-->
+<!--< rem						WORD INFO TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin wordinfo >-->
+  <center><b>Word Information of '<!--< value word >-->'</b></center>
+  <br><br><br>
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+      <td align=center colspan=2>Word informations</td>
+    </tr>
+    <tr bgcolor=#ffffff>
+      <td>Word</td><td><!--< value word >--></td>
+	</tr>
+    <tr bgcolor=#ffffff>
+      <td>Claim Count</td><td><!--< value claimCount >--></td>
+    </tr>
+    <tr bgcolor=#ffffff>
+      <td>DownloadCount</td><td><!--< value downloadCount >--></td>
+    </tr>
+  </table>
+  <br><br>
+<!--< end wordinfo >-->
+
+<!--< begin relatedwordlist_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+      <td align=center>Cooccurrent word</td>
+	  <td>Claim count</td>
+	  <td>Download count</td>
+    </tr>
+<!--< end relatedwordlist_header >-->
+
+<!--< begin relatedwordlist_row >-->
+    <tr bgcolor="#ffffff">
+      <td><a href="/maay/wordinfo?w=<!--< value word >-->"><!--< value word >--></a></td>
+	  <td align=right><!--< value searchCount >--></td>
+	  <td align=right><!--< value downloadCount >--></td>
+	  <td align=right><!--< value responseCount >--></td>
+    </tr>
+<!--< end relatedwordlist_row >-->
+
+<!--< begin relatedwordlist_footer >-->
+  </table>
+  <br><br>
+<!--< end relatedwordlist_footer >-->
+
+<!--< begin interestednodelist_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+      <td align=center>Node ID</td>
+	  <td>Claim count</td>
+	  <td>Specialization</td>
+	  <td>Expertise</td>
+    </tr>
+<!--< end interestednodelist_header >-->
+
+<!--< begin interestednodelist_row >-->
+    <tr bgcolor="#ffffff">
+      <td><a href="/maay/nodeinfo?nid=<!--< value nodeID >-->"><!--< value nodeID >--></a></td>
+	  <td align=right><!--< value claimCount >--></td>
+	  <td align=right><!--< value relevance >--></td>
+	  <td align=right><!--< value popularity >--></td>
+    </tr>
+<!--< end interestednodelist_row >-->
+
+<!--< begin interestednodelist_footer >-->
+  </table>
+  <br><br>
+<!--< end interestednodelist_footer >-->
+
+<!--< begin interesteddocumentlist_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+      <td align=center>Title</td>
+	  <td>Excerpt</td>
+	  <td>Relevance</td>
+	  <td>Popularity</td>
+    </tr>
+<!--< end interesteddocumentlist_header >-->
+
+<!--< begin interesteddocumentlist_row >-->
+    <tr bgcolor="#ffffff">
+      <td><a href="/maay/documentinfo?did=<!--< value documentID >-->"><!--< value title >--></a></td>
+      <td><!--< value excerpt >--></a></td>
+	  <td align=right><!--< value relevance >--></td>
+	  <td align=right><!--< value popularity >--></td>
+    </tr>
+<!--< end interesteddocumentlist_row >-->
+
+<!--< begin interesteddocumentlist_footer >-->
+  </table>
+<!--< end interesteddocumentlist_footer >-->
+
+
+<!--< rem																	>-->
+<!--< rem				DOWNLOADING PAGE TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin download_header >-->
+  <table width=100% bgcolor=#3366cc>
+    <tr>
+  	  <td valign=center><font color=#ffffff>Downloading <b><!--< value title >--></b></font>
+	  </td>
+	</tr>
+  </table>
+  <br>
+  The document will appear when the download is finished.<br>
+  Document ID: <a href="/maay/documentinfo?did=<!--< value documentID >-->"><!--< value documentID >--></a><br>
+  Current state: <!--< value state >--><br>
+  Transferred: <!--< value transferred >--> /  <!--< value size >--><br>
+  <br>
+<!--< end download_header >-->
+
+<!--< begin downloadproviderlist_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+	  <td align=center>ID</td>
+	  <td align=center>IP</td>
+	  <td align=center nowrap>Port</td>
+	  <td align=center nowrap>State</td>
+	</tr>
+<!--< end downloadproviderlist_header >-->
+
+<!--< begin downloadproviderlist_row >-->
+    <tr bgcolor=#ffffff>
+	  <td><a href="/maay/nodeinfo?nid=<!--< value nodeID >-->"><!--< value nodeID >--></a></td>
+	  <td><!--< value ip >--></td>
+	  <td><!--< value port >--></td>
+	  <td><!--< value state >--></td>
+	</tr>
+<!--< end downloadproviderlist_row >-->
+
+<!--< begin downloadproviderlist_footer >-->
+	</table>
+    <br>
+<!--< end downloadproviderlist_footer >-->
+
+
+<!--< begin download_footer >-->
+  This page is refreshed automatically to display the current status of the download. If it is not the case, <a href="/maay/document?did=<!--< value documentID >-->&qid=<!--< value queryID >-->">click here</a>, to force refresh
+  <br>
+  You can cancel the download by <a href=/maay/canceldownload?did=<!--< value documentID >-->>clicking here</a>.
+
+  <script language="javascript">
+  	// <!--
+		function beginDownload()
+		{
+			document.location.href="/maay/document?did=<!--< value documentID >-->&qid=<!--< value queryID >-->"
+		}
+
+		function waitDownload()
+		{
+		   setTimeout('beginDownload();', 3000);
+	       return 1;
+		}
+		window.onLoad=waitDownload();
+	// -->
+  </script>
+<!--< end download_footer >-->
+
+
+<!--< rem																	>-->
+<!--< rem				REMOTE DOWNLOADING PAGE TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin remote_download_header >-->
+<html>
+<body>
+  <table width=100% bgcolor=#3366cc>
+    <tr>
+  	  <td valign=center><font color=#ffffff>Downloading <b><!--< value title >--></b></font>
+	  </td>
+	</tr>
+  </table>
+  <br>
+  The document will appear when the document will be downloaded.<br>
+  Document ID: <a href="/maay/documentinfo?did=<!--< value documentID >-->"><!--< value documentID >--></a><br>
+  Current state: <!--< value state >--><br>
+  Transferred: <!--< value transferred >--> /  <!--< value size >--><br>
+  <br>
+<!--< end remote_download_header >-->
+
+<!--< begin remote_downloadproviderlist_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+	  <td align=center>ID</td>
+	  <td align=center>IP</td>
+	  <td align=center nowrap>Port</td>
+	  <td align=center nowrap>State</td>
+	</tr>
+<!--< end remote_downloadproviderlist_header >-->
+
+<!--< begin remote_downloadproviderlist_row >-->
+    <tr bgcolor=#ffffff>
+	  <td><!--< value nodeID >--></td>
+	  <td><!--< value ip >--></td>
+	  <td><!--< value port >--></td>
+	  <td><!--< value state >--></td>
+	</tr>
+<!--< end remote_downloadproviderlist_row >-->
+
+<!--< begin remote_downloadproviderlist_footer >-->
+	</table>
+    <br>
+<!--< end remote_downloadproviderlist_footer >-->
+
+
+<!--< begin remote_download_footer >-->
+  This page is refreshed automatically to display the current status of the download. If it is not the case, <a href="/maay/remotedownload?did=<!--< value documentID >-->&qid=<!--< value queryID >-->&download=1">click here</a>, to force refresh
+
+  <script language="javascript">
+  	// <!--
+		function beginDownload()
+		{
+			document.location.href="/maay/remotedownload?did=<!--< value documentID >-->&qid=<!--< value queryID >-->&download=1"
+		}
+
+		function waitDownload()
+		{
+		   setTimeout('beginDownload();', 3000);
+	       return 1;
+		}
+		window.onLoad=waitDownload();
+	// -->
+  </script>
+</body>
+</html>
+<!--< end remote_download_footer >-->
+
+
+<!--< rem																	>-->
+<!--< rem							SYSTEM TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin system >-->
+<h1>Node Info</h1>
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=1>
+    <tr bgcolor="#ffffff">
+      <td>ID</td><td><!--< value id >--></td>
+    </tr>
+    <tr bgcolor="#ffffff">
+      <td>IP</td><td><!--< value ip >--></td>
+    </tr>
+    <tr bgcolor="#ffffff">
+      <td>Port</td><td><!--< value port >--></td>
+    </tr>
+ 	</table>
+<hr>
+<h1>System Info</h1>
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=1>
+    <tr bgcolor="#ffffff">
+      <td>Processor load</td><td><!--< value processorLoad >--></td>
+    </tr>
+    <tr bgcolor="#ffffff">
+      <td>Disk space</td><td><!--< value disk >--></td>
+    </tr>
+    <tr bgcolor="#ffffff">
+      <td>Available Memory</td><td><!--< value availableMemory >--></td>
+    </tr>
+ 	</table>
+<hr>
+<h1>Repository Info</h1>
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=1>
+    <tr bgcolor="#ffffff">
+      <td>Private files indexed</td><td><!--< value privateDocumentCount >--> (<!--< value privateDocumentSize >-->)</td>
+    </tr>
+    <tr bgcolor="#ffffff">
+      <td>Published files indexed</td><td><!--< value publishedDocumentCount >--> (<!--< value publishedDocumentSize >-->)</td>
+    </tr>
+    <tr bgcolor="#ffffff">
+      <td>Cached files indexed</td><td><!--< value cachedDocumentCount >--> (<!--< value cachedDocumentSize >-->)</td>
+    </tr>
+    <tr bgcolor="#ffffff">
+      <td>Known Documents</td><td><!--< value knownDocumentCount >--></td>
+    </tr>
+    <tr bgcolor="#ffffff">
+      <td>Neighbors</td><td><!--< value neighborCount >--></td>
+    </tr>
+  </table>
+<hr>
+<!--< end system >-->
+
+<!--< rem																	>-->
+<!--< rem						PREFERENCE TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin preference_header >-->
+<script language="javascript">
+  if ('<!--< value comment >-->' != '')
+	  alert('<!--< value comment >-->');
+</script>
+
+<table height=100%>
+<tr>
+<td valign="top" width=100>
+<a href="/maay/prefsecurity">Security</a><br>
+<a href="/maay/prefindexation">Indexation</a><br>
+<a href="/maay/prefui">User Interface</a><br>
+<a href="/maay/prefdebug">Debug</a>
+</td>
+<td bgcolor=#000000"><img width=1></td>
+<td>&nbsp;&nbsp;</td>
+
+<td>
+<!--< end preference_header >-->
+
+<!--< begin preference_footer >-->
+</td>
+</tr>
+</table>
+<!--< end preference_footer >-->
+
+
+<!--< begin preference_security >-->
+  <h1>Règles d'accès</h1>
+  <form action="/maay/prefsecurity">
+    <input type="checkbox" name="remoteaccess" <!--< value remoteAccessChecked >--> >Remote access (with password authentication)<br>
+    <input type="checkbox" name="localauth" <!--< value localAuthentificationChecked >--> >Local authentication<br>
+    <input type="submit" name="changesetting" value="Modification des règles d'accès">
+  </form>
+<hr>
+  <h1>Compte utilisateur</h1>
+Vous pouvez modifier le login ainsi que le password du compte.
+<form action="/maay/prefsecurity">
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=1>
+    <tr bgcolor="#ffffff">
+      <td>Login</td><td><input type="text" name="login" value="<!--< value login >-->" size="10"></td>
+    </tr>
+    <tr bgcolor="#ffffff">
+      <td>Password</td><td><input type="password" name="password" size="10"></td>
+    </tr>
+    <tr bgcolor="#ffffff">
+      <td>New login</td><td><input type="password" name="newlogin" size="10"></td>
+    </tr>
+    <tr bgcolor="#ffffff">
+      <td>New password</td><td><input type="password" name="newpassword1" size="10"></td>
+    </tr>
+    <tr bgcolor="#ffffff">
+      <td>Retype new password</td><td><input type="password" name="newpassword2" size="10"></td>
+    </tr>
+    <tr bgcolor="#ffffff"><td colspan=2 align=right><input type="submit" name="changeauth" value="Modification du compte"></td></tr>
+	</table>
+  </form>
+  Par défaut, le login et le mot de passe sont "maay".
+<hr>
+<!--< end preference_security >-->
+
+
+<!--< begin preference_indexation >-->
+<h1>Indexation</h1>
+<h2>Indexed Directories</h2>
+<form action="/maay/prefindexation">
+<font color=green>Index directories(and its subdirectories) in the following path. Put each entry on a separate line.</font><br>
+<textarea name="indexedDirectories" rows=6 cols=80 style="background:#ddffdd"><!--< value indexedDirectories >--></textarea>
+<br>
+<font color=red>Do not index these directories (and subdirectories) in the following entries.</font><br>
+<textarea name="notIndexedDirectories" rows=6 cols=80 style="background:#ffdddd"><!--< value notIndexedDirectories >--></textarea>
+<br>
+
+<h2>Published Directories</h2>
+<br>
+<font color=green>Directories (and its subdirectories) in the following path are made public and can be search and retrieved
+by other users. Put each entry on a separate line.</font><br>
+<textarea name="publishedDirectories" rows=6 cols=80 style="background:#ddffdd"><!--< value publishedDirectories >--></textarea>
+<br>
+<font color=red>Do not publish these directories (and subdirectories) in the following entries.</font><br>
+<textarea name="notPublishedDirectories" rows=6 cols=80 style="background:#ffdddd"><!--< value notPublishedDirectories >--></textarea>
+<br>
+
+<input type="submit" name="save" value="Sauvegarder les règles d'indexations">
+</form>
+
+<!--< end preference_indexation >-->
+
+
+<!--< begin preference_language_header >-->
+<h1>Language</h1>
+<form action="/maay/prefui">
+Choose your language:
+<select name=lang>
+<!--< end preference_language_header >-->
+
+<!--< begin preference_language_option >-->
+<option value="<!--< value language >-->"  <!--< value selected >-->><!--< value language >--></option>
+<!--< end preference_language_option >-->
+
+<!--< begin preference_language_footer >-->
+</select>
+<input type=submit value="Change language">
+</form>
+<!--< end preference_language_footer >-->
+
+
+<!--< begin preference_results >-->
+<h1>Page des résultats</h1>
+  <form action="/maay/prefui">
+  Nombre de résultats à afficher par page : <select name="rs">
+    <option value="10" <!--< value 10selected >-->>10</option>
+    <option value="20" <!--< value 20selected >-->>20</option>
+    <option value="50" <!--< value 50selected >-->>50</option>
+    <option value="100" <!--< value 100selected >-->>100</option>
+  </select>
+  	<input type="submit" value="Modifier">
+   </form>
+<hr>
+<!--< end preference_results >-->
+
+<!--< begin preference_mode >-->
+<h1>Mode</h1>
+  If you are a <b>developper of Maay</b>, select <b>developper</b> mode, else select <b>user</b> mode.<br><br>
+  <form action="/maay/prefdebug">
+  Choose your mode: <select name="mode">
+    <option value="user" <!--< value userModeSelected >-->>user</option>
+    <option value="developper" <!--< value developperModeSelected >-->>developper</option>
+  </select>
+  	<input type="submit" value="Change">
+   </form>
+<hr>
+<!--< end preference_mode >-->
+
+
+<!--< begin preference_debug >-->
+<h1>Indexation</h1>
+    <h2>Priority</h2>
+    <form action="/maay/prefdebug">
+    Choose you priority of indexation:<br>
+    <select name="idxpr">
+      <option value="<!--< value LOW_PRIORITY >-->" <!--< value lowPrioritySelected >-->>low (default)</option>
+      <option value="<!--< value MEDIUM_PRIORITY >-->" <!--< value mediumPrioritySelected >-->>medium</option>
+      <option value="<!--< value HIGH_PRIORITY >-->" <!--< value highPrioritySelected >-->>high</option>
+    </select>
+      <input type="submit" value="Change">
+    </form>
+
+<h1>Actions</h1>
+  <b>Published Indexation status:</b> <!--< value publishedIndexationState >--><br>
+  <b>Private Indexation status:</b> <!--< value privateIndexationState >-->
+  <form action="/maay/prefdebug">
+  	<input type="submit" name="template" value="Reload template file">
+ 	<input type="submit" name="affinity" value="Recompute affinity">
+  	<input type="submit" name="matching" value="Recompute matching">
+ 	<input type="submit" name="pubrepository" value="Rescan published repository">
+ 	<input type="submit" name="prirepository" value="Rescan private repository">
+   </form>
+
+<hr>
+<font color=red>TODO:</font>
+<hr>
+
+<h1>Network Preference</h1>
+  <form action="">
+    <table>
+	<tr>
+		<td>Simultaneous Download</td>
+		<td><input type="text" maxlength=3 size=3 value="<!--< value maxSimultaneousDownload >-->"></td>
+	</tr>
+	<tr>
+		<td>Max Download Bandwidth</td>
+		<td><input type="text" maxlength=3 size=3></td>
+	</tr>
+	<tr>
+		<td>Simultaneous Upload</td>
+		<td><input type="text" maxlength=3 size=3></td>
+	</tr>
+	<tr>
+		<td>Max Upload Bandwidth</td>
+		<td><input type="text" maxlength=3 size=3></td>
+	</tr>
+	</table>
+  </form>
+<hr>
+<h1>Repository</h2>
+    <form action="/maay/prefdebug">
+      Choose the repository to index:<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="idxpriv" <!--< value privateChecked >-->> Private repository<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="idxpub" <!--< value publishedChecked >-->> Published repository<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="idxcac" <!--< value cachedChecked >-->> Cached repository<br>
+        <input type="submit" value="Change priority">
+    </form>
+<hr>
+
+<!--< end preference_debug >-->
+
+
+
+
+<!--< begin config_processor_header >-->
+<h1>Processor Info</h1>
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=1>
+<!--< end config_processor_header >-->
+
+<!--< begin config_processor_row >-->
+    <tr bgcolor="#ffffff">
+      <td><!--< value processorName >--></td>
+      <td><!--< value processorLoad >--></td>
+    </tr>
+<!--< end config_processor_row >-->
+
+<!--< begin config_processor_footer >-->
+<h1>Processor Info</h1>
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=1>
+<!--< end config_processor_footer >-->
+
+
+<!--< rem																	>-->
+<!--< rem					DOCUMENT TEXT TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin document_text >-->
+<html>
+  <title><!--< value HTML_TITLE_PREFIX >--> - <!--< value title >--></title>
+</html>
+<body>
+ <!--< value text >-->
+</body>
+</html>
+<!--< end document_text >-->
+
+
+<!--< rem																	>-->
+<!--< rem					DOWNLOAD LIST TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin downloadlist_header >-->
+  <table bgcolor=#aaaaaa border=0 cellspacing=1 cellpadding=2>
+    <tr bgcolor="#efefef">
+	  <td align=center>Title</td>
+	  <td align=center>Transferred</td>
+	  <td align=center nowrap>Size</td>
+	  <td align=center nowrap>Speed</td>
+	  <td align=center nowrap>State</td>
+	  <td align=center nowrap></td>
+	  <!--
+	  <td align=center nowrap></td>
+	  -->
+	</tr>
+	<br>
+<!--< end downloadlist_header >-->
+
+
+<!--< begin downloadlist_row >-->
+    <tr bgcolor=#ffffff>
+	  <td align=left><a href="/maay/document?did=<!--< value documentID >-->"><!--< value title >--></a></td>
+	  <td align=left><!--< value transferred >--></td>
+	  <td align=right><!--< value size >--></td>
+	  <td align=right><!--< value speed >--></td>
+	  <td><!--< value state >--></td>
+	  <td><a href="/maay/canceldownload?did=<!--< value documentID >-->">cancel</a></td>
+	  <!--
+	  <td align=right><a href="">Cancel</a></td>
+	  -->
+	</tr>
+<!--< end downloadlist_row >-->
+
+<!--< begin downloadlist_footer >-->
+  </table>
+<!--< end downloadlist_footer >-->
+
+<!--< rem																	>-->
+<!--< rem					MESSAGE BODY TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin messagebody >-->
+<h1><!--< value title >--></h1>
+<!--< value text >-->
+<!--< end messagebody >-->
+
+<!--< rem																	>-->
+<!--< rem					CACHED VERSION TEMPLATE							>-->
+<!--< rem																	>-->
+
+<!--< begin versionlist_header >-->
+<h1>Cached version of <a href="/maay/url?url=<!--< value url >-->&qid=<!--< value queryID >-->"><!--< value url >--> :</a></h1>
+<table>
+<!--< end versionlist_header >-->
+
+<!--< begin versionlist_row >-->
+<tr>
+<td valign=top><a href="/maay/document?did=<!--< value documentID >-->&qid=<!--< value queryID >-->"><b><!--< value date >--></b></a></td><td><a href="/maay/document?did=<!--< value documentID >-->&qid=<!--< value queryID >-->"><!--< value title >--></a><br><!--< value excerpt >--></a></td>
+</tr>
+<!--< end versionlist_row >-->
+
+<!--< begin versionlist_footer >-->
+</table>
+<br>
+<form action="/maay/search">
+<input type=hidden name="url" value="<!--< value url >-->">
+<input type=hidden name="maaysearch" value="">
+<input type=submit value="Find more">
+</form>
+<!--< end versionlist_footer >-->
+
+<!--< rem																	>-->
+<!--< rem						CACHED TEMPLATE								>-->
+<!--< rem																	>-->
+
+<!--< begin cached_header >-->
+<table bgcolor=#ffffff style="border: 2px black solid" width="100%">
+<tr>
+<td>
+This is Maay's cache of <a href="/maay/url?url=<!--< value quotedUrl >-->&qid=<!--< value queryID >-->"><!--< value url >--></a> as retrieved on <!--< value date >-->.<br>
+The page may have changed since that time.
+Click here for the <a href="/maay/url?url=<!--< value quotedUrl >-->&qid=<!--< value queryID >-->">current page</a>.<br>
+The page may have other snapshots taken at different times.
+Click here for <a href="/maay/versions?url=<!--< value quotedUrl >-->&qid=<!--< value queryID >-->">other versions</a> of this
+page.
+<br><br>
+<center><i>Maay is not affiliated with the authors of this page nor responsible for its contents</i></center>
+</td>
+</tr>
+</table>
+<!--< end cached_header >-->
+
+
+
+<!--< rem																	>-->
+<!--< rem							ERROR PAGE								>-->
+<!--< rem																	>-->
+
+<!--< begin error_page >-->
+<html>
+  <head>
+    <title><!--< value HTML_TITLE_PREFIX >--> - <!--< value title >--></title>
+    <link href="/css/style.css" rel=stylesheet type="text/css">
+  </head>
+  <body>
+<table bgcolor="#000000" width="100%"><tr>
+<td><img src=/images/smallmaay.png></td><td align=left width=100% valign=bottom><font size="+2" color="#ffffff"><!--< value errorTitle >--></font></td>
+</tr></table>
+<br><br>
+ <!--< value description >-->
+</body>
+</html>
+<!--< end error_page >-->
+
+
+
+<!--< rem																	>-->
+<!--< rem							MAAYIFY PAGE							>-->
+<!--< rem																	>-->
+
+<!--< begin maayify_url >-->
+<html>
+  <head>
+    <title><!--< value HTML_TITLE_PREFIX >--> - Maayify page at <!--< value url >--></title>
+    <link href="/css/style.css" rel=stylesheet type="text/css">
+  </head>
+  <body onLoad="window.focus();window.raise();">
+<form>
+<table>
+<tr><td>Title</td><td><!--< value title >--></td></tr>
+<tr><td>URL</td><td><input type="text" name="url" size="80" value="<!--< value url >-->"></td></tr>
+<tr><td>Keywords</td><td><input type="text" name="keywords" size="80" value="<!--< value keywords >-->">
+<br><font class=small><i>write keywords separated by space. i.e. search engine</i></font></td></tr>
+<tr><td colspan=2><input type="submit" name="maayify" value="Annotate this page"></td>
+</table>
+</form>
+</body>
+</html>
+<!--< end maayify_url >-->
+
+<!--< begin maayify_document >-->
+<html>
+  <head>
+    <title><!--< value HTML_TITLE_PREFIX >--> - Maayify page at <!--< value url >--></title>
+    <link href="/css/style.css" rel=stylesheet type="text/css">
+  </head>
+    <body onLoad="window.focus();window.raise();">
+<form>
+<table>
+<tr><td>Title</td><td><!--< value title >--></td></tr>
+<tr><td>Document ID</td><td><!--< value documentID >--></td></tr>
+<tr><td>Keywords</td><td><input type="text" name="keywords" size="80" value="<!--< value keywords >-->">
+<br><font class=small><i>write keywords separated by space. i.e. search engine</i></font></td></tr>
+<tr><td colspan=2><input type="submit" name="maayify" value="Annotate this page"></td>
+</table>
+<input type="hidden" name="did" size="80" value="<!--< value documentID >-->">
+</form>
+</body>
+</html>
+<!--< end maayify_document >-->
+
+
+<!--< begin maayify_close >-->
+<html>
+<body onLoad="window.close()">
+</body>
+</html>
+<!--< end maayify_close >-->
+
+<!--< rem																	>-->
+<!--< rem							MAAYL PAGE								>-->
+<!--< rem																	>-->
+
+<!--< begin maayl_page >-->
+<html>
+<head>
+</head>
+<body>
+<a href="mailto:?subject=<!--< value mailTitle >-->&body=<!--< value mailBody >-->">mail</a>
+
+<script language="javascript">
+window.href="mailto:?subject=<!--< value mailTitle >-->&body=<!--< value mailBody >-->"
+</script>
+</body>
+</html>
+<!--< end maayl_page >-->
+
+<!--< rem																	>-->
+<!--< rem							ABOUT PAGE								>-->
+<!--< rem																	>-->
+
+<!--< begin about_page >-->
+Maay est un projet développé à France Télécom Division R&amp;D par <a href="mailto:frederic.dangngoc@rd.francetelecom.com">Frédéric Dang Ngoc (MAPS/MMC)</a> et <a href="mailto:joaquin.keller@rd.francetelecom.com">Joaquin Keller (MAPS/MMC)</a>.
+<br>
+Pour plus d'information sur le projet, vous pouvez visiter la page de Maay ainsi que sa documentation sur le site <a href="http://maay.rd.francetelecom.fr">http://maay.rd.francetelecom.fr</a>
+<br><br>
+Ce programme est en version beta, toutes les fonctionnalités n'ont pas encore été incluse et le programmme
+comporte encore des bugs.
+<br>
+Pour toutes remarques ou suggestions, n'hésitez pas à écrire à : <a href="mailto:frederic.dangngoc@rd.francetelecom.com">frederic.dangngoc@rd.francetelecom.com</a>.
+<br>
+<h1>Liens</h1>
+<ul>
+<li>Maay
+<ul>
+<li><a href="http://maay.rd.francetelecom.fr/">Page du projet Maay</a></li>
+<li><a href="http://p-maay2.rd.francetelecom.fr/download">Téléchargement de Maay</a></li>
+</ul>
+</li>
+<li>Autres projets de l'équipe
+<ul>
+<li><a href="http://solipsis.rd.francetelecom.fr/">Solipsis (monde virtuel massivement multi-joueurs)</a></li>
+<li><a href="http://pulse.rd.francetelecom.fr/">PULSE (streaming collaboratif)</a></li>
+</ul>
+</li>
+</ul>
+<!--< end about_page >-->
+
+<!--< rem																	>-->
+<!--< rem							HELP PAGE								>-->
+<!--< rem																	>-->
+
+<!--< begin help_page >-->
+Page en construction...
+
+<h1>Bookmarklet</h1>
+Vous pouvez ajouter ces liens à votre marque page pour une meilleure utilisation de Maay :
+<ul>
+<li><a "Maay" href="http://127.0.0.1:6446" onclick="window.alert('Drag this link to your toolbar or right-click it and choose Add to Favorites.');">Maay</a> (pour aller sur votre page Maay)</li>
+<li><a href="javascript:w=window.open('http://127.0.0.1:6446/maay/maayify?url='+escape(location.href)+'&title='+encodeURIComponent(document.title), 'Maayify this page', 'toolbar=no,width=600,height=250');w.raise();w.focus();" onclick="window.alert('Drag this link to your toolbar or right-click it and choose Add to Favorites.');return false;">Maayifier cette page</a> (pour indexer une page visitée et l'annoter)</li>
+</ul>
+<!--< end help_page >-->
+
+<!--< rem																	>-->
+<!--< rem				REMOTE DOWNLOAD PAGE								>-->
+<!--< rem																	>-->
+
+<!--< begin remote_download_page >-->
+
+<html>
+<body onLoad="checkLocalMaay()">
+
+<img name="maay" src="http://127.0.0.1:6446/images/smallmaay.png" name="maayImage">
+<script language="javascript">
+
+function checkLocalMaay()
+{
+	maayImage = document.all['maay'];
+	if (maayImage.width != 91)
+		document.location.href="/maay/remotedownload?did=<!--< value documentID >-->&download=1";
+	else
+		document.location.href="http://127.0.0.1:6446/maay/document?did=<!--< value documentID >-->&nid=<!--< value nodeID >-->&ip=<!--< value ip >-->&port=<!--< value port >-->&lst=<!--< value lastSeenTime >-->&lpt=<!--< value lastProvidingTime >-->";
+}
+</script>
+</body>
+</html>
+
+<!--< end remote_download_page >-->
+
+
+<!--< rem																	>-->
+<!--< rem							LOGIN PAGE								>-->
+<!--< rem																	>-->
+
+<!--< begin login_page >-->
+<html>
+  <head onLoad="window.focus()>
+  	<title><!--< value HTML_TITLE_PREFIX >--> - Login</title>
+    <link href="/css/style.css" rel=stylesheet type="text/css">
+  </head>
+
+  <body>
+  <center><img src="/images/maay.png"></center>
+  <br><br>
+  <font color=red><b><!--< value comment >--></b></font>
+  <table cellpadding=10>
+  <tr>
+  <td>
+  <form action="/maay/login">
+    <table>
+	<tr>
+	<td>Login:</td>
+    <td><input name="login" type="text"></td>
+	</tr>
+	<tr>
+    <td>Password:</td>
+    <td><input name="password" type="password"></td>
+	</tr>
+	</table>
+	<input type="hidden" name="url" value="<!--< value url >-->">
+	<input type="submit" value="Login">
+  </form>
+  </td>
+  </tr>
+  </table>
+  Pour vous connecter, utilisez le login 'maay' et le mot de passe 'onez'.
+  </body>
+</html>
+
+<!--< end login_page >-->
