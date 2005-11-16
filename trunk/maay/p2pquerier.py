@@ -57,7 +57,8 @@ def getUserLogin():
             guessed = os.environ.get(var)
             if guessed:
                 return guessed
-        return 'anonymous'
+        # could not guess username, use host name
+        return socket.gethostname()
 
 class QueryVersionMismatch(Exception):
     """we beginning a versionning nightmare trip on queries
@@ -339,6 +340,8 @@ class P2pQuerier:
         for document in answer.documents:
             if not isinstance(document, dict):
                 document = document.__dict__
+                if 'url' in document:
+                    document['url'] = os.path.basename(document['url'])
             # TODO: record answer in database if local is False
             # auc : to cache them ?
             if not query.isKnown(document):

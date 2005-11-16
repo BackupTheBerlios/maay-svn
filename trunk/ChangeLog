@@ -1,6 +1,6 @@
 Maay-0.2.1 2005-11-16
-        * Fixed bug preventing P2P queries from being processed on
-        Windows
+        * Fixed bug #5647 caused by bad use of os.getlogin() preventing P2P
+	   queries from being processed on Windows
         * Fixed off by one error in document abstract generation
         * Fixed auto indexation of downloaded documents
         * Fixed some display inconsistencies in web interface
@@ -8,7 +8,7 @@ Maay-0.2.1 2005-11-16
         * Logging now happens in maay-node.log
 
 Maay-0.2.0 2005-11-15
-	* Added P2P queries
+        * Added P2P queries
         * Added presence server
         * Can launch indexation through web interface
         * Maay node runs as a windows service
