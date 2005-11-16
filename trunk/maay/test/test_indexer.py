@@ -23,6 +23,7 @@ from  tempfile import mkstemp
 import os
 
 from maay.indexer import *
+from maay import indexer
 
 class GlobalFunctionTC(unittest.TestCase):
 
@@ -41,6 +42,25 @@ class GlobalFunctionTC(unittest.TestCase):
 #         # as text files
 #         self.assertEquals('text/plain', mimetypes.types_map['.py'])
         
+
+class DummyThread:
+    alive = False
+    def isAlive(self):
+        return self.alive
+
+class ThreadsTC(unittest.TestCase):
+
+    def tearDown(self):
+        indexer.indexer_thread = None
+        
+    def test_is_running(self):
+        self.failIf(is_running())
+        indexer.indexer_thread = DummyThread()
+        self.failIf(is_running())
+        indexer.indexer_thread.alive = True
+        self.failUnless(is_running())
+
+    
         
 
 if __name__ == '__main__':

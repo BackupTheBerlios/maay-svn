@@ -33,13 +33,16 @@ from xmlrpclib import ServerProxy, Fault, ProtocolError
 import mimetypes
 import socket
 
-import maay.indexer
+
 from maay import converter
 from maay.configuration import IndexerConfiguration
 from maay.dbentity import FutureDocument, Document, FileInfo
 from maay.querier import MaayAuthenticationError
 from maay.texttool import removeControlChar
-from thread import start_new_thread
+from threading import Thread
+
+#log.startLogging(open('maay-indexer.log', 'w'))
+
 
 def makeDocumentId(filename):
     """return the SHA hash value from of the contents of the file"""
@@ -112,11 +115,10 @@ class Indexer:
     def purgeFiles(self,fileset):
         for filename in fileset:
             if self.verbose:
-                print "Requesting unindexation of %s" % filename
+                print "Requesting unindexation of %s" % \
+                      filename.encode('iso-8859-1',
+                                      'replace')
             self.serverProxy.removeFileInfo(self.cnxId, filename)
-            #XXX: fix by alf, below, causes indexer crash on auc personnal machine
-##                                             unicode(filename,
-##                                                     self.filesystemEncoding))
         if self.verbose:
             print "Requesting cleanup of unreferenced documents"
         self.serverProxy.removeUnreferencedDocuments(self.cnxId)
@@ -145,7 +147,8 @@ class Indexer:
     def indexFile(self, filepath, isPrivate=True):
         if not self.isIndexable(filepath):
             if self.verbose:
-                print "Indexer indexFile : can't index %s" % filepath
+                print "Indexer indexFile : can't index %s" % \
+                      filepath.encode('iso-8859-1', 'replace')
             return
 
         state = docState(isPrivate)
@@ -154,7 +157,8 @@ class Indexer:
         lastIdxTime, lastIdxState = self.getLastIndexationTimeAndState(filepath)
         if lastIdxState == state and lastIdxTime >= lastModificationTime:
             if self.verbose:
-                print "%s didn't change since last indexation" % filepath
+                print "%s didn't change since last indexation" % \
+                      filepath.encode('iso-8859-1', 'replace')
                 return
         try:
             title, text, _, _ = converter.extractWordsFromFile(filepath)
@@ -184,22 +188,24 @@ class Indexer:
     def indexDocument(self, futureDoc):
         futureDoc.file_state=FileInfo.CREATED_FILE_STATE
         if self.verbose:
-            print "Requesting indexation of %s" % futureDoc.filename,
+            print "Requesting indexation of %s" % \
+                  futureDoc.filename.encode('iso-8859-1', 'replace'),
         try:
             futureDoc.title = removeControlChar(futureDoc.title) 
             futureDoc.text = removeControlChar(futureDoc.text)
             if self.verbose:
-                print '('+futureDoc.title.encode('utf-8')+')'
+                print '('+futureDoc.title.encode('iso-8859-1', 'replace')+')'
             self.serverProxy.indexDocument(self.cnxId, futureDoc)
 
         except (Fault, ProtocolError), exc:
             if self.verbose:
                 print "An error occured on the Node while indexing %s" % \
-                      futureDoc.filename.encode('iso-8859-1')
+                      futureDoc.filename.encode('iso-8859-1', 'replace')
                 print exc
                 print "See Node log for details"
             else:
-                print "Error indexing %s: %s" % (futureDoc.filename.encode('iso-8859-1'), exc)
+                print "Error indexing %s: %s" % \
+                      (futureDoc.filename.encode('iso-8859-1', 'replace'), exc)
         
 
 ######### FileIterator
@@ -257,29 +263,37 @@ def run():
               (indexerConfig.host, indexerConfig.port)
         sys.exit(1)
 
-running = False
 
 ## helpers for calls from the node, probably needs a serious fix
 
 # run the indexer from webapp
-
+indexer_thread = None
 def _run_thread():
-    maay.indexer.running = True
+    global running
+    running = True
     try:
         run()
     finally:    
-        maay.indexer.running = False
+        running = False
+
+def is_running():
+    print '** is_running()', indexer_thread
+    return indexer_thread and indexer_thread.isAlive()
 
 def start_as_thread():
-    if maay.indexer.running:
-        print "Indexer already running"
-        return
-    start_new_thread(_run_thread, ())
+    global indexer_thread
+    if is_running():
+        print "Indexer already running", indexer_thread
+    else:
+        print "launching indexer"
+        indexer_thread = Thread(target=run)
+        indexer_thread.start()
 
-# index one file from webapp
+# index one file from webapp in a thread
 
 def indexJustOneFile(filepath):
-    start_new_thread(_just_one, (filepath,))
+    thread = Thread(target=_just_one, args=(filepath,))
+    thread.start()
 
 def _just_one(filepath):
     indexerConfig = IndexerConfiguration()

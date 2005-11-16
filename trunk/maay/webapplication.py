@@ -40,7 +40,7 @@ from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
 from maay.query import Query
 from maay.p2pquerier import P2pQuerier, P2pQuery
 from maay.dbentity import Document
-import maay.indexer
+from maay import indexer 
 
 class INodeConfiguration(Interface):
     """provide an interface in order to be able to remember webappconfig"""
@@ -129,16 +129,16 @@ class SearchForm(MaayPage):
     def child_indexation(self, context):
         start = int(context.arg('start', 0))
         if start == 0:
-            if maay.indexer.running:
+            if indexer.is_running():
                 msg = "Indexer running"
             else:
                 msg = "Indexer not running"
         else:
-            if maay.indexer.running:    
+            if indexer.is_running():    
                 msg = "Indexer already running"
             else:
                 msg = "Indexer started"
-                maay.indexer.start_as_thread()
+                indexer.start_as_thread()
 
         return IndexationPage(msg)
 
@@ -190,7 +190,7 @@ class DistantFilePage(static.File):
     def __init__(self, filepath):
         static.File.__init__(self, filepath)
         self.filepath = filepath
-        maay.indexer.indexJustOneFile(self.filepath)
+        indexer.indexJustOneFile(self.filepath)
 
         
 class IndexationPage(MaayPage):
