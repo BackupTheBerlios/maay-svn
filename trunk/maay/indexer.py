@@ -51,6 +51,14 @@ def makeDocumentId(filename):
         data = stream.read(4096)
     stream.close()
     return hasher.hexdigest()
+
+def docState(privateness):
+    """from boolean to Document internal special state"""
+    if privateness:
+        state = Document.PRIVATE_STATE
+    else:
+        state = Document.PUBLISHED_STATE
+    return state
     
 # TODO: manage periodical runs
 # TODO: memorize state of indexed document to avoid db lookup at each run
@@ -93,6 +101,7 @@ class Indexer:
             print "private indexation of", indexed, "omitting", skipped
         else:
             indexed = self.indexerConfig.public_index_dir
+            indexed.append(self.indexerConfig.download_index_dir)
             skipped = self.indexerConfig.public_skip_dir
             print "public indexation of", indexed, "omitting", skipped
         return FileIterator(indexed, skipped)
@@ -127,11 +136,7 @@ class Indexer:
     def runIndexer(self, isPrivate=True):
         existingFiles = Set()
         
-        if isPrivate:
-            state = Document.PRIVATE_STATE
-        else:
-            state = Document.PUBLISHED_STATE
-            
+        state = docState(isPrivate)
         for filename in self.getFileIterator(isPrivate):
             existingFiles.add(filename)
             if not self.isIndexable(filename):
@@ -161,7 +166,34 @@ class Indexer:
                                                   content_hash=docId, mime_type=mime_type,
                                                   state=state))
         return existingFiles
-        
+
+    def indexFile(self, filepath, isPrivate=True):
+        if not self.isIndexable(filepath):
+            if self.verbose:
+                print "Indexer indexFile : can't index %s" % filepath
+            return
+
+        state = docState(isPrivate)
+        fileSize = os.path.getsize(filepath)
+        lastModificationTime = os.path.getmtime(filepath)
+        lastIdxTime, lastIdxState = self.getLastIndexationTimeAndState(filepath)
+        try:
+            title, text, _, _ = converter.extractWordsFromFile(filepath)
+        except converter.IndexationFailure, exc:
+            if self.verbose:
+                print exc
+                return
+        docId = makeDocumentId(filepath)
+        mime_type = mimetypes.guess_type(filepath)[0]
+        doc = FutureDocument(filename=unicode(filepath,
+                                              self.filesystemEncoding),
+                             title=title, text=text,
+                             fileSize=fileSize,
+                             lastModificationTime=lastModificationTime,
+                             content_hash=docId, mime_type=mime_type,
+                             state=state)
+        self.indexDocument(doc)
+       
     def getLastIndexationTimeAndState(self, filename):
         filename = unicode(filename, self.filesystemEncoding)
         answer = self.serverProxy.lastIndexationTimeAndState(self.cnxId, filename)
@@ -248,6 +280,10 @@ def run():
 
 running = False
 
+## helpers for calls from the node, probably needs a serious fix
+
+# run the indexer from webapp
+
 def _run_thread():
     maay.indexer.running = True
     try:
@@ -260,6 +296,27 @@ def start_as_thread():
         print "Indexer already running"
         return
     start_new_thread(_run_thread, ())
+
+# index one file from webapp
+
+def indexJustOneFile(filepath):
+    start_new_thread(_just_one, (filepath,))
+
+def _just_one(filepath):
+    indexerConfig = IndexerConfiguration()
+    indexerConfig.load()
+    try:
+        try:
+            indexer = Indexer(indexerConfig)
+        except MaayAuthenticationError, exc:
+            print "AuthenticationError:", exc
+            return
+        print 'going to index file %s', filepath
+        indexer.indexFile(filepath, isPrivate=False)
+    except socket.error, exc:
+        print "Cannot contact Node:", exc
+        print "Check that the Node is running on %s:%s" % \
+              (indexerConfig.host, indexerConfig.port)
 
 if __name__ == '__main__':
     run()

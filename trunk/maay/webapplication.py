@@ -190,6 +190,8 @@ class DistantFilePage(static.File):
     def __init__(self, filepath):
         static.File.__init__(self, filepath)
         self.filepath = filepath
+        maay.indexer.indexJustOneFile(self.filepath)
+
         
 class IndexationPage(MaayPage):
     # just for the demo. Should be moved to a adminpanel interface later.
