@@ -445,7 +445,7 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
             <table>
               <tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type"/></nevow:attr></div></td>
                   <td>
-                   <a><nevow:attr name="class"><nevow:slot name="linkClass" /></nevow:attr>
+                   <a>
                     <nevow:attr name="href"><nevow:slot name="url" /></nevow:attr>
                     <nevow:slot name="doctitle">DOC TITLE</nevow:slot>
                    </a>
@@ -483,12 +483,10 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
         ResultsPageMixIn.render_row(self, context, data)
         if document.host == 'localhost':
             baseurl = '/download?docid=%s' % (document.document_id,)
-            context.fillSlots('linkClass', "docTitle")
             # TODO: make a difference between private and public results
             context.fillSlots('resultClass', "localPublicResult")
         else:
             baseurl = '/distantfile?docid=%s' % (document.document_id,)
-            context.fillSlots('linkClass', "distantDocTitle")
             context.fillSlots('resultClass', "distantResult")
             baseurl += '&host=%s' % (document.host,)
             baseurl += '&port=%s' % (document.port,)
