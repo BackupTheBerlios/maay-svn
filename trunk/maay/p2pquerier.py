@@ -43,6 +43,22 @@ def hashIt(item, uname=''.join(platform.uname())):
     hasher.update('%s' % time.time())
     return hasher.hexdigest()
 
+def getUserLogin():
+    """uses os.getlogin() when available, and if not provides a simple
+    (and *unreliable*) replacement.
+    """
+    try:
+        return os.getlogin()
+    except (OSError, AttributeError):
+        # OSError can occur on some Linux platforms.
+        # AttributeError occurs on any non-UNIX platform
+        # try to make a rough guess ...
+        for var in ('USERNAME', 'USER', 'LOGNAME'):
+            guessed = os.environ.get(var)
+            if guessed:
+                return guessed
+        return 'anonymous'
+
 class QueryVersionMismatch(Exception):
     """we beginning a versionning nightmare trip on queries
        maybe I'll be shot for this, but who knows"""
@@ -296,17 +312,7 @@ class P2pQuerier:
             doc.text = untagText(removeSpace(abstract))
 
         # provider is a triple (login, IP, xmlrpc-port)
-        # FIXME: method os.getlogin() raises an exception (under Linux).
-        # >>> os.getlogin()
-        # Traceback (most recent call last):
-        #   File "<stdin>", line 1, in ?
-        #   OSError: [Errno 2] No such file or directory
-        try:
-            login = os.getlogin()
-        except OSError:
-            login = "anonymous"
-
-        provider = (login,
+        provider = (getUserLogin(),
                     socket.gethostbyname(socket.gethostname()),
                     P2pQuerier._ourRPCPort)
             
