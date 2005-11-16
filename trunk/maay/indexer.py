@@ -25,6 +25,11 @@ TODO: analyse the God class into something understandable
 
 __revision__ = '$Id$'
 
+from maay.configuration import IndexerConfiguration
+indexerConfig = IndexerConfiguration()
+indexerConfig.load()
+
+
 import os
 import sys
 import sha
@@ -35,7 +40,6 @@ import socket
 
 
 from maay import converter
-from maay.configuration import IndexerConfiguration
 from maay.dbentity import FutureDocument, Document, FileInfo
 from maay.querier import MaayAuthenticationError
 from maay.texttool import removeControlChar
@@ -248,8 +252,6 @@ class FileIterator:
 ## main() ##################################################
 
 def run():
-    indexerConfig = IndexerConfiguration()
-    indexerConfig.load()
     try:
         try:
             indexer = Indexer(indexerConfig)

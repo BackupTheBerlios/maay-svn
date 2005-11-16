@@ -24,6 +24,9 @@ an xmlrpc server for the indexer and distributed queries.
 
 __revision__ = '$Id$'
 
+from maay.configuration import NodeConfiguration
+nodeConfig = NodeConfiguration()
+nodeConfig.load()
 
 import platform
 import sha
@@ -57,7 +60,7 @@ import MySQLdb
 from maay.querier import MaayQuerier, IQuerier, AnonymousQuerier, \
      MaayAuthenticationError, WEB_AVATARID
 from maay.rpc import MaayRPCServer
-from maay.configuration import NodeConfiguration
+
 from maay import presenceclient
 from maay.webapplication import Maay404, INodeConfiguration, SearchForm
 
@@ -245,12 +248,10 @@ class MaaySessionWrapper(guard.SessionWrapper):
 
 ##     def _forceLoginPage(self, *args):
 ##         return LoginForm(), ''
-    
+
     
 def run():
     log.startLogging(open('maay-node.log', 'w'))
-    nodeConfig = NodeConfiguration()
-    nodeConfig.load()
     maayPortal = MaayPortal(nodeConfig)
     website = appserver.NevowSite(MaaySessionWrapper(maayPortal,
                                                      mindFactory=MaayMindFactory))

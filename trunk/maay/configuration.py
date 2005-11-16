@@ -87,31 +87,18 @@ def _filter_files_with(file_list, access_criterium):
     return [file_obj for file_obj in file_list
             if os.access(file_obj, access_criterium)]
 
-def _download_index_dir():
-    if sys.platform == 'win32':
-        theDir = osp.join(osp.expanduser('~'),'MaayDownloads')
-    else:
-        theDir = osp.expanduser('~/maay-downloads/')
-    if not osp.exists(theDir):
-        os.makedirs(theDir)
-    return theDir
 
 class Configuration(BaseConfiguration):
+
+    config_file = None
     options = [
         ('config-name',
          {'type' : "string", 'metavar' : "<config-name>", 'short' : "C",
          'help' : "allow to specify a config directory name",
           'default' : "maay",
         }),
-        ('download-index-dir',
-         {'type': 'string',
-          'metavar': '<downloads>',
-          'help': 'downloaded files will go there and be immediately indexed',
-          'default' : _download_index_dir()
-          })
-
         ]
-    config_file = None
+
 
     def __init__(self, name=None):
         BaseConfiguration.__init__(self, options=self.options,
@@ -119,15 +106,15 @@ class Configuration(BaseConfiguration):
                                    name=name)
         
     def load(self):
-        # line below to take early into account the config name var
         self.load_command_line_configuration()
-        if self.config_file:
-            for directory in self.get_config_dirs():
-                path = os.path.join(directory, self.config_file)
-                self.load_file_configuration(path)
+        self.load_from_files()
         # then override with command-line options
         self.load_command_line_configuration()
-    
+
+    def load_from_files(self):
+        for directory in self.get_config_dirs():
+            path = os.path.join(directory, self.config_file)
+            self.load_file_configuration(path)
 
     def get_config_dirs(self):
         if sys.platform == "win32": # XXX: fix Win32 with self.config_name attr
@@ -269,6 +256,16 @@ class NodeConfiguration(Configuration):
         raise ValueError('Unable to find a writable directory to store the node id')
 
 ################ Indexer stuff
+
+def _download_index_dir():
+    if sys.platform == 'win32':
+        theDir = r'C:\Documents and Settings\All Users\Desktop\Maay Documents\downloaded'
+    else:
+        theDir = osp.expanduser('~/maay-downloads/')
+    if not osp.exists(theDir):
+        os.makedirs(theDir)
+    return theDir
+
     
 class IndexerConfiguration(Configuration):
     options = Configuration.options + [
@@ -335,7 +332,14 @@ class IndexerConfiguration(Configuration):
           'help' : 'purge the set of indexed documents and returns immediately',
           'metavar' : '<y or n>',
           'default' : False,
+          }),
+        ('download-index-dir',
+         {'type': 'string',
+          'metavar': '<downloads>',
+          'help': 'downloaded files will go there and be immediately indexed',
+          'default' : _download_index_dir()
           })
+        
         ]
 
     config_file = 'indexer.ini'
@@ -387,6 +391,3 @@ class ImageConfiguration(BaseConfiguration):
             return path
         else:
             raise NoThumbnailsDir("Access to %s is impossible." % path)
-
-
-
