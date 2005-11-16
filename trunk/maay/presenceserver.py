@@ -33,7 +33,8 @@ from twisted.protocols.basic import LineReceiver
 class PresenceServer(LineReceiver):
     # define this as a static class member since a new instance of the class
     # is created after each request
-    _registeredUsers = {} 
+    _registeredUsers = {}
+    _ruReverseMap = {}
     _ruTimestamp = {}
     # TODO: auto logout after a given time to save memory
 
@@ -47,9 +48,11 @@ class PresenceServer(LineReceiver):
         for nodeId, values in PresenceServer._ruTimestamp.items():
             dt = now - values
             if dt.seconds > self._autoExpirationDelayInSecs:
+                ip, port = PresenceServer._registeredUsers[nodeId] [2:3]
                 if verbose:
-                    print "%s removed" % str(PresenceServer._registeredUsers[nodeId])
+                    print "%s:%s removed" % (ip, port)
                 del PresenceServer._registeredUsers[nodeId]
+                del PresenceServer._ruReverseMap[(ip, port)]
                 del PresenceServer._ruTimestamp[nodeId]
             elif verbose:
                 print "keep: %s (%s)" % (str(PresenceServer._registeredUsers[nodeId]), str(values))
@@ -90,11 +93,18 @@ class PresenceServer(LineReceiver):
             print "%s was already registered" % (nodeId,)
         lastseen = datetime.utcnow()
         PresenceServer._ruTimestamp[nodeId] = lastseen
+        # check bijection betwen (ip, port) and nodeId
+        # same (ip, port) shouldn't be registered several times
+        if (ip, port) in PresenceServer._ruReverseMap:
+            oldId = PresenceServer._ruReverseMap[(ip, port)]
+            del PresenceServer._registeredUsers[oldId]
+            del PresenceServer._ruTimestamp[oldId]
         PresenceServer._registeredUsers[nodeId] = (lastseen.isoformat(),
                                          nodeId,
                                          self.transport.getPeer().host,
                                          port,
                                          bandwidth)
+        PresenceServer._ruReverseMap[(ip, port)] = nodeId
 
     def do_logout(self, nodeId):
         try:
