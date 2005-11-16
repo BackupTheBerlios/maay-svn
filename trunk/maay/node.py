@@ -42,6 +42,7 @@ from twisted.internet import reactor, defer
 from twisted.web import server
 from twisted.python import failure
 from nevow import inevow, appserver, guard
+from twisted.python import log
 
 # These imports are not used, but they help py2exe tremendously.
 # Do not remove them (that is, unless we change the database backend
@@ -247,6 +248,7 @@ class MaaySessionWrapper(guard.SessionWrapper):
     
     
 def run():
+    log.startLogging(open('maay-node.log', 'w'))
     nodeConfig = NodeConfiguration()
     nodeConfig.load()
     maayPortal = MaayPortal(nodeConfig)
