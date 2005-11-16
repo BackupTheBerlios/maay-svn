@@ -139,32 +139,7 @@ class Indexer:
         state = docState(isPrivate)
         for filename in self.getFileIterator(isPrivate):
             existingFiles.add(filename)
-            if not self.isIndexable(filename):
-                continue
-            lastModificationTime = os.path.getmtime(filename)
-            lastIdxTime, lastIdxState = self.getLastIndexationTimeAndState(filename)
-            if lastIdxState == state and lastIdxTime >= lastModificationTime:
-                if self.verbose:
-                    print "%s didn't change since last indexation" % filename
-                continue
-            else:
-                fileSize = os.path.getsize(filename)
-                try:
-                    title, text, _, _ = converter.extractWordsFromFile(filename)
-                except converter.IndexationFailure, exc:
-                    if self.verbose:
-                        print exc
-                    continue                    
-                docId = makeDocumentId(filename)
-                mime_type = mimetypes.guess_type(filename)[0]
-
-                self.indexDocument(FutureDocument(filename=unicode(filename,
-                                                                   self.filesystemEncoding),
-                                                  title=title, text=text,
-                                                  fileSize=fileSize,
-                                                  lastModificationTime=lastModificationTime,
-                                                  content_hash=docId, mime_type=mime_type,
-                                                  state=state))
+            self.indexFile(filename, isPrivate)
         return existingFiles
 
     def indexFile(self, filepath, isPrivate=True):
@@ -177,12 +152,16 @@ class Indexer:
         fileSize = os.path.getsize(filepath)
         lastModificationTime = os.path.getmtime(filepath)
         lastIdxTime, lastIdxState = self.getLastIndexationTimeAndState(filepath)
+        if lastIdxState == state and lastIdxTime >= lastModificationTime:
+            if self.verbose:
+                print "%s didn't change since last indexation" % filepath
+                return
         try:
             title, text, _, _ = converter.extractWordsFromFile(filepath)
         except converter.IndexationFailure, exc:
             if self.verbose:
                 print exc
-                return
+            return
         docId = makeDocumentId(filepath)
         mime_type = mimetypes.guess_type(filepath)[0]
         doc = FutureDocument(filename=unicode(filepath,
