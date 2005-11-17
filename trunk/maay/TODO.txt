@@ -21,7 +21,6 @@
    "où souhaitez vous installer Maay ?"
  - envoi paresseux des documents par les fournisseurs
  - admin panel plus interactif (chemins éditables, progression de l'indexation)
- - ajout tests présence server
  - table Node cohérente avec ce qui a été fait sur présence server (nodeId <=> (ip, port))
  - maay passerelle (deux+ interfaces rezo)
 
@@ -41,3 +40,4 @@
        sur une liste de résutlat exclusivement locaux et distants.
      * Un indicateur visuel pour chaque résultat qui permet de savoir que c'est un
        résultat distant, et de qui ça vient.
+ - ajout tests présence server
