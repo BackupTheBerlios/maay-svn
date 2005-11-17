@@ -278,6 +278,7 @@ class P2pQuerier:
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
             d.addErrback(P2pErrbacks.sendQueryProblem)
+            # FIXME : mecanism below might be bogus
             P2pErrbacks.setQueryTarget(target)
             self._sentQueries[query.qid] = query
             print " ... sent to %s %s %s" % (neighbor.node_id,
