@@ -241,6 +241,9 @@ class ResultsPageMixIn:
 
     def macro_prevnext(self, context):
         return loaders.xmlfile(get_path_of('prevnext.html'))
+
+    def macro_resultset(self, context):
+        return loaders.xmlfile(get_path_of('livefragment.html'))
     
     def render_title(self, context, data):
         localCount, distantCount = self.querier.countResults(self.queryId)
@@ -295,7 +298,12 @@ class ResultsPageMixIn:
         offset = self.query.offset - 15
         return tags.xml('<a href="javascript: browseResults(%s);">Previous</a>' % (offset))
     
-
+    def render_peer(self, context, data):
+        """:type data: Result"""
+        if data.login is None:
+            return ''
+        return '%s (%s) - ' % (data.login, data.host)
+    
     def render_row(self, context, data):
         document = data
         words = self.query.words #WORDS (was .split())
@@ -312,13 +320,23 @@ class ResultsPageMixIn:
             print exc
             abstract = u'No abstract available for this document [%s]' % exc
         context.fillSlots('abstract', tags.xml(abstract))
-        context.fillSlots('docid', document.document_id)
         context.fillSlots('docurl', tags.xml(boldifyText(document.url, words)))
         context.fillSlots('words', self.query.joinwords(' ')) #WORDS
         context.fillSlots('readable_size', document.readable_size())
         date = datetime.fromtimestamp(document.publication_time)
         context.fillSlots('publication_date', date.strftime('%d %b %Y'))
-        context.fillSlots('resultClass', "localPublicResult")
+        if document.host == 'localhost':
+            baseurl = '/download?docid=%s' % (document.document_id,)
+            # TODO: make a difference between private and public results
+            context.fillSlots('resultClass', "localPublicResult")
+        else:
+            baseurl = '/distantfile?docid=%s' % (document.document_id,)
+            context.fillSlots('resultClass', "distantResult")
+            baseurl += '&host=%s' % (document.host,)
+            baseurl += '&port=%s' % (document.port,)
+        baseurl += '&filename=%s' % osp.basename(document.url)
+        baseurl += '&words=%s' % '+'.join(self.query.words)
+        context.fillSlots('url', baseurl)
         return context.tag
     
 from nevow import athena, inevow
@@ -422,44 +440,7 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     It will be refactored later. The idea is to have something working
     quickly.
     """
-    docFactory = loaders.xmlstr("""
-  <div id="resultsDiv" xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1" >
-   <div class="message" nevow:render="title">Results <b><nevow:slot name="start_result" /></b> - <b><nevow:slot name="end_result" /></b> of <b><nevow:slot name="count" /></b> for <b><nevow:slot name="words" /></b>.</div>
-    <nevow:invisible nevow:macro="prevnext" />
-   <table>
-     <tr>
-       <td><div class="localPublicResult"><a href="javascript: onlyLocalResults();"><span nevow:render="localcount" /> local</a></div></td>
-       <td> - </td>
-       <td> <div class="distantResult"><a href="javascript: onlyDistantResults();"><span nevow:render="distantcount" /> distant</a></div></td>
-       <td>-</td>
-       <td><a href="javascript: allResults();"><span nevow:render="totalcount" /> all</a></td>
-     </tr>
-   </table>
-    <table class="results" nevow:render="sequence" nevow:data="results">
-      <tr nevow:pattern="item" nevow:render="row">
-        <td>
-          <div>
-            <nevow:attr name="class"><nevow:slot name="resultClass" /></nevow:attr>
-            <table>
-              <tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type"/></nevow:attr></div></td>
-                  <td>
-                   <a>
-                    <nevow:attr name="href"><nevow:slot name="url" /></nevow:attr>
-                    <nevow:slot name="doctitle">DOC TITLE</nevow:slot>
-                   </a>
-                  </td>
-              </tr>
-            </table>
-            <div class="resultDesc"><nevow:slot name="abstract" /></div>
-            <span class="resultUrl"><span nevow:render="peer" /><nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
-          </div>
-        </td>
-      </tr>
-    </table>
-    <nevow:invisible nevow:macro="prevnext" />
-    <nevow:invisble nevow:macro="footer" />
-  </div>
-    """)
+    docFactory = loaders.xmlfile(get_path_of('livefragment.html'))
     
     def __init__(self, results, querier, query, queryId,
                  onlyLocal=False, onlyDistant=False):
@@ -470,28 +451,6 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
         self.onlyLocal = onlyLocal
         self.onlyDistant = onlyDistant
 
-    def render_peer(self, context, data):
-        """:type data: Result"""
-        if data.login is None:
-            return ''
-        return '%s (%s) - ' % (data.login, data.host)
-    
-    def render_row(self, context, data):
-        document = data
-        ResultsPageMixIn.render_row(self, context, data)
-        if document.host == 'localhost':
-            baseurl = '/download?docid=%s' % (document.document_id,)
-            # TODO: make a difference between private and public results
-            context.fillSlots('resultClass', "localPublicResult")
-        else:
-            baseurl = '/distantfile?docid=%s' % (document.document_id,)
-            context.fillSlots('resultClass', "distantResult")
-            baseurl += '&host=%s' % (document.host,)
-            baseurl += '&port=%s' % (document.port,)
-        baseurl += '&filename=%s' % osp.basename(document.url)
-        baseurl += '&words=%s' % '+'.join(self.query.words)
-        context.fillSlots('url', baseurl)
-        return context.tag
 
 class ResultsPageFactory(athena.LivePageFactory):
     def getLivePage(self, context):

@@ -1,0 +1,38 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<div id="resultsDiv" xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+  <div class="message" nevow:render="title">Results <b><nevow:slot name="start_result" /></b> - <b><nevow:slot name="end_result" /></b> of <b><nevow:slot name="count" /></b> for <b><nevow:slot name="words" /></b>.</div>
+  <nevow:invisible nevow:macro="prevnext" />
+  <table>
+    <tr>
+      <td><div class="localPublicResult"><a href="javascript: onlyLocalResults();"><span nevow:render="localcount" /> local</a></div></td>
+      <td> - </td>
+      <td> <div class="distantResult"><a href="javascript: onlyDistantResults();"><span nevow:render="distantcount" /> distant</a></div></td>
+      <td>-</td>
+      <td><a href="javascript: allResults();"><span nevow:render="totalcount" /> all</a></td>
+    </tr>
+  </table>
+  <table class="results" nevow:render="sequence" nevow:data="results">
+    <tr nevow:pattern="item" nevow:render="row">
+      <td>
+	<div>
+	  <nevow:attr name="class"><nevow:slot name="resultClass" /></nevow:attr>
+	  <table>
+	    <tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type"/></nevow:attr></div></td>
+	    <td>
+	      <a>
+		<nevow:attr name="href"><nevow:slot name="url" /></nevow:attr>
+		<nevow:slot name="doctitle">DOC TITLE</nevow:slot>
+	      </a>
+	    </td>
+	    </tr>
+	  </table>
+	  <div class="resultDesc"><nevow:slot name="abstract" /></div>
+	  <span class="resultUrl"><span nevow:render="peer" /><nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
+	</div>
+      </td>
+    </tr>
+  </table>
+  <nevow:invisible nevow:macro="prevnext" />
+</div>
