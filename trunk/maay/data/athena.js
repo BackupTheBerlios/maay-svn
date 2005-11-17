@@ -179,12 +179,19 @@ function nevow_XMLHttpRequestFail(err) {
 }
 
 var last_request = null;
+var abortNeeded = true; // default is "abort needed"
 var userAgent = navigator.userAgent.toLowerCase();
+
+function abortLastRequest() {
+    if (last_request != null && abortNeeded) {
+	last_request.abort();
+    }
+}
 
 if (userAgent.indexOf("msie") != -1) {
     /* IE specific stuff */
     /* Abort last request so we don't 'leak' connections */
-    window.attachEvent("onbeforeunload", function() { if (last_request != null) {last_request.abort();} } )
+    window.attachEvent("onunload", abortLastRequest )
 }
 
 function nevow_prepareRemoteAction(actionType, args) {

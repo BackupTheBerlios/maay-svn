@@ -11,13 +11,16 @@
 function updateResults(source) {
  div = document.getElementById('resultsDiv');
  div.innerHTML = source;
+ abortNeeded = true;
 }
 
 function startConnection() {
- var d = server.callRemote('connect');
+  var d = server.callRemote('connect');
 }
 
 function browseResults(offset) {
+ // Do not abort last request when using Prev/Next links
+ abortNeeded = false;
  var d = server.callRemote('browseResults', offset);
  d.addCallback(updateResults);
 }
