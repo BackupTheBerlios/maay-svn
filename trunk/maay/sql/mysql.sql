@@ -146,7 +146,7 @@ CREATE TABLE `words` (
  
 
 CREATE TABLE `results` (
-  `db_document_id` varchar(40) NOT NULL,
+--  `db_document_id` varchar(40) NOT NULL,
   `document_id` varchar(40) NOT NULL default '',
   `query_id` varchar(64) NOT NULL,
   `mime_type` varchar(40) NOT NULL default '',
@@ -159,7 +159,9 @@ CREATE TABLE `results` (
   `port` int(11), -- check this
   `login` varchar(255),
   `record_ts` TIMESTAMP(8), -- DEFAULT NOW() is not necessary because records are not updated
-  PRIMARY KEY (`db_document_id`, `query_id`, `host`, `port`)
+  `providers` int(11) default 1, -- number of providers for the document
+  PRIMARY KEY (`document_id`, `query_id`)
+--  PRIMARY KEY (`db_document_id`, `query_id`, `host`, `port`)
 --  KEY `document_id` (`document_id`),
 --  KEY `url` (`url`)
 ) TYPE=MyISAM;

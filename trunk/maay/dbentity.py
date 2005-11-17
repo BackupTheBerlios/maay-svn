@@ -26,7 +26,8 @@ __all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore',
 import re
 from sets import Set
 
-from maay.texttool import normalizeText, WORD_MIN_LEN, WORD_MAX_LEN
+from maay.texttool import normalizeText, WORD_MIN_LEN, WORD_MAX_LEN,\
+     WORDS_RGX
 
 class DBEntity:
     attributes = []
@@ -230,6 +231,7 @@ class Document(DBEntity):
     def _selectContainingQuery(cls, words, mimetype=None, offset=0, allowPrivate=False):
         # XXX mimetype handling is a HACK. It needs to be integrated
         #     nicely in order to handle any kind of restrictions easily
+        #word = WORDS_RGX.finditer(normalizeText(' '.join(words)))
         if mimetype is not None:
             restriction = " AND D.mime_type=%s "
             restrictionParams = [unicode(mimetype)]
@@ -296,12 +298,23 @@ class Result(Document):
     """Results are temporary relations created/destroyed on the fly
        they contain documents matching both local and distributed requests
     """
-    attributes = ('db_document_id', 'document_id', 'query_id', 'mime_type',
+    attributes = ('document_id', 'query_id', 'mime_type',
                   'title', 'size', 'text', 'publication_time', 'url',
-                  'host', 'port', 'login')
-    key = ('document_id', 'query_id', 'host', 'port')
+                  'host', 'port', 'login', 'providers')
+    key = ('document_id', 'query_id')
     tableName = 'results'
-    
+
+    def _insertQuery(self):
+        """generates an INSERT query according to object's state
+           also update provider count on collisions on (queryId, document_id)"""
+        values = ['%%(%s)s' % attr for attr in self.attributes
+                  if hasattr(self, attr)]
+        query = "INSERT INTO %s (%s) VALUES (%s) " % (self.tableName,
+                                                     ', '.join(self.boundAttributes()),
+                                                     ', '.join(values))
+        query += "ON DUPLICATE KEY UPDATE providers=providers+1"
+        return query
+
     def fromDocument(document, queryId, provider=None):
         stateDict = document.stateDict
         for key, value in stateDict.items():
@@ -462,6 +475,8 @@ class Node(DBEntity):
                   'claim_count', 'affinity', 'bandwidth')
     key = ('node_id',)
 
+    #TODO: ensure nodeID <=> (ip, port)
+
     def _selectRegisteredNodesQuery(cls):
         query = cls._selectQuery()
         query += " WHERE node_id != %s ORDER BY last_seen_time DESC LIMIT %s"
@@ -477,6 +492,7 @@ class Node(DBEntity):
     selectRegistered = classmethod(selectRegistered)
 
     def selectActive(cls, cursor, currentNodeId, maxResults):
+        #TODO: return really active nodes
         return cls.selectRegistered(cursor, currentNodeId, maxResults)
     selectActive = classmethod(selectActive)
 
