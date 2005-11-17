@@ -178,10 +178,20 @@ function nevow_XMLHttpRequestFail(err) {
     }
 }
 
+var last_request = null;
+var userAgent = navigator.userAgent.toLowerCase();
+
+if (userAgent.indexOf("msie") != -1) {
+    /* IE specific stuff */
+    /* Abort last request so we don't 'leak' connections */
+    window.attachEvent("onbeforeunload", function() { if (last_request != null) {last_request.abort();} } )
+}
+
 function nevow_prepareRemoteAction(actionType, args) {
 
     var url = nevow_constructActionURL(actionType, args);
     var req = MochiKit.Async.getXMLHttpRequest();
+    last_request = req;
 
     try {
         req.open('GET', url, true);
