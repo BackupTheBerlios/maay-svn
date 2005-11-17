@@ -326,7 +326,7 @@ class Result(Document):
             where += " AND host != 'localhost' "
         elif onlyLocal:
             where += " AND host = 'localhost' "
-        query = 'SELECT %s FROM %s%s ORDER BY publication_time LIMIT %s OFFSET %s' % (
+        query = 'SELECT %s FROM %s%s ORDER BY publication_time DESC LIMIT %s OFFSET %s' % (
             ', '.join(cls.attributes),
             cls.tableName,
             where, limit, offset)
