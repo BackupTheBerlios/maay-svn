@@ -16,14 +16,23 @@
 
 * What's Next
 
+ - GC des noeuds morts (ping ? heartbeats ? etc.)
+ - Ne pas mettre dans le wizzard d'installation de question du genre
+   "où souhaitez vous installer Maay ?"
+ - envoi paresseux des documents par les fournisseurs
+ - admin panel plus interactif (chemins éditables, progression de l'indexation)
+ - ajout tests présence server
+ - table Node cohérente avec ce qui a été fait sur présence server (nodeId <=> (ip, port))
+ - maay passerelle (deux+ interfaces rezo)
+
+
+* Done
+
  - "le serveur d'enregistrement" est un serveur de présence (vocabulaire)
  - autologin (<=> ne travailler qu'en mode loggé)
- - GC des noeuds morts (ping ? heartbeats ? etc.)
  - serveur de présence ne doit être utilisé qu'à l'amorçage. Chaque
    noeud maintient ensuite à jour sa liste de voisins
  - Désinstalleur windows
- - Ne pas mettre dans le wizzard d'installation de question du genre
-   "où souhaitez vous installer Maay ?"
  - Par défaut : private-index-dir : $HOME, public-index-dir : $HOME/Desktop/MaayPublic
  - Dans le cadre de la recherche P2P, on cherche partout (local et distribué), mais sur
    la page de résultats, on doit voir apparaître les informations suivantes :
@@ -32,5 +41,3 @@
        sur une liste de résutlat exclusivement locaux et distants.
      * Un indicateur visuel pour chaque résultat qui permet de savoir que c'est un
        résultat distant, et de qui ça vient.
-
-
