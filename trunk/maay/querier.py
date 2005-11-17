@@ -257,9 +257,11 @@ class AnonymousQuerier:
             
             score.popularity = score.download_count / winfo_downloads
             score.popularity -= hoeffding_deviation(winfo_downloads)
+            score.popularity = max(1e-6, score.popularity)
             
             score.relevance = score.download_count / document.download_count
             score.relevance -= hoeffding_deviation(document.download_count)
+            score.relevance = max(1e-6, score.relevance)
             
             score.commit(cursor, update=True)
         cursor.close()
