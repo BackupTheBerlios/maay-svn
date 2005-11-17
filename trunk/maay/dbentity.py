@@ -310,8 +310,8 @@ class Result(Document):
         values = ['%%(%s)s' % attr for attr in self.attributes
                   if hasattr(self, attr)]
         query = "INSERT INTO %s (%s) VALUES (%s) " % (self.tableName,
-                                                     ', '.join(self.boundAttributes()),
-                                                     ', '.join(values))
+                                                      ', '.join(self.boundAttributes()),
+                                                      ', '.join(values))
         query += "ON DUPLICATE KEY UPDATE providers=providers+1"
         return query
 

@@ -200,8 +200,7 @@ class IndexationPage(MaayPage):
     def __init__(self, msg = "No message"):
         MaayPage.__init__(self)
         self._msg = msg
-        self.indexerConfig = indexer.IndexerConfig
-        self.indexerConfig.load()
+        self.indexerConfig = indexer.indexerConfig
 
     def render_message(self, context, data):
         return self._msg
@@ -363,7 +362,11 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         self.onlyDistant = False
         # push local results once for all
         if len(inevow.IRemainingSegments(context)) < 2:
-            results = querier.findDocuments(self.query)
+            # only store abstracts in the results table
+            results = []
+            for localDoc in querier.findDocuments(self.query):
+                localDoc.text = makeAbstract(localDoc.text, self.query.words)
+                results.append(localDoc)
             webappConfig = INodeConfiguration(context)
             p2pQuery = P2pQuery(webappConfig.get_node_id(),
                                 webappConfig.rpcserver_port,
