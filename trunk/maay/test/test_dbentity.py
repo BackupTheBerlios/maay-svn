@@ -86,7 +86,7 @@ class ResultTC(unittest.TestCase):
         self.assertEquals(result.host, 'localhost')
         self.assertEquals(result.mime_type, 'application/pdf')
         self.assertEquals(result.boundAttributes(), ['db_document_id', 'query_id',
-                                                     'mime_type', 'host'])
+                                                     'mime_type', 'host', 'port'])
         
     def testBuildFromDistantDocument(self):
         document = Document(db_document_id='foo', mime_type='application/pdf')
