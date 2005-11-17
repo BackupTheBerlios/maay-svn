@@ -80,7 +80,7 @@ def createConfigFile(myDesktop, myDocuments):
 
 def probe_presence_config():
     default = ('192.33.178.29', 2345)
-    private_ft = ('maay.rd.francetelecom.fr', 2345)
+    private_ft = ('10.193.165.35', 2345)
     crater = ('172.17.1.4', 2345)
     jenkins = ('192.168.74.105', 2345)
     for addr in (private_ft,
