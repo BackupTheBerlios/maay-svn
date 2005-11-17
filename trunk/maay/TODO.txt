@@ -17,8 +17,6 @@
 * What's Next
 
  - GC des noeuds morts (ping ? heartbeats ? etc.)
- - Ne pas mettre dans le wizzard d'installation de question du genre
-   "où souhaitez vous installer Maay ?"
  - envoi paresseux des documents par les fournisseurs
  - admin panel plus interactif (chemins éditables, progression de l'indexation)
  - table Node cohérente avec ce qui a été fait sur présence server (nodeId <=> (ip, port))
