@@ -35,7 +35,7 @@ from nevow import rend, tags, loaders
 from logilab.common.textutils import normalize_text
 
 from maay.querier import WEB_AVATARID
-from maay.configuration import get_path_of, NodeConfiguration, IndexerConfiguration
+from maay.configuration import get_path_of
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
 from maay.query import Query
 from maay.p2pquerier import P2pQuerier, P2pQuery
@@ -104,9 +104,7 @@ class PeersList(MaayPage):
             context.fillSlots(attrname, getattr(peerNode, attrname, 'N/A'))
         return context.tag
 
-_idxcfg = NodeConfiguration()
-_idxcfg.load()
-                    
+                   
 class SearchForm(MaayPage):
     """default search form"""
     bodyFactory = loaders.xmlfile(get_path_of('searchform.html'))
@@ -116,7 +114,7 @@ class SearchForm(MaayPage):
         MaayPage.__init__(self, maayId)
         self.querier = querier
         self.p2pquerier = p2pquerier
-        self.download_dir = _idxcfg.download_index_dir
+        self.download_dir = indexer.indexerConfig.download_index_dir
         
     def logout(self):
         print "Bye %s !" % (self.maayId,)
@@ -202,7 +200,7 @@ class IndexationPage(MaayPage):
     def __init__(self, msg = "No message"):
         MaayPage.__init__(self)
         self._msg = msg
-        self.indexerConfig = IndexerConfiguration()
+        self.indexerConfig = indexer.IndexerConfig
         self.indexerConfig.load()
 
     def render_message(self, context, data):
