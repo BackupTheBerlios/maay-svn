@@ -133,13 +133,13 @@ div.sort {
 
 
 /** indexation page *******/
-div.indexedDirectoryName {
+div.indexedFolderName {
   font-size: 60%;
   color: #448844; 
   margin-left: 10px;
 }
 
-div.skippedDirectoryName {
+div.skippedFolderName {
   font-size: 60%;
   color: #884444; 
   margin-left: 10px;

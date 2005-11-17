@@ -125,6 +125,42 @@ class SearchForm(MaayPage):
         return PeersList(self.maayId, self.querier)
 
     def child_indexation(self, context):
+        # Actions (add/remove) on private folders
+        addPrivateFolder = context.arg('addPrivateFolder', 0)
+        if addPrivateFolder:
+                indexer.indexerConfig.private_index_dir.append(addPrivateFolder)
+ 
+        removePrivateFolder = context.arg('removePrivateFolder', 0)
+        if removePrivateFolder:
+            try:
+                indexer.indexerConfig.private_index_dir.remove(removePrivateFolder)
+            except ValueError:
+                print "Folder '%s' not in the private directory list"
+
+        # Actions (add/remove) on public folders
+        addPublicFolder = context.arg('addPublicFolder', 0)
+        if addPublicFolder:
+                indexer.indexerConfig.public_index_dir.append(addPublicFolder)
+ 
+        removePublicFolder = context.arg('removePublicFolder', 0)
+        if removePublicFolder:
+            try:
+                indexer.indexerConfig.public_index_dir.remove(removePublicFolder)
+            except ValueError:
+                print "Folder '%s' not in the private directory list"
+
+        # Actions (add/remove) on skipped folders
+        addSkippedFolder = context.arg('addSkippedFolder', 0)
+        if addSkippedFolder:
+                indexer.indexerConfig.public_skip_dir.append(addSkippedFolder)
+ 
+        removeSkippedFolder = context.arg('removeSkippedFolder', 0)
+        if removeSkippedFolder:
+            try:
+                indexer.indexerConfig.public_skip_dir.remove(removeSkippedFolder)
+            except ValueError:
+                print "Folder '%s' not in the private directory list"
+
         start = int(context.arg('start', 0))
         if start == 0:
             if indexer.is_running():
@@ -205,22 +241,17 @@ class IndexationPage(MaayPage):
     def render_message(self, context, data):
         return self._msg
 
-    def data_indexedprivatedirectories(self, context, data):
+    def data_privatefolders(self, context, data):
         if not self.indexerConfig.private_index_dir:
-            return ["No indexed private directory."]
+            return ["No private folder."]
         return self.indexerConfig.private_index_dir
 
-    def data_skippedprivatedirectories(self, context, data):
-        if not self.indexerConfig.private_skip_dir:
-            return ["No skipped private directory."]
-        return self.indexerConfig.private_skip_dir
-
-    def data_indexedpublicdirectories(self, context, data):
+    def data_publicfolders(self, context, data):
         if not self.indexerConfig.public_index_dir:
-            return ["No indexed public directory."]
+            return ["No public folder."]
         return self.indexerConfig.public_index_dir
 
-    def data_skippedpublicdirectories(self, context, data):
+    def data_skippedfolders(self, context, data):
         if not self.indexerConfig.public_skip_dir:
             return ["No skipped public directory."]
         return self.indexerConfig.public_skip_dir

@@ -1,34 +1,36 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <nevow:invisible xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+<form action="/indexation" method="post">
 <table>
   <tr>
     <td><a href="/"><img border="0" src="images/smallmaay.png" /></a></td>
-    <td><h1>Indexation Page</h1></td>
+    <td><h1>Folders</h1></td>
   </tr>
 </table>
   <br />
-  <div class="message"><b>Status: </b><span nevow:render="message" /></div>
+  <h2>Search these private folders</h2>
+   <div nevow:render="sequence" nevow:data="privatefolders">
+      <div class="indexedFolderName" nevow:pattern="item" nevow:render="directory"><a><nevow:attr name="href">/indexation?removePrivateFolder=<nevow:slot name="name" /></nevow:attr>X</a> - <nevow:slot name="name" /></div>
+   </div>
+    <input type="text" name="addPrivateFolder" size="50" />
+    <input type="submit" value="Add" />
+  <h2>Search and share these public folders</h2>
+    <div nevow:render="sequence" nevow:data="publicfolders">
+      <div class="indexedFolderName" nevow:pattern="item" nevow:render="directory"><a><nevow:attr name="href">/indexation?removePublicFolder=<nevow:slot name="name" /></nevow:attr>X</a> - <nevow:slot name="name" /></div>
+    </div>
+    <input type="text" name="addPublicFolder" size="50" />
+    <input type="submit" value="Add" />
+  <h2>Don't search these folders</h2>
+    <div nevow:render="sequence" nevow:data="skippedfolders">
+      <div class="skippedFolderName" nevow:pattern="item" nevow:render="directory"><a><nevow:attr name="href">/indexation?removeSkippedFolder=<nevow:slot name="name" /></nevow:attr>X</a> - <nevow:slot name="name" /></div>
+    </div>
+    <input type="text" name="addSkippedFolder" size="50" />
+    <input type="submit" value="Add" />
+ 
+  </form>
   <hr />
-  <h2>Private Directories</h2>
-  <h3>Indexed</h3>
-    <div nevow:render="sequence" nevow:data="indexedprivatedirectories">
-      <div class="indexedDirectoryName" nevow:pattern="item" nevow:render="directory"><nevow:slot name="name" /></div>
-    </div>
-  <h3>Skipped</h3>
-    <div nevow:render="sequence" nevow:data="skippedprivatedirectories">
-      <div class="skippedDirectoryName" nevow:pattern="item" nevow:render="directory"><nevow:slot name="name" /></div>
-    </div>
-  <h2>Public Directories</h2>
-  <h3>Indexed</h3>
-    <div nevow:render="sequence" nevow:data="indexedpublicdirectories">
-      <div class="indexedDirectoryName" nevow:pattern="item" nevow:render="directory"><nevow:slot name="name" /></div>
-    </div>
-    <h3>Skipped</h3>
-    <div nevow:render="sequence" nevow:data="skippedpublicdirectories">
-      <div class="skippedDirectoryName" nevow:pattern="item" nevow:render="directory"><nevow:slot name="name" /></div>
-    </div>
-  <hr />
+  <div class="message"><span nevow:render="message" /></div><br />
   <form action="/indexation" method="PUT">
     <input type="hidden" name="start" value="1" />
     <input type="submit" value="Index now" /> 
