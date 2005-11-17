@@ -78,16 +78,16 @@ class PresenceServerTC(unittest.TestCase):
                            ('1.2.3.4', '567') : 'FOONODEB',})
 
 
-    def testNotifyTwice(self):
-        self.srv.transport = MockTransport('1.2.3.4')
-        self.assertEquals(self.srv._registeredUsers, {})
-        self.assertEquals(self.srv._ruReverseMap, {})
-        self.srv.lineReceived("notify:FOONODEA:1.2.3.4:5678:9")
-        self.srv.lineReceived("notify:FOONODEB:1.2.3.4:5678:9")
-        self.assertEquals(self.srv._registeredUsers['FOONODEB'][1:],
-                          ('FOONODEB','1.2.3.4','5678','9'))
-        self.assertEquals(self.srv._ruReverseMap[('1.2.3.4','5678')],
-                          'FOONODEB')
+##     def testNotifyTwice(self):
+##         self.srv.transport = MockTransport('1.2.3.4')
+##         self.assertEquals(self.srv._registeredUsers, {})
+##         self.assertEquals(self.srv._ruReverseMap, {})
+##         self.srv.lineReceived("notify:FOONODEA:1.2.3.4:5678:9")
+##         self.srv.lineReceived("notify:FOONODEB:1.2.3.4:5678:9")
+##         self.assertEquals(self.srv._registeredUsers['FOONODEB'][1:],
+##                           ('FOONODEB','1.2.3.4','5678','9'))
+##         self.assertEquals(self.srv._ruReverseMap[('1.2.3.4','5678')],
+##                           'FOONODEB')
 
 
     def testWho(self):
@@ -142,7 +142,7 @@ class PresenceServerTC(unittest.TestCase):
                           {('1.2.3.4', '567') : 'FOONODEB',})
        
     def testAutoLogout(self):
-        self.srv = PresenceServer(autoExpirationDelayInSecs=1)
+        PresenceServer._autoExpirationDelayInSecs = 1
         self.srv.transport = MockTransport('1.2.3.4')
         mockLineReceiver = MockLineReceiver()
         self.srv.sendLine = mockLineReceiver.sendLine
@@ -159,10 +159,29 @@ class PresenceServerTC(unittest.TestCase):
         self.srv._auto_logout_everybody()
         self.assertEquals(self.srv._registeredUsers, {})
         self.assertEquals(self.srv._ruReverseMap, {})
-        self.srv = PresenceServer()
+        self.assertEquals(self.srv._ruTimestamp, {})
+        PresenceServer._autoExpirationDelayInSecs = 3600 * 24
         self.assertEquals(self.srv._autoExpirationDelayInSecs,
                           3600 * 24)
-     
+
+        
+    def testCrashOnSameNotification(self):
+        self.srv.transport = MockTransport('1.2.3.4')
+        mockLineReceiver = MockLineReceiver()
+        self.srv.sendLine = mockLineReceiver.sendLine
+        self.assertEquals(self.srv._registeredUsers, {})
+        self.assertEquals(self.srv._ruTimestamp, {})
+        self.assertEquals(self.srv._ruReverseMap, {})
+        # same everything
+        self.srv.lineReceived("notify:FOONODEA:1.2.3.4:5678:9")
+        self.srv.lineReceived("notify:FOONODEA:1.2.3.4:5678:9")
+        # same Id, diff ip/port
+        self.srv.lineReceived("notify:FOONODEA:1.2.3.0:5678:9")
+        self.srv.lineReceived("notify:FOONODEA:1.2.3.4:5678:9")
+        # diff Id, same ip/port (we once were crashing on this one)
+        self.srv.lineReceived("notify:FOONODEA:1.2.3.4:5678:9")
+        self.srv.lineReceived("notify:FOONODEB:1.2.3.4:5678:9")
+
 
 if __name__ == '__main__':
     unittest.main()

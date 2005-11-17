@@ -36,10 +36,10 @@ class PresenceServer(LineReceiver):
     _registeredUsers = {}
     _ruReverseMap = {}
     _ruTimestamp = {}
-    # TODO: auto logout after a given time to save memory
+    _autoExpirationDelayInSecs = 3600*24
 
-    def __init__(self, autoExpirationDelayInSecs=3600*24):
-        self._autoExpirationDelayInSecs = autoExpirationDelayInSecs
+    def __del__(self):
+        self._auto_logout_everybody()
 
     def _auto_logout_everybody(self):
         """evicts registered nodes after some time
@@ -47,15 +47,13 @@ class PresenceServer(LineReceiver):
         now = datetime.utcnow()
         for nodeId, values in PresenceServer._ruTimestamp.items():
             dt = now - values
-            if dt.seconds > self._autoExpirationDelayInSecs:
+            if dt.seconds > PresenceServer._autoExpirationDelayInSecs:
                 ip, port = PresenceServer._registeredUsers[nodeId] [2:4]
                 if verbose:
                     print "%s:%s removed" % (ip, port)
                 del PresenceServer._registeredUsers[nodeId]
                 del PresenceServer._ruReverseMap[(ip, port)]
                 del PresenceServer._ruTimestamp[nodeId]
-            elif verbose:
-                print "keep: %s (%s)" % (str(PresenceServer._registeredUsers[nodeId]), str(values))
         
     def lineReceived(self, line):
         """received lines should match the following format :
@@ -76,7 +74,6 @@ class PresenceServer(LineReceiver):
                     result = callback()
             else:
                 result = "received invalid action: <%s>" % action
-        self._auto_logout_everybody()
         
     def do_notify(self, nodeId, ip, port, bandwidth):
         # For the moment, take IP and port from the TCP socket and not
@@ -92,19 +89,21 @@ class PresenceServer(LineReceiver):
         if nodeId in PresenceServer._registeredUsers:
             print "%s was already registered" % (nodeId,)
         lastseen = datetime.utcnow()
-        PresenceServer._ruTimestamp[nodeId] = lastseen
         # check bijection betwen (ip, port) and nodeId
         # same (ip, port) shouldn't be registered several times
         if (ip, port) in PresenceServer._ruReverseMap:
             oldId = PresenceServer._ruReverseMap[(ip, port)]
             del PresenceServer._registeredUsers[oldId]
             del PresenceServer._ruTimestamp[oldId]
-        PresenceServer._registeredUsers[nodeId] = (lastseen.isoformat(),
-                                         nodeId,
-                                         self.transport.getPeer().host,
-                                         port,
-                                         bandwidth)
+        PresenceServer._registeredUsers[nodeId] = \
+                                (lastseen.isoformat(),
+                                 nodeId,
+                                 self.transport.getPeer().host,
+                                 port,
+                                 bandwidth)
         PresenceServer._ruReverseMap[(ip, port)] = nodeId
+        PresenceServer._ruTimestamp[nodeId] = lastseen
+
 
     def do_logout(self, nodeId):
         try:
