@@ -172,8 +172,3 @@ CREATE TABLE `results` (
 -- ---------------------------------------------------------
 
 grant all on maay.* to "maay"@"localhost" identified by "maay";
--- grant udpate on maay.documents to "maay"@"localhost" identified by "maay";
--- grant update on maay.words to "maay"@"localhost" identified by "maay";
--- grant update on maay.nodes to "maay"@"localhost" identified by "maay";
--- grant update on maay.nodes_interests to "maay"@"localhost" identified by "maay";
--- grant update on document_scores to "maay"@"localhost" identified by "maay";
