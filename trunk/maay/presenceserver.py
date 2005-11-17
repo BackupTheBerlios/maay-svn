@@ -48,7 +48,7 @@ class PresenceServer(LineReceiver):
         for nodeId, values in PresenceServer._ruTimestamp.items():
             dt = now - values
             if dt.seconds > self._autoExpirationDelayInSecs:
-                ip, port = PresenceServer._registeredUsers[nodeId] [2:3]
+                ip, port = PresenceServer._registeredUsers[nodeId] [2:4]
                 if verbose:
                     print "%s:%s removed" % (ip, port)
                 del PresenceServer._registeredUsers[nodeId]
@@ -109,8 +109,11 @@ class PresenceServer(LineReceiver):
     def do_logout(self, nodeId):
         try:
             print "%s logout" % str(PresenceServer._registeredUsers[nodeId])
+            print "???", PresenceServer._registeredUsers[nodeId]
+            ip, port = PresenceServer._registeredUsers[nodeId] [2:4]
             del PresenceServer._registeredUsers[nodeId]
             del PresenceServer._ruTimestamp[nodeId]
+            del PresenceServer._ruReverseMap[(ip, port)]
         except KeyError:
             print "%s was not registered" % (nodeId,)
 
