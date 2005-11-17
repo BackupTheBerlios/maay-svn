@@ -109,7 +109,6 @@ class PresenceServer(LineReceiver):
     def do_logout(self, nodeId):
         try:
             print "%s logout" % str(PresenceServer._registeredUsers[nodeId])
-            print "???", PresenceServer._registeredUsers[nodeId]
             ip, port = PresenceServer._registeredUsers[nodeId] [2:4]
             del PresenceServer._registeredUsers[nodeId]
             del PresenceServer._ruTimestamp[nodeId]
