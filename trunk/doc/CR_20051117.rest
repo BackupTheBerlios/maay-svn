@@ -1,0 +1,102 @@
+==========================================
+Compte rendu de la réunion du 17 Nov. 2005
+==========================================
+
+Participants
+~~~~~~~~~~~~
+
+Joaquin Keller (FTRD)
+Frédéric Dang Ngoc (FTRD)
+Alexandre Fayolle (Logilab)
+
+But de la réunion
+~~~~~~~~~~~~~~~~~
+
+Bilan sur l'installation de la version 0.2.1 et perspectives pour la suite. 
+
+Échéances
+~~~~~~~~~~
+
+Démonstration publique le 30 Nov. 
+
+Déploiment à large échelle chez FT à compter du 21 Nov. d'une version
+0.2.2 de Maay. 
+
+Points abordés
+~~~~~~~~~~~~~~
+
+Retour sur les premières installations
+--------------------------------------
+
+Il y a quelques points à modifier dans l'aspect cosmétique de
+l'interface Web. 
+
+L'installeur doit :
+
+ * ajouter un icône uninstall dans le menu Démarrer ;
+
+ * créer un lien vers http://localhost:7777 dans le menu démarrer et
+   sur le bureau ;
+
+ * afficher la page principale de Maay dans le navigateur après
+   l'installation.
+
+Les modifications de l'interface Web seront réalisées par FTRD et
+celles concernant l'installeur Windows par Logilab. Elles donneront
+lieu à la publication de Maay-0.2.2.
+
+Anomalies détectées par Logilab
+-------------------------------
+
+Fayolle signale deux anomalies détectées par Logilab après la
+publication de Maay-0.2.1 :
+
+ * les documents sont triés du plus vieux au plus récent et non pas le
+   contraire (corrigé dans SVN)
+
+ * l'utilisation de Maay à travers Internet Explorer peut causer des
+   blocages temporaires du navigateur qui ne se produisent pas avec
+   Firefox.
+
+Cette deuxième anomalie est problématique car IE est utilisé sur de
+nombreux postes à FTRD. Un correctif a été fourni par Logilab, et il
+est en cours de validation. 
+
+Ces deux anomalies seront corrigées dans la version 0.2.2 de Maay.
+
+Développements futurs
+---------------------
+
+Entre la publication de Maay-0.2.2 et la démonstration du 30 Nov. une
+version 0.3 devrait être publiée qui servira de base à la
+démonstration. Cette version devrait offrir de nouvelles possibilité
+en matière de classement des documents renvoyés :
+
+ * les documents pourront être triés par relevance
+
+ * l'utilisateur pourra choisir un critère de tri depuis l'interface
+   web (date ou relevance) et un sens de tri (croissant ou
+   décroissant)
+
+ * dans le cas ou un même document est renvoyé par plusieurs noeuds
+   distants, un seul résultat est affiché sur la page, avec la liste
+   tous les noeuds, et le critère de tri est calculé comme suit: date
+   la plus récente (ou la plus ancienne pour un tri décroissant) ou
+   somme des relevances. 
+
+Conclusion de la réunion
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+La version 0.2.2 de Maay devrait être publiée le 18 Nov. en fin de
+journée ou le 21 Nov. au matin au plus tard, afin que FTRD puisse la
+valider avant de procéder à l'annonce de la disponibilité du produit
+en interne. 
+
+Le travail sur Maay-0.3.0 commencera en début de semaine prochaine. 
+
+ -- Alexandre Fayolle <alexandre.fayolle@logilab.fr>  Thu, 17 Nov 2005 17:19:44 +0100
+
+
+
+
+
