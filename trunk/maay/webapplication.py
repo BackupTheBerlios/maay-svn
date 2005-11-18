@@ -155,7 +155,9 @@ class IndexationPage(athena.LivePage):
     def indexationCompleted(self):
         self.updateStatus(u'Indexation finished - %s new documents / %s total'
             % (IndexationPage.indexedDocuments, IndexationPage.indexedDocuments + IndexationPage.untouchedDocuments))
-
+        # reset counters for the next indexation
+        IndexationPage.untouchedDocuments = 0
+        IndexationPage.indexedDocuments = 0
 
     def render_message(self, context, data):
         return self.msg

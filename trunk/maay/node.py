@@ -87,7 +87,6 @@ class MaayRealm:
         print "with a", type(querier), "querier."
         self._sessions[avatarId] = querier
 
-
     def requestAvatar(self, avatarId, mind, *interfaces):
         """Our realm provides 2 different kinds of avatars :
           - HTML resources (for web applications)
