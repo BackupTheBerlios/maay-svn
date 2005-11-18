@@ -45,8 +45,7 @@ from maay.dbentity import FutureDocument, Document, FileInfo
 from maay.querier import MaayAuthenticationError
 from maay.texttool import removeControlChar
 from threading import Thread
-
-#log.startLogging(open('maay-indexer.log', 'w'))
+from twisted.python import log
 
 class IIndexerObserver(Interface):
 
@@ -174,6 +173,7 @@ class Indexer:
 
     def start(self):
         # we index private dirs first because public overrides private
+        log.startLogging(open('maay-indexer.log', 'w'))
         existingFiles = self.runIndexer(isPrivate=True)
         existingFiles |= self.runIndexer(isPrivate=False)
         indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
@@ -355,6 +355,7 @@ def _just_one(filepath):
             print "AuthenticationError:", exc
             return
         print 'going to index file %s', filepath
+        log.startLogging(open('maay-indexer.log', 'w'))
         indexer.indexFile(filepath, isPrivate=False)
     except socket.error, exc:
         print "Cannot contact Node:", exc
