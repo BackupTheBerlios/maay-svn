@@ -79,25 +79,25 @@ class Document_TC(unittest.TestCase):
 class ResultTC(unittest.TestCase):
 
     def testBuildFromLocalDocument(self):
-        document = Document(db_document_id='foo', mime_type='application/pdf')
+        document = Document(document_id='foo', mime_type='application/pdf')
         result = Result.fromDocument(document, 'qid')
-        self.assertEquals(result.db_document_id, 'foo')
+        self.assertEquals(result.document_id, 'foo')
         self.assertEquals(result.query_id, 'qid')
         self.assertEquals(result.host, 'localhost')
         self.assertEquals(result.mime_type, 'application/pdf')
-        self.assertEquals(result.boundAttributes(), ['db_document_id', 'query_id',
+        self.assertEquals(result.boundAttributes(), ['document_id', 'query_id',
                                                      'mime_type', 'host', 'port'])
         
     def testBuildFromDistantDocument(self):
-        document = Document(db_document_id='foo', mime_type='application/pdf')
+        document = Document(document_id='foo', mime_type='application/pdf')
         result = Result.fromDocument(document, 'qid', ('adim', 'IP', 'PORT'))
-        self.assertEquals(result.db_document_id, 'foo')
+        self.assertEquals(result.document_id, 'foo')
         self.assertEquals(result.mime_type, 'application/pdf')
         self.assertEquals(result.login, 'adim')
         self.assertEquals(result.host, 'IP')
         self.assertEquals(result.query_id, 'qid')
         self.assertEquals(result.port, 'PORT')
-        self.assertEquals(result.boundAttributes(), ['db_document_id', 'query_id', 'mime_type',
+        self.assertEquals(result.boundAttributes(), ['document_id', 'query_id', 'mime_type',
                                                      'host', 'port', 'login'])
 
 
