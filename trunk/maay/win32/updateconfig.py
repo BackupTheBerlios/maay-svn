@@ -63,7 +63,7 @@ def createConfigFile(myDesktop, myDocuments):
     f=open("indexer.ini", "w")
     values = {'private'     : '%s,%s' % (myDesktop, myDocuments),
               'public'      : '%s\\Maay Documents' % myDesktop,
-              'public_skip' : '',
+              'skip' : '',
               }
     f.write(indexer_config % values)
     f.close()
