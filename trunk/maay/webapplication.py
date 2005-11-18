@@ -113,7 +113,8 @@ class IndexationPage(athena.LivePage):
     implements(indexer.IIndexerObserver)
 
     # share counter among instances
-    counter = 0
+    indexedDocuments = 0
+    untouchedDocuments = 0
     
     def __init__(self):
         athena.LivePage.__init__(self)
@@ -139,14 +140,21 @@ class IndexationPage(athena.LivePage):
         self.callRemote('updateStatus', message)
 
     def newDocumentIndexed(self, filename):
-        IndexationPage.counter += 1
-        if (IndexationPage.counter % 10) == 0:
-            self.updateStatus(u'Indexation in progress - %s documents indexed'
-                              % IndexationPage.counter)
+        IndexationPage.indexedDocuments += 1
+        if (IndexationPage.indexedDocuments % 10) == 0:
+            self.updateStatus(u'Indexation in progress - %s documents indexed (%s left untouched)'
+                              % (IndexationPage.indexedDocuments, IndexationPage.untouchedDocuments))
 
+    def documentUntouched(self, filename):
+        IndexationPage.untouchedDocuments += 1
+        if (IndexationPage.untouchedDocuments % 10) == 0:
+            self.updateStatus(u'Indexation in progress - %s documents indexed (%s left untouched)'
+                              % (IndexationPage.indexedDocuments, IndexationPage.untouchedDocuments))
+        
     def indexationCompleted(self):
-        self.updateStatus(u'Indexation completed (%s documents indexed)' %
-                          (IndexationPage.counter,))
+        self.updateStatus(u'Indexation completed (%s documents indexed - %s left untouched)' %
+                          (IndexationPage.indexedDocuments, IndexationPage.untouchedDocuments))
+
 
     def render_message(self, context, data):
         return self.msg
@@ -177,6 +185,10 @@ class IndexationPageFactory(athena.LivePageFactory):
     def newDocumentIndexed(self, filename):
         for webpage in self.clients.itervalues():
             webpage.newDocumentIndexed(filename)
+        
+    def documentUntouched(self, filename):
+        for webpage in self.clients.itervalues():
+            webpage.documentUntouched(filename)
         
     def indexationCompleted(self):
         for webpage in self.clients.itervalues():

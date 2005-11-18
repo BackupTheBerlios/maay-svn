@@ -8,6 +8,8 @@
     <nevow:invisible nevow:render="liveglue" />
 
     <script type='text/javascript' language='javascript'>
+
+abortNeeded = true;
 function live() {
   server.callRemote('live');
 }
@@ -16,6 +18,7 @@ function updateStatus(msg) {
   elt = document.getElementById('statusMessage');
   elt.innerHTML = msg;
 }
+
     </script>
   </head>
   <body onload="live();">

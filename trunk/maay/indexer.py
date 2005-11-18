@@ -53,9 +53,11 @@ class IIndexerObserver(Interface):
     def newDocumentIndexed(filename):
         """called by indexer when a document was just indexed"""
 
+    def documentUntouched(filename):
+        """called when a document was left untouched"""
+
     def indexationCompleted():
         """called when indexation is over"""
-
 
 
 def makeDocumentId(filename):
@@ -201,8 +203,10 @@ class Indexer:
             lastModificationTime = os.path.getmtime(filepath)
             lastIdxTime, lastIdxState = self.getLastIndexationTimeAndState(filepath)
             if lastIdxState == state and lastIdxTime >= lastModificationTime:
-                    raise FileIndexationFailure (safe_encode(filepath),
-                                                 "it didn't change since last indexation")
+                for obs in self.observers:
+                    obs.documentUntouched(filepath)
+                print "%s didn't change since last indexation" % (safe_encode(filepath),)
+                return
             try:
                 title, text, _, _ = converter.extractWordsFromFile(filepath)
             except converter.IndexationFailure, exc:
