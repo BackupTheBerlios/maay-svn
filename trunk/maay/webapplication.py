@@ -385,7 +385,7 @@ class ResultsPageMixIn:
             resultsCount = localCount + distantCount
         offset = self.query.offset
         context.fillSlots('words', self.query.joinwords(' ')) #WORDS
-        context.fillSlots('start_result', offset + 1)
+        context.fillSlots('start_result', min(resultsCount, offset + 1))
         context.fillSlots('end_result', min(resultsCount, offset+15))
         context.fillSlots('count', resultsCount)
         return context.tag

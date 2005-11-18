@@ -3,16 +3,19 @@
 
 <div id="resultsDiv" xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
   <div class="message" nevow:render="title">Results <b><nevow:slot name="start_result" /></b> - <b><nevow:slot name="end_result" /></b> of <b><nevow:slot name="count" /></b> for <b><nevow:slot name="words" /></b>.</div>
-  <nevow:invisible nevow:macro="prevnext" />
   <table>
     <tr>
-      <td><div class="localPublicResult"><a href="javascript: onlyLocalResults();"><span nevow:render="localcount" /> local</a></div></td>
+      <td><b>Filter :</b></td>
+      <td><div class="localPublicResult"><a href="javascript: onlyLocalResults();">local result</a> (<span nevow:render="localcount" />)</div></td>
       <td> - </td>
-      <td> <div class="distantResult"><a href="javascript: onlyDistantResults();"><span nevow:render="distantcount" /> distant</a></div></td>
+      <td> <div class="distantResult"><a href="javascript: onlyDistantResults();">remote result</a>(<span nevow:render="distantcount" />)</div></td>
       <td>-</td>
-      <td><a href="javascript: allResults();"><span nevow:render="totalcount" /> all</a></td>
+      <td><a href="javascript: allResults();">all results </a>(<span nevow:render="totalcount" />)</td>
     </tr>
   </table>
+  <center>
+  <nevow:invisible nevow:macro="prevnext" />
+  </center>
   <table class="results" nevow:render="sequence" nevow:data="results">
     <tr nevow:pattern="item" nevow:render="row">
       <td>
@@ -34,5 +37,7 @@
       </td>
     </tr>
   </table>
+  <center>
   <nevow:invisible nevow:macro="prevnext" />
+  </center>
 </div>
