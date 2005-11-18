@@ -343,11 +343,9 @@ class IndexerConfiguration(Configuration):
         # FIXME: since there may be several configuration files, which
         # one do we choose. By default, we take the one in the current
         # directory
-        # FIXME: does not work, why ? It writes a None in the indexer.ini
-        return
         try:
             fd = file(self.config_file, 'wb')
-            fd.write(str(self.generate_config()))
+            self.generate_config(stream=fd)
             fd.close()
         except IOError, e:
             print "Cannot open file '%s' to update configuration" % self.config_file
