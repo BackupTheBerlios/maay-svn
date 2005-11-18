@@ -272,6 +272,7 @@ class FileIterator:
         self.indexed = [os.path.abspath(os.path.expanduser(p)) for p in indexed]
         self.skipped = [os.path.abspath(os.path.expanduser(p)) for p in skipped]
         self.skipped = [normalizeCase(p) for p in self.skipped]
+        self.indexed = [normalizeCase(p) for p in self.indexed]
         
     def __iter__(self):
         for path in self.indexed:
