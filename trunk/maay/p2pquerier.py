@@ -76,7 +76,6 @@ class P2pQuery:
 
     _version = 2
     
-#    def __init__(self, sender, originator_port, query, ttl=5,
     def __init__(self, sender, query, ttl=5,
                  qid=None, client_host=None, client_port=None):
         """
@@ -350,7 +349,6 @@ class P2pQuerier:
     def _selectTargetNeighbors(self, query):
         """return a list of nodes to which the query will be sent.
         """
-        print "TYPE OF TTL", type(query.ttl)
         nbNodes = 2**(max(5, query.ttl))
         # TODO: use the neighbors' profiles to route requests
         return self.querier.getActiveNeighbors(self.nodeId, nbNodes)
