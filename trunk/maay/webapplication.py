@@ -44,6 +44,7 @@ from maay.p2pquerier import P2pQuerier, P2pQuery
 from maay.dbentity import Document
 from maay import indexer 
 
+
 class INodeConfiguration(Interface):
     """provide an interface in order to be able to remember webappconfig"""
 
@@ -443,9 +444,8 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
                 localDoc.text = makeAbstract(localDoc.text, self.query.words)
                 results.append(localDoc)
             webappConfig = INodeConfiguration(context)
-            p2pQuery = P2pQuery(webappConfig.get_node_id(),
-                                webappConfig.rpcserver_port,
-                                self.query)
+            p2pQuery = P2pQuery(sender=webappConfig.get_node_id(),
+                                query=self.query)
             self.queryId = p2pQuery.qid
             self.p2pQuery = p2pQuery
             # purge old results

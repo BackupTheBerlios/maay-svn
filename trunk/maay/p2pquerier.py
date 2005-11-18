@@ -32,9 +32,13 @@ from logilab.common.compat import set
 from twisted.web.xmlrpc import Proxy
 from twisted.internet import reactor
 from maay.texttool import makeAbstract, removeSpace, untagText
-from configuration import NodeConfiguration
+from maay.configuration import NodeConfiguration
 from maay.query import Query
 
+nodeConfig=NodeConfiguration()
+nodeConfig.load()
+NODE_HOST = socket.gethostbyname(socket.gethostname())
+NODE_PORT = nodeConfig.rpcserver_port
 
 def hashIt(item, uname=''.join(platform.uname())):
     hasher = sha.sha()
@@ -70,9 +74,11 @@ class QueryVersionMismatch(Exception):
 # XXX should P2pQuery derive from query.Query? (auc : no)
 class P2pQuery:
 
-    _version = 1
+    _version = 2
     
-    def __init__(self, sender, port, query, ttl=5, qid=None, host=None):
+#    def __init__(self, sender, originator_port, query, ttl=5,
+    def __init__(self, sender, query, ttl=5,
+                 qid=None, client_host=None, client_port=None):
         """
         :param sender: really a nodeId
         :type sender: str
@@ -82,19 +88,22 @@ class P2pQuery:
         :type query: `maay.query.Query`
         :param qid: query identifier
         :type qid: str
-        :param host: IP adress of sender
-        :type host: str
         """
         if qid:
             self.qid = qid
         else:
             self.qid = hashIt(sender)
         self.sender = sender
-        self.port = port
+        #self.port = originator_port
         self.ttl = ttl
         self.query = query
         self.documents_ids = set()
-        self.host = host
+        # *** client_host: IP adress of immediate client (computed at reception)
+        # *** client_port: rpc port of immediate client (provided by client)
+        # default args are typically used from webapplication instantiation
+        # but NOT at rpc level, where we MUST use the transmited values
+        self.client_host = client_host or NODE_HOST
+        self.client_port = client_port or NODE_PORT
         
     def hop(self):
         self.ttl -= 1
@@ -112,27 +121,34 @@ class P2pQuery:
         #       None can't be sent via XMLRPC.
         #       (Well, it can be in Twisted, but then I guess that
         #       we have to restrict to Twisted and Python world)
-        return {'qid':self.qid,
-                'sender':self.sender,
-                'port':self.port,
-                'ttl':self.ttl,
-                'words': self.query.words,
-                'mime_type': self.query.filetype or '',
-                'version' : P2pQuery._version
+        return {'qid':          self.qid,
+                'sender':       self.sender,
+                #'host': self.host,
+                #'port':self.port,
+                'client_host' : self.client_host,
+                'client_port' : self.client_port,
+                'ttl':          self.ttl,
+                'words':        self.query.words,
+                'mime_type':    self.query.filetype or '',
+                'version' :     P2pQuery._version
                 }
 
     def fromDict(dic):
         """dual of asKwargs"""
         if dic.has_key('version'):
             if dic['version'] > P2pQuery._version:
+                print "******* Query Version Mismatch ********"
+                print "(we don't understand queries version %s)" % dic['version']
                 raise QueryVersionMismatch(query_version=dic['version'],
                                            local_version=P2pQuery._version)
         _query = Query(' '.join(dic['words']), filetype=dic['mime_type'])
-        return P2pQuery(qid=dic['qid'],
-                        sender=dic['sender'],
-                        port=dic['port'],
-                        ttl=dic['ttl'],
-                        query=_query)
+        p2pquery = P2pQuery(qid=dic['qid'],
+                            sender=dic['sender'],
+                            client_host=dic['client_host'],
+                            client_port=dic['client_port'],
+                            ttl=dic['ttl'],
+                            query=_query)
+        return p2pquery
     fromDict = staticmethod(fromDict)
     
     def getWords(self):
@@ -147,40 +163,6 @@ class P2pAnswer:
         self.queryId = queryId
         self.provider = provider
         self.documents = documents
-
-class P2pErrbacks:
-    """a small namespace to hold errbacks and contextual
-       information so as to display meaningful stuff
-    """
-
-    lastQueryTarget = None
-    lastAnswerTarget = None
-
-    def setQueryTarget(target):
-        P2pErrbacks.lastQueryTarget = target
-    setQueryTarget = staticmethod(setQueryTarget)
-        
-    def setAnswerTarget(target):
-        P2pErrbacks.lastAnswerTarget = target
-    setAnswerTarget = staticmethod(setAnswerTarget)
-
-    def sendQueryProblem(failure):
-        """Politely displays any problem (bug, unavailability) related
-        to an attempt to send a query.
-        """
-        print " ... problem sending the query (likely to %s) : %s" \
-              % (P2pErrbacks.lastQueryTarget, failure.getTraceback())
-    sendQueryProblem = staticmethod(sendQueryProblem)
-
-
-    def answerQueryProblem(failure):
-        """Politely displays any problem (bug, unavailability) related
-        to an attempt to answer a query.
-        """
-        print " ... problem answering the query (likely to %s) : %s" \
-              % (P2pErrbacks.lastAnswerTarget, failure.getTraceback())
-    answerQueryProblem = staticmethod(answerQueryProblem)
-
 
 class P2pQuerier:
     """The P2pQuerier class is responsible for managing P2P queries.
@@ -201,22 +183,15 @@ class P2pQuerier:
     _receivedQueries = {} # key : queryId, val : query
     _sentQueries = {}
 
-    _ourRPCPort = None
-    
     def __init__(self, nodeId, querier):
         self.nodeId = nodeId  
         self.querier = querier
         self._answerCallbacks = {}
         # now, read a config. provided value for EXPIRATION_TIME
         # and fire the garbage collector
-        config = NodeConfiguration()
-        config.load()
-        P2pQuerier._EXPIRATION_TIME = max(config.query_life_time,
+        P2pQuerier._EXPIRATION_TIME = max(nodeConfig.query_life_time,
                                           P2pQuerier._EXPIRATION_TIME)
         reactor.callLater(self._EXPIRATION_TIME, self._markQueries)
-        # remember once and for all our RPC port
-        P2pQuerier._ourRPCPort = config.rpcserver_port
-
 
     ######## Stuff to remove old queries from cache
         
@@ -278,12 +253,14 @@ class P2pQuerier:
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
             d.addErrback(P2pErrbacks.sendQueryProblem)
-            # FIXME : mecanism below might be bogus
+            # FIXME : mecanism below likely to be bogus
             P2pErrbacks.setQueryTarget(target)
             self._sentQueries[query.qid] = query
-            print " ... sent to %s %s %s" % (neighbor.node_id,
-                                             neighbor.ip,
-                                             neighbor.port)
+            print " ... query from %s:%s sent to %s %s %s" % (query.client_host,
+                                                              query.client_port,
+                                                              neighbor.node_id,
+                                                              neighbor.ip,
+                                                              neighbor.port)
 
     def receiveQuery(self, query):
         """
@@ -316,7 +293,7 @@ class P2pQuerier:
         # provider is a triple (login, IP, xmlrpc-port)
         provider = (getUserLogin(),
                     socket.gethostbyname(socket.gethostname()),
-                    P2pQuerier._ourRPCPort)
+                    NODE_PORT)
             
         self.relayAnswer(P2pAnswer(query.qid, provider, documents))
 
@@ -334,7 +311,7 @@ class P2pQuerier:
                 print " ... bug or dos : we had no query for this answer"
                 return
         print " ... relaying Answer to %s:%s ..." \
-              % (query.host, query.port)
+              % (query.client_host, query.client_port)
         
         toSend = []
         
@@ -353,8 +330,7 @@ class P2pQuerier:
         
         if query.sender != self.nodeId: 
             try:
-                host = query.host 
-                port = query.port
+                (host, port) = (query.client_host, query.client_port)
                 print " ... will send answer to %s:%s" % (host, port)
                 senderUrl = 'http://%s:%s' % (host, port)
                 proxy = Proxy(senderUrl)
@@ -362,7 +338,7 @@ class P2pQuerier:
                                      query.qid,
                                      self.nodeId,
                                      answer.provider,
-                                     toSend)
+                                     toSend) 
                 d.addCallback(self.querier.registerNodeActivity)
                 d.addErrback(P2pErrbacks.answerQueryProblem)
                 P2pErrbacks.setAnswerTarget(senderUrl)
@@ -374,7 +350,44 @@ class P2pQuerier:
     def _selectTargetNeighbors(self, query):
         """return a list of nodes to which the query will be sent.
         """
+        print "TYPE OF TTL", type(query.ttl)
         nbNodes = 2**(max(5, query.ttl))
         # TODO: use the neighbors' profiles to route requests
         return self.querier.getActiveNeighbors(self.nodeId, nbNodes)
         
+
+
+#FIXME: this should be shot (auc)
+
+class P2pErrbacks:
+    """a small namespace to hold errbacks and contextual
+       information so as to display meaningful stuff
+    """
+
+    lastQueryTarget = None
+    lastAnswerTarget = None
+
+    def setQueryTarget(target):
+        P2pErrbacks.lastQueryTarget = target
+    setQueryTarget = staticmethod(setQueryTarget)
+        
+    def setAnswerTarget(target):
+        P2pErrbacks.lastAnswerTarget = target
+    setAnswerTarget = staticmethod(setAnswerTarget)
+
+    def sendQueryProblem(failure):
+        """Politely displays any problem (bug, unavailability) related
+        to an attempt to send a query.
+        """
+        print " ... problem sending the query (likely to %s) : %s" \
+              % (P2pErrbacks.lastQueryTarget, failure.getTraceback())
+    sendQueryProblem = staticmethod(sendQueryProblem)
+
+
+    def answerQueryProblem(failure):
+        """Politely displays any problem (bug, unavailability) related
+        to an attempt to answer a query.
+        """
+        print " ... problem answering the query (likely to %s) : %s" \
+              % (P2pErrbacks.lastAnswerTarget, failure.getTraceback())
+    answerQueryProblem = staticmethod(answerQueryProblem)
