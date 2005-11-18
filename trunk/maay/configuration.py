@@ -257,7 +257,7 @@ class NodeConfiguration(Configuration):
 
 ################ Indexer stuff
 
-def _download_index_dir():
+def _download_dir():
     if sys.platform == 'win32':
         theDir = r'C:\Documents and Settings\All Users\Desktop\Maay Documents\downloaded'
     else:
@@ -295,33 +295,25 @@ class IndexerConfiguration(Configuration):
           'default' : "maay",
           }),
 
-        ('private-index-dir',
+        ('private-dir',
          {'type': 'csv',
           'metavar': '<csv>', 'short': 'i',
           'help': 'index this directory with the private indexer',
           'default' : []
           }),
-         
-        ('private-skip-dir',
-         {'type': 'csv',
-          'metavar': '<csv>', 'short': 's',
-          'help': 'the private indexer will skip this directory',
-          'default' : []
-          }),
-        ('public-index-dir',
+         ('public-dir',
          {'type': 'csv',
           'metavar': '<csv>', 'short': 'I',
           'help': 'index this directory with the public indexer',
           'default' : []
           }),
-        ('public-skip-dir',
+        ('skip-dir',
          {'type': 'csv',
-          'metavar': '<csv>', 'short': 'S',
-          'help': 'the public indexer will skip this directory',
+          'metavar': '<csv>', 'short': 's',
+          'help': 'the indexer will skip this directory',
           'default' : []
           }),
-        
-        ('verbose',
+       ('verbose',
          {'type': 'yn',
           'metavar': '<y or n>', 'short': 'v',
           'help': 'enable verbose mode',
@@ -333,11 +325,11 @@ class IndexerConfiguration(Configuration):
           'metavar' : '<y or n>',
           'default' : False,
           }),
-        ('download-index-dir',
+        ('download-dir',
          {'type': 'string',
           'metavar': '<downloads>',
           'help': 'downloaded files will go there and be immediately indexed',
-          'default' : _download_index_dir()
+          'default' : _download_dir()
           })
         
         ]
@@ -346,6 +338,19 @@ class IndexerConfiguration(Configuration):
 
     def __init__(self):
         Configuration.__init__(self, name="Indexer")
+
+    def save(self):
+        # FIXME: since there may be several configuration files, which
+        # one do we choose. By default, we take the one in the current
+        # directory
+        # FIXME: does not work, why ? It writes a None in the indexer.ini
+        return
+        try:
+            fd = file(self.config_file, 'wb')
+            fd.write(str(self.generate_config()))
+            fd.close()
+        except IOError, e:
+            print "Cannot open file '%s' to update configuration" % self.config_file
 
 ################ Image stuff 
 

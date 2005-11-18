@@ -151,19 +151,19 @@ class IndexationPage(athena.LivePage):
         return self.msg
 
     def data_privatefolders(self, context, data):
-        if not self.indexerConfig.private_index_dir:
+        if not self.indexerConfig.private_dir:
             return ["No private folder."]
-        return self.indexerConfig.private_index_dir
+        return self.indexerConfig.private_dir
 
     def data_publicfolders(self, context, data):
-        if not self.indexerConfig.public_index_dir:
+        if not self.indexerConfig.public_dir:
             return ["No public folder."]
-        return self.indexerConfig.public_index_dir
+        return self.indexerConfig.public_dir
 
     def data_skippedfolders(self, context, data):
-        if not self.indexerConfig.public_skip_dir:
-            return ["No skipped public directory."]
-        return self.indexerConfig.public_skip_dir
+        if not self.indexerConfig.skip_dir:
+            return ["No skipped folders."]
+        return self.indexerConfig.skip_dir
 
     def render_directory(self, context, name):
         print "directory = %s" % name
@@ -191,7 +191,7 @@ class SearchForm(MaayPage):
         MaayPage.__init__(self, maayId)
         self.querier = querier
         self.p2pquerier = p2pquerier
-        self.download_dir = indexer.indexerConfig.download_index_dir
+        self.download_dir = indexer.indexerConfig.download_dir
         
     def logout(self):
         print "Bye %s !" % (self.maayId,)
@@ -202,39 +202,42 @@ class SearchForm(MaayPage):
         return PeersList(self.maayId, self.querier)
 
     def child_indexation(self, context, _factory=IndexationPageFactory(IndexationPage)):
+        # TODO: check if the added folders are valid
+
         # Actions (add/remove) on private folders
         addPrivateFolder = context.arg('addPrivateFolder', 0)
         if addPrivateFolder:
-                indexer.indexerConfig.private_index_dir.append(addPrivateFolder)
+                indexer.indexerConfig.private_dir.append(addPrivateFolder)
+                indexer.indexerConfig.save()
  
         removePrivateFolder = context.arg('removePrivateFolder', 0)
         if removePrivateFolder:
             try:
-                indexer.indexerConfig.private_index_dir.remove(removePrivateFolder)
+                indexer.indexerConfig.private_dir.remove(removePrivateFolder)
             except ValueError:
                 print "Folder '%s' not in the private directory list"
 
         # Actions (add/remove) on public folders
         addPublicFolder = context.arg('addPublicFolder', 0)
         if addPublicFolder:
-                indexer.indexerConfig.public_index_dir.append(addPublicFolder)
+                indexer.indexerConfig.public_dir.append(addPublicFolder)
  
         removePublicFolder = context.arg('removePublicFolder', 0)
         if removePublicFolder:
             try:
-                indexer.indexerConfig.public_index_dir.remove(removePublicFolder)
+                indexer.indexerConfig.public_dir.remove(removePublicFolder)
             except ValueError:
                 print "Folder '%s' not in the private directory list"
 
         # Actions (add/remove) on skipped folders
         addSkippedFolder = context.arg('addSkippedFolder', 0)
         if addSkippedFolder:
-                indexer.indexerConfig.public_skip_dir.append(addSkippedFolder)
+                indexer.indexerConfig.skip_dir.append(addSkippedFolder)
  
         removeSkippedFolder = context.arg('removeSkippedFolder', 0)
         if removeSkippedFolder:
             try:
-                indexer.indexerConfig.public_skip_dir.remove(removeSkippedFolder)
+                indexer.indexerConfig.public_dir.remove(removeSkippedFolder)
             except ValueError:
                 print "Folder '%s' not in the private directory list"
 

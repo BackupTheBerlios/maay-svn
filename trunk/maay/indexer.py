@@ -114,13 +114,13 @@ class Indexer:
         
     def getFileIterator(self, isPrivate=True):
         if isPrivate:
-            indexed = self.indexerConfig.private_index_dir
-            skipped = self.indexerConfig.private_skip_dir
+            indexed = self.indexerConfig.private_dir
+            skipped = self.indexerConfig.skip_dir
             print "private indexation of", indexed, "omitting", skipped
         else:
-            indexed = self.indexerConfig.public_index_dir
-            indexed.append(self.indexerConfig.download_index_dir)
-            skipped = self.indexerConfig.public_skip_dir
+            indexed = self.indexerConfig.public_dir
+            indexed.append(self.indexerConfig.download_dir)
+            skipped = self.indexerConfig.skip_dir
             print "public indexation of", indexed, "omitting", skipped
         return FileIterator(indexed, skipped)
 

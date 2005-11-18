@@ -34,7 +34,7 @@
  - serveur de présence ne doit être utilisé qu'à l'amorçage. Chaque
    noeud maintient ensuite à jour sa liste de voisins
  - Désinstalleur windows
- - Par défaut : private-index-dir : $HOME, public-index-dir : $HOME/Desktop/MaayPublic
+ - Par défaut : private-dir : $HOME, public-dir : $HOME/Desktop/MaayPublic
  - Dans le cadre de la recherche P2P, on cherche partout (local et distribué), mais sur
    la page de résultats, on doit voir apparaître les informations suivantes :
 

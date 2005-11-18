@@ -34,8 +34,8 @@ user=maay
 password=maay
 
 # Which directories are to be indexed
-#  - private indexed directories are not available to  queries from other nodes
-#  - public indexed directories are available to these queries
+#  - private directories are not available to  queries from other nodes
+#  - public directories are available to these queries
 #  - skip dirs are not indexed
 #
 # If a document is available through both a public and a private directory, 
@@ -43,10 +43,9 @@ password=maay
 #
 # You can use a comma separated list of values to specify several
 # directories in each configuration variable. 
-private-index-dir=%(private)s
-private-skip-dir=%(private_skip)s
-public-index-dir=%(public)s
-public-skip-dir=%(public_skip)s
+private-dir=%(private)s
+public-dir=%(public)s
+skip-dir=%(skip)s
 """
 
 node_config = """[NODE]
@@ -63,7 +62,6 @@ import socket
 def createConfigFile(myDesktop, myDocuments):
     f=open("indexer.ini", "w")
     values = {'private'     : '%s,%s' % (myDesktop, myDocuments),
-              'private_skip': '',
               'public'      : '%s\\Maay Documents' % myDesktop,
               'public_skip' : '',
               }
