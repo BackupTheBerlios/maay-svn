@@ -27,8 +27,9 @@ from maay.dbentity import Document
 
 class P2pQueryTC(unittest.TestCase):
     def setUp(self):
-        self.query = P2pQuery(sender='http://localhost:3423', # should be a hash (auc)
-                              port=3423,
+        self.query = P2pQuery(sender='http://localhost:3423', # a hash in real life
+                              client_port=3423,
+                              client_host='1.2.3.4',
                               query=Query.fromRawQuery("foo"),
                               qid=42)
 
@@ -52,25 +53,28 @@ class P2pQueryTC(unittest.TestCase):
         self.assertEquals(self.query.asKwargs(),
                           {'qid' : 42,
                            'sender' : 'http://localhost:3423',
-                           'port' : 3423,
+                           'client_port' : 3423,
+                           'client_host' : '1.2.3.4',
                            'ttl' : 5, # default value
                            'words' : [u'foo'],
-                           'version' : 1,
+                           'version' : 2,
                            'mime_type' : ''})
 
     def testComplexQueryAsKwargs(self):
         query = P2pQuery(sender='http://localhost:3423',
-                         port = 3423,
+                         client_port = 3423,
+                         client_host = '1.2.3.4',
                          ttl=2,
                          query=Query.fromRawQuery("foo bar filetype:pdf"),
                          qid=42)
         self.assertEquals(query.asKwargs(),
                           {'qid' : 42,
                            'sender' : 'http://localhost:3423',
-                           'port' : 3423,
+                           'client_port' : 3423,
+                           'client_host' : '1.2.3.4',
                            'ttl' : 2,
                            'words' : [u'foo', u'bar'],
-                           'version' : 1,
+                           'version' : 2,
                            'mime_type' : 'application/pdf'})
         
     
@@ -79,7 +83,8 @@ class P2pQuerierTC(unittest.TestCase):
     def setUp(self):
         self.querier = P2pQuerier('0'*40, None) 
         self.query = P2pQuery(sender='http://localhost:3423',
-                              port=3423,
+                              client_port=3423,
+                              client_host='1.2.3.4',
                               ttl=2,
                               query=Query.fromRawQuery("foo"))
 
