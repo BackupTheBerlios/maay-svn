@@ -32,8 +32,13 @@ table.loginTable {
 }
 
 /** search page *******/
+div.homemessage {
+  font-size: 120%;
+  color: orange;
+}
+
 div.shortDocStat {
-  font-size: 60%;
+  font-size: 80%;
 }
 
 

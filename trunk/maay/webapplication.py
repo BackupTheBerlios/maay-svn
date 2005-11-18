@@ -159,6 +159,10 @@ class IndexationPage(athena.LivePage):
     def render_message(self, context, data):
         return self.msg
 
+    def render_alert(self, context, data):
+        context.fillSlots("message", self.alertmessage)
+        return context.tag
+
     def data_privatefolders(self, context, data):
         if not self.indexerConfig.private_dir:
             return ["No private folder."]
@@ -206,6 +210,8 @@ class SearchForm(MaayPage):
         self.p2pquerier = p2pquerier
         self.download_dir = indexer.indexerConfig.download_dir
 
+    # TODO: since getDocumentCount might be quite costly to compute for the
+    # DBMS, cache the value and update it every 10 mn
     def render_shortstat(self, context, data):
         docCounts = self.querier.getDocumentCount()
         context.fillSlots('localDocumentCount', docCounts[Document.PRIVATE_STATE] + docCounts[Document.PUBLISHED_STATE]) 
