@@ -289,7 +289,11 @@ class SearchForm(MaayPage):
         query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'))
         docurl = self.querier.notifyDownload(docid, query.words)
         if docurl:
-            return static.File(docurl)
+            if osp.isfile(docurl):
+                return static.File(docurl)
+            else:
+                return Maay404("File %s does not exist any more. Please re-index." %
+                               docurl)
         else:
             return Maay404()
 
