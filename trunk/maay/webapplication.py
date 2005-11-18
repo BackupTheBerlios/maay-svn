@@ -217,14 +217,29 @@ class SearchForm(MaayPage):
         # XXX: logout message should be forwarded to presence server
         return None
 
+    # FIXME: maybe not a good place to define this function ?
+    def __is_valid_directory(self, directory):
+        try:
+            mode = os.stat(directory)[stat.ST_MODE]
+            if not stat.S_ISDIR(mode):
+                return False
+        except:
+            return False
+        return True
+
     def child_indexation(self, context, _factory=IndexationPageFactory(IndexationPage)):
+        alertMsg = ""
         # TODO: check if the added folders are valid
 
         # Actions (add/remove) on private folders
+
         addPrivateFolder = context.arg('addPrivateFolder', 0)
         if addPrivateFolder:
+            if self.__is_valid_directory(addPrivateFolder):
                 indexer.indexerConfig.private_dir.append(addPrivateFolder)
                 indexer.indexerConfig.save()
+            else:
+                alertMsg = "\\'%s\\' is not a valid folder" % addPrivateFolder
  
         removePrivateFolder = context.arg('removePrivateFolder', 0)
         if removePrivateFolder:
@@ -237,8 +252,11 @@ class SearchForm(MaayPage):
         # Actions (add/remove) on public folders
         addPublicFolder = context.arg('addPublicFolder', 0)
         if addPublicFolder:
+            if self.__is_valid_directory(addPublicFolder):
                 indexer.indexerConfig.public_dir.append(addPublicFolder)
                 indexer.indexerConfig.save()
+            else:
+                alertMsg = "\\'%s\\' is not a valid folder" % addPublicFolder
  
         removePublicFolder = context.arg('removePublicFolder', 0)
         if removePublicFolder:
@@ -251,8 +269,11 @@ class SearchForm(MaayPage):
         # Actions (add/remove) on skipped folders
         addSkippedFolder = context.arg('addSkippedFolder', 0)
         if addSkippedFolder:
+            if self.__is_valid_directory(addSkippedFolder):
                 indexer.indexerConfig.skip_dir.append(addSkippedFolder)
                 indexer.indexerConfig.save()
+            else:
+                alertMsg = "\\'%s\\' is not a valid folder" % addSkippedFolder
  
         removeSkippedFolder = context.arg('removeSkippedFolder', 0)
         if removeSkippedFolder:
@@ -276,6 +297,7 @@ class SearchForm(MaayPage):
                 msg = "Indexer started"
                 indexer.start_as_thread(_factory)
         indexationPage.msg = msg
+        indexationPage.alertmessage = alertMsg
         return indexationPage
 
     def child_search(self, context):

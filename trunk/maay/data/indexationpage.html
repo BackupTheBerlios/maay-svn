@@ -57,6 +57,11 @@ function updateStatus(msg) {
     <input type="hidden" name="start" value="1" />
     <input type="submit" value="Index now" /> 
   </form>
-  <nevow:invisble nevow:macro="footer" />
+  <script language="javascript" nevow:render="alert">
+    msg = '<nevow:slot name="message" />'
+    if (msg)
+        alert(msg)
+  </script>
+  <nevow:invisible nevow:macro="footer" />
 </body>
 </html>
