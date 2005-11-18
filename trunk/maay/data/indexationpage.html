@@ -1,6 +1,25 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<nevow:invisible xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+  <head>
+    <title>Live results</title>
+    <link rel="stylesheet" type="text/css" href="maaycss"/>
+    <link rel="shortcut icon" href="images/maay.ico" />
+    <nevow:invisible nevow:render="liveglue" />
+
+    <script type='text/javascript' language='javascript'>
+function live() {
+  server.callRemote('live');
+}
+
+function updateStatus(msg) {
+  elt = document.getElementById('statusMessage');
+  elt.innerHTML = msg;
+}
+    </script>
+  </head>
+  <body onload="live();">
+
 <form action="/indexation" method="post">
 <table>
   <tr>
@@ -8,6 +27,8 @@
     <td><h1>Folders</h1></td>
   </tr>
 </table>
+  <br />
+  <div class="message"><b>Status: </b><span id="statusMessage"><span nevow:render="message" /></span></div>
   <br />
   <h2>Search these private folders</h2>
    <div nevow:render="sequence" nevow:data="privatefolders">
@@ -29,10 +50,10 @@
     <input type="submit" value="Add" />
  
   </form>
-  <hr />
-  <div class="message"><span nevow:render="message" /></div><br />
   <form action="/indexation" method="PUT">
     <input type="hidden" name="start" value="1" />
     <input type="submit" value="Index now" /> 
   </form>
-</nevow:invisible>
+  <nevow:invisble nevow:macro="footer" />
+</body>
+</html>

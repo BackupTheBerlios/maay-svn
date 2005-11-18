@@ -38,6 +38,7 @@ from xmlrpclib import ServerProxy, Fault, ProtocolError
 import mimetypes
 import socket
 
+from zope.interface import Interface
 
 from maay import converter
 from maay.dbentity import FutureDocument, Document, FileInfo
@@ -46,6 +47,15 @@ from maay.texttool import removeControlChar
 from threading import Thread
 
 #log.startLogging(open('maay-indexer.log', 'w'))
+
+class IIndexerObserver(Interface):
+
+    def newDocumentIndexed(filename):
+        """called by indexer when a document was just indexed"""
+
+    def indexationCompleted():
+        """called when indexation is over"""
+
 
 
 def makeDocumentId(filename):
@@ -78,7 +88,7 @@ class Indexer:
     decide to do nothing if it detects that the database is up-to-date.
     """
     
-    def __init__(self, indexerConfig):
+    def __init__(self, indexerConfig, observers=None):
         self.indexerConfig = indexerConfig
         username = self.indexerConfig.user
         password = self.indexerConfig.password
@@ -91,6 +101,7 @@ class Indexer:
                                        encoding='utf-8')
         self.cnxId, errmsg = self.serverProxy.authenticate(username, password)
         self.verbose = indexerConfig.verbose
+        self.observers = observers or []
         if not self.cnxId:
             if self.verbose:
                 print "Got failure from Node:", errmsg
@@ -138,6 +149,8 @@ class Indexer:
         indexedFiles = Set(self.serverProxy.getIndexedFiles(self.cnxId))
         oldFiles = indexedFiles - existingFiles
         self.purgeFiles(oldFiles)
+        for obs in self.observers:
+            obs.indexationCompleted()
 
     def runIndexer(self, isPrivate=True):
         existingFiles = Set()
@@ -210,7 +223,8 @@ class Indexer:
             else:
                 print "Error indexing %s: %s" % \
                       (futureDoc.filename.encode('iso-8859-1', 'replace'), exc)
-        
+        for obs in self.observers:
+            obs.newDocumentIndexed(futureDoc.filename)
 
 ######### FileIterator
 
@@ -251,10 +265,10 @@ class FileIterator:
 
 ## main() ##################################################
 
-def run():
+def run(webpage):
     try:
         try:
-            indexer = Indexer(indexerConfig)
+            indexer = Indexer(indexerConfig, observers=[webpage])
         except MaayAuthenticationError, exc:
             print "AuthenticationError:", exc
             sys.exit(1)
@@ -282,13 +296,13 @@ def is_running():
     print '** is_running()', indexer_thread
     return indexer_thread and indexer_thread.isAlive()
 
-def start_as_thread():
+def start_as_thread(webpage):
     global indexer_thread
     if is_running():
         print "Indexer already running", indexer_thread
     else:
         print "launching indexer"
-        indexer_thread = Thread(target=run)
+        indexer_thread = Thread(target=run, args=(webpage,))
         indexer_thread.start()
 
 # index one file from webapp in a thread

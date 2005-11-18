@@ -26,11 +26,13 @@ from itertools import cycle
 from tempfile import mkdtemp
 import os, os.path as osp
 
-from zope.interface import Interface
+from zope.interface import Interface, implements
 from twisted.web import static
 from twisted.web.xmlrpc import Proxy
 from twisted.internet import reactor
-from nevow import rend, tags, loaders
+from twisted.python import log
+
+from nevow import rend, tags, loaders, athena, inevow
 
 from logilab.common.textutils import normalize_text
 
@@ -104,7 +106,82 @@ class PeersList(MaayPage):
             context.fillSlots(attrname, getattr(peerNode, attrname, 'N/A'))
         return context.tag
 
-                   
+
+class IndexationPage(athena.LivePage):
+    docFactory = loaders.xmlfile(get_path_of('indexationpage.html'))
+    implements(indexer.IIndexerObserver)
+
+    # share counter among instances
+    counter = 0
+    
+    def __init__(self):
+        athena.LivePage.__init__(self)
+        self.indexerConfig = indexer.indexerConfig
+        self.msg = 'not running'
+
+    def macro_footer(self, context):
+        return loaders.xmlfile(get_path_of('footer.html'))
+
+    def remote_live(self, context):
+        """let's start !"""
+        return 0
+
+    # XXX (refactoring): provide a common base class for LivePages
+    # Maay / py2exe / win32 related trick : we provide our own javascript
+    # files, so we need to override the default LivePage mechanism
+    # to find them
+    def childFactory(self, ctx, name):
+        if name in self._javascript:
+            return static.File(get_path_of(self._javascript[name]))
+
+    def updateStatus(self, message):
+        self.callRemote('updateStatus', message)
+
+    def newDocumentIndexed(self, filename):
+        IndexationPage.counter += 1
+        if (IndexationPage.counter % 10) == 0:
+            self.updateStatus(u'Indexation in progress - %s docouments indexed'
+                              % IndexationPage.counter)
+
+    def indexationCompleted(self):
+        self.updateStatus(u'Indexation completed (%s doucments indexed)' %
+                          (IndexationPage.counter,))
+
+    def render_message(self, context, data):
+        return self.msg
+
+    def data_privatefolders(self, context, data):
+        if not self.indexerConfig.private_index_dir:
+            return ["No private folder."]
+        return self.indexerConfig.private_index_dir
+
+    def data_publicfolders(self, context, data):
+        if not self.indexerConfig.public_index_dir:
+            return ["No public folder."]
+        return self.indexerConfig.public_index_dir
+
+    def data_skippedfolders(self, context, data):
+        if not self.indexerConfig.public_skip_dir:
+            return ["No skipped public directory."]
+        return self.indexerConfig.public_skip_dir
+
+    def render_directory(self, context, name):
+        print "directory = %s" % name
+        context.fillSlots("name", name)
+        return context.tag
+
+class IndexationPageFactory(athena.LivePageFactory):
+    implements(indexer.IIndexerObserver)
+
+    def newDocumentIndexed(self, filename):
+        for webpage in self.clients.itervalues():
+            webpage.newDocumentIndexed(filename)
+        
+    def indexationCompleted(self):
+        for webpage in self.clients.itervalues():
+            webpage.indexationCompleted()
+    
+
 class SearchForm(MaayPage):
     """default search form"""
     bodyFactory = loaders.xmlfile(get_path_of('searchform.html'))
@@ -124,7 +201,7 @@ class SearchForm(MaayPage):
     def child_peers(self, context):
         return PeersList(self.maayId, self.querier)
 
-    def child_indexation(self, context):
+    def child_indexation(self, context, _factory=IndexationPageFactory(IndexationPage)):
         # Actions (add/remove) on private folders
         addPrivateFolder = context.arg('addPrivateFolder', 0)
         if addPrivateFolder:
@@ -162,6 +239,7 @@ class SearchForm(MaayPage):
                 print "Folder '%s' not in the private directory list"
 
         start = int(context.arg('start', 0))
+        indexationPage = _factory.clientFactory(context)
         if start == 0:
             if indexer.is_running():
                 msg = "Indexer running"
@@ -172,9 +250,9 @@ class SearchForm(MaayPage):
                 msg = "Indexer already running"
             else:
                 msg = "Indexer started"
-                indexer.start_as_thread()
-
-        return IndexationPage(msg)
+                indexer.start_as_thread(_factory)
+        indexationPage.msg = msg
+        return indexationPage
 
     def child_search(self, context):
         return FACTORY.clientFactory(context, self.querier, self.p2pquerier)
@@ -225,41 +303,6 @@ class DistantFilePage(static.File):
         static.File.__init__(self, filepath)
         self.filepath = filepath
         indexer.indexJustOneFile(self.filepath)
-
-        
-class IndexationPage(MaayPage):
-    # just for the demo. Should be moved to a adminpanel interface later.
-    """index page"""
-    bodyFactory = loaders.xmlfile(get_path_of('indexationpage.html'))
-    addSlash = False
-    
-    def __init__(self, msg = "No message"):
-        MaayPage.__init__(self)
-        self._msg = msg
-        self.indexerConfig = indexer.indexerConfig
-
-    def render_message(self, context, data):
-        return self._msg
-
-    def data_privatefolders(self, context, data):
-        if not self.indexerConfig.private_index_dir:
-            return ["No private folder."]
-        return self.indexerConfig.private_index_dir
-
-    def data_publicfolders(self, context, data):
-        if not self.indexerConfig.public_index_dir:
-            return ["No public folder."]
-        return self.indexerConfig.public_index_dir
-
-    def data_skippedfolders(self, context, data):
-        if not self.indexerConfig.public_skip_dir:
-            return ["No skipped public directory."]
-        return self.indexerConfig.public_skip_dir
-
-    def render_directory(self, context, name):
-        print "directory = %s" % name
-        context.fillSlots("name", name)
-        return context.tag
 
 class ResultsPageMixIn:
 
@@ -369,8 +412,6 @@ class ResultsPageMixIn:
         context.fillSlots('url', baseurl)
         return context.tag
     
-from nevow import athena, inevow
-from twisted.python import log
 
 class ResultsPage(athena.LivePage, ResultsPageMixIn):
     """default results page"""
@@ -409,16 +450,13 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
             self.querier.pushDocuments(self.queryId, results, provider=None)
             self.results = self.querier.getQueryResults(self.queryId, offset=0)
             
+    # XXX (refactoring): provide a common base class for LivePages
+    # Maay / py2exe / win32 related trick : we provide our own javascript
+    # files, so we need to override the default LivePage mechanism
+    # to find them
     def childFactory(self, ctx, name):
         if name in self._javascript:
             return static.File(get_path_of(self._javascript[name]))
-
-# XXX: do we need to override the following 2 methods too ?
-##     def child_MochiKit(self, ctx):
-##         return static.File(get_path_of('MochiKit'))
-
-##     def child_MochiKitLogConsole(self, ctx):
-##         return static.File(get_path_of('MochiKit'))
         
     def onNewResults(self, provider, results):
         results = [Document(**params) for params in results]
