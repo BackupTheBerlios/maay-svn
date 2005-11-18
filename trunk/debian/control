@@ -8,7 +8,7 @@ Standards-Version: 3.6.2
 Package: maay
 Architecture: all
 Depends: ${misc:Depends}, mysql-server-4.1, python, python-mysql, python-nevow (>= 0.6.0), python-twisted (>= 2.0), python-logilab-common (>=0.12.0-3)
-Recommends: antiword, unrtf, pdftohtml, python-imaging
+Recommends: antiword, unrtf, pdftohtml, python-imaging, gs-common
 Description: peer to peer indexation and search engine
  Maay can index files on your computer, and export them to other
  members of the Maay P2P network. You can also issue searches which
