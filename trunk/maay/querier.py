@@ -307,11 +307,11 @@ class AnonymousQuerier:
         nodes = Node.selectWhere(cursor, node_id=nodeId)
         if nodes:
             node = nodes[0]
+            node.last_seen_time = int(time.time())
+            node.commit(cursor, update=True)
         else:
             log.debug('No matching node found for id {%s}' % nodeId,
                       category='[warning]')
-        node.last_seen_time = int(time.time())
-        node.commit(cursor, update=True)
         cursor.close()
 
     def getRegisteredNeighbors(self, nodeId, nbNodes):
