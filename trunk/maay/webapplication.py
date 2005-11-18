@@ -244,6 +244,7 @@ class SearchForm(MaayPage):
         if removePublicFolder:
             try:
                 indexer.indexerConfig.public_dir.remove(removePublicFolder)
+                indexer.indexerConfig.save()
             except ValueError:
                 print "Folder '%s' not in the private directory list"
 
@@ -251,11 +252,13 @@ class SearchForm(MaayPage):
         addSkippedFolder = context.arg('addSkippedFolder', 0)
         if addSkippedFolder:
                 indexer.indexerConfig.skip_dir.append(addSkippedFolder)
+                indexer.indexerConfig.save()
  
         removeSkippedFolder = context.arg('removeSkippedFolder', 0)
         if removeSkippedFolder:
             try:
-                indexer.indexerConfig.public_dir.remove(removeSkippedFolder)
+                indexer.indexerConfig.skip_dir.remove(removeSkippedFolder)
+                indexer.indexerConfig.save()
             except ValueError:
                 print "Folder '%s' not in the private directory list"
 
