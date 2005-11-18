@@ -1,6 +1,13 @@
+Maay-0.2.2 2005-11-21
+	* Use IP adress of presence server instead of domain name
+	* Threshold on document relevance and popularity to avoid negative
+	values
+	* Fixed ranking bug to display more recent documents first
+	* 
+
 Maay-0.2.1 2005-11-16
         * Fixed bug #5647 caused by bad use of os.getlogin() preventing P2P
-	   queries from being processed on Windows
+	  queries from being processed on Windows
         * Fixed off by one error in document abstract generation (#5648)
         * Fixed auto indexation of downloaded documents
         * Fixed some display inconsistencies in web interface
