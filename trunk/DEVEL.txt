@@ -1,0 +1,106 @@
+===========================
+Maay development guidelines
+===========================
+
+.. revision: $Id$
+
+Scope of this document
+======================
+
+This document is a collection of tips to help Maay contributors. It
+will be expanded as needs arise.
+
+
+Generating a Windows installer
+==============================
+
+Setting up the Windows machine
+------------------------------
+
+Download and install `Python 2.4`_ and update your PATH environment variable
+so that c:\python24 belongs to the path. Do it right away this will 
+save precious time and frustration.
+
+Install `Inno Setup`_, `py2exe`_, `pywin32`_ which are used to produce
+the installer. You will probably want to install a Subversion client
+such as `Tortoise SVN`_, as well as putty_ to benefit from the
+``pageant`` ssh agent and avoid typing your berlios password again and
+again. 
+
+Checkout the Maay sources from Berlios. 
+
+You need to install the dependencies of Maay too. Download and install
+the following python modules (take care when downloading a windows
+installer, it has to be built for Python 2.4): 
+
+ * `egenix-mx-base`_
+ * `mysql-python`_
+ * `twisted-2.0.1`_ 
+ * `nevow-0.6`_
+ * `PIL`_
+ * `logilab-common-0.12.1`_
+
+If there is no windows installer available for the package, it most
+certainly means that it is a pure Python library. Unpack the source
+archive in a temporary directory and use a command prompt window to
+run ``python setup.py bdist_wininst`` in that directory. This will
+generate a Windows installer in the ``dist`` subdirectory, which you
+can run to install the library.
+
+Download the `mysql-4.1-noinstall` prebuilt zip file, and unzip it in
+``trunk\thirdparty`` (where ``trunk`` is the Subversion checkout
+directory). Rename ``trunk\thirdparty\mysql-4.1`` to
+``trunk\thirdparty`mysql``.
+
+Download and unpack `antiword`_, `unrtf`_ and `pdftohtml` in
+``trunk\thirdparty``. I think this is all and correct. Fortunately,
+all of this only has to be done once. 
+
+.. _Python 2.4: http://www.python.org/2.4/
+.. _Inno Setup: http://www.jrsoftware.org/isdl.ph
+.. _py2exe: http://sourceforge.net/projects/py2exe/
+.. _pywin32: http://starship.python.net/crew/mhammond/win32/Downloads.html
+.. _Tortoise SVN: http://tortoisesvn.tigris.org/download.html
+.. _putty: http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html
+.. _egenix-mx-base: http://www.egenix.com/files/python/eGenix-mx-Extensions.html#Download-mxBASE
+.. _mysql-python: http://sourceforge.net/project/showfiles.php?group_id=22307&release_id=102893
+.. _twisted-2.0.1: http://twistedmatrix.com/projects/core/
+.. _nevow-0.6: http://divmod.org/projects/nevow
+.. _PIL: http://www.pythonware.com/products/pil/
+.. _logilab-common-0.12.1:  http://www.logilab.org/projects/common
+.. _mysql-4.1-noinstall: http://dev.mysql.com/get/Downloads/MySQL-4.1/mysql-4.1.15-win32.zip/from/pick#mirrors
+.. _antiword: http://www.informatik.uni-frankfurt.de/~markus/antiword/
+.. _unrtf: http://gnuwin32.sourceforge.net/packages/unrtf.htm
+.. _pdftohtml: http://sourceforge.net/projects/pdftohtml/
+
+Generating the installer
+------------------------
+
+ * In a shell window, navigate to the trunk directory. 
+
+ * Run ``python setup.py py2exe > py2exe.log``
+
+ * Examine ``py2exe.log`` for possible errors or missing modules
+
+ * Launch Inno setup by double clickink on ``maay.iss``
+
+ * Select the right option in the menu to generate the installer
+
+It is probably possible to right click on ``maay.iss`` and to compile
+directly from Windows Explorer. I prefer compiling from the Inno Setup
+GUI because it is possible to run the installer and uninstaller from
+the application and get a log displayed.
+
+What if it does not work?
+-------------------------
+
+The author admits that he may have got one of the preparation step
+wrong. Please send a mail on the ``maay-dev`` mailing list and we will
+try to help.
+
+Generating a source distribution
+================================
+
+Go the trunk directory and run ``python setup.py sdist``
+
+

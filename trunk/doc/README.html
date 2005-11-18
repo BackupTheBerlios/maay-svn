@@ -10,6 +10,7 @@
 <body>
 <div class="document" id="maay-documentation">
 <h1 class="title">Maay documentation</h1>
+<!-- revision: $Id$ -->
 <div class="section" id="warning">
 <h1><a name="warning">Warning</a></h1>
 <p>This is beta quality software. Before launching anything be sure to read 
@@ -41,73 +42,15 @@ nodes, in order to seed the node database.</li>
 </ul>
 </blockquote>
 </div>
-<div class="section" id="how-do-i-install-maay-from-source">
-<h1><a name="how-do-i-install-maay-from-source">How do I install Maay from source?</a></h1>
-<p>These instruction are intended for people using a unix-like
-OS. Windows users are strongly advised to use the prebuilt package
-(see below).</p>
-<p>A few Python libraries are required to make the whole think work. Most
-of them should be available in your OS distribution too :</p>
-<blockquote>
-<ul class="simple">
-<li>logilab common libraries 0.12.1 or above (<a class="reference" href="http://www.logilab.org/projects/common">http://www.logilab.org/projects/common</a>)</li>
-<li>mysql-python (<a class="reference" href="http://sourceforge.net/projects/mysql-python">http://sourceforge.net/projects/mysql-python</a>)</li>
-<li>python-twisted 2.0 or above ((<a class="reference" href="http://twistedmatrix.com/projects/core/">http://twistedmatrix.com/projects/core/</a>)</li>
-<li>python-twisted-web 0.5 or above (<a class="reference" href="http://twistedmatrix.com/projects/web/">http://twistedmatrix.com/projects/web/</a>)</li>
-<li>python-nevow 0.6 or above (<a class="reference" href="http://divmod.org/projects/nevow">http://divmod.org/projects/nevow</a>)</li>
-<li>python-imaging (<a class="reference" href="http://www.pythonware.com/products/pil/">http://www.pythonware.com/products/pil/</a>)</li>
-<li>mxDatetime (<a class="reference" href="http://www.egenix.com/files/python/mxDateTime.html">http://www.egenix.com/files/python/mxDateTime.html</a>)</li>
-</ul>
-</blockquote>
-<p>You will also need a few helper applications to perform the conversion
-of various binary formats to something that Maay can index. There is
-probably a prebuilt binary available for your OS distribution
-somewhere. You will need to download and install :</p>
-<blockquote>
-<ul class="simple">
-<li>pdftohtml (<a class="reference" href="http://pdftohtml.sourceforge.net/">http://pdftohtml.sourceforge.net/</a>)</li>
-<li>antiword (<a class="reference" href="http://www.winfield.demon.nl/">http://www.winfield.demon.nl/</a>)</li>
-<li>unrtf (<a class="reference" href="http://www.gnu.org/software/unrtf/unrtf.html">http://www.gnu.org/software/unrtf/unrtf.html</a>)</li>
-</ul>
-</blockquote>
-<p>The indexation part uses a MySQL database, version 4.1
-(<a class="reference" href="http://www.mysql.org/">http://www.mysql.org/</a>). You will need to install such a database or
-get in touch with your DBA. The following assumes a local mysql
-installation, with no root password. Maay has not been tested with
-MySQL 5.0, but it should work. Please report if you encounter problems
-with this version of MySQL.</p>
-<p>Once everything else is installed, you can point you web browser to
-<a class="reference" href="http://developer.berlios.de/projects/maay/">http://developer.berlios.de/projects/maay/</a> and download the latest
-source tarball. Unpack it, go to the newly created directory and run:</p>
-<pre class="literal-block">
-# python setup.py install
-</pre>
-<p>It is now necessary to create the MySQL database instance that will
-store the indexation data:</p>
-<pre class="literal-block">
-# mysql -u root mysql
-mysql&gt; \. sql/mysql.sql
-</pre>
-<p>You're done! See a bit further down in this document for how to start
-using Maay.</p>
-</div>
-<div class="section" id="how-do-i-install-maay-from-a-package">
-<h1><a name="how-do-i-install-maay-from-a-package">How do I install Maay from a package?</a></h1>
-<p>For now, only a Windows installer is available. Download it from
-<a class="reference" href="http://developer.berlios.de/projects/maay/">http://developer.berlios.de/projects/maay/</a> and run it. This should
-install and setup everything properly.</p>
-<p>A package for the Debian GNU/Linux distribution will soon be made
-available.</p>
-</div>
 <div class="section" id="how-do-i-start-using-maay">
 <h1><a name="how-do-i-start-using-maay">How do I start using Maay?</a></h1>
-<p>First, edit the configuration files. On Windows, they are in 
+<p>First, edit the configuration files. On Windows, they are in
 C:Program FilesMaaywebapp.ini and C:Program
 FilesMaayindexer.ini. The Windows installer should have set the
-different configuration values
-On Unix systems, they are in /etc/maay, and you can copy them to 
-~/.maay/ if you want to have some personnalized settings. Pay attention 
-to the index-dir and skip-dir settings in indexer.ini.</p>
+different configuration values.  On Unix systems, they are in
+/etc/maay, and you can copy them to ~/.maay/ if you want to have some
+personnalized settings. Pay attention to the index-dir and skip-dir
+settings in indexer.ini.</p>
 <p>Then, start the Maay service. On Windows, this is done automatically
 when your machine boots. On unix systems, use /usr/bin/maay-server</p>
 <p>You can now visit <a class="reference" href="http://localhost:7777/">http://localhost:7777/</a> which will display the Maay
@@ -142,7 +85,7 @@ following pieces of information:</p>
 <p>Be as precise as possible. Just saying &quot;the indexer does not work&quot;
 won't give us any clue to help you.</p>
 <blockquote>
-Alexandre Fayolle &lt;<a class="reference" href="mailto:alexandre.fayolle&#64;logilab.fr">alexandre.fayolle&#64;logilab.fr</a>&gt;, Tue, 15 Nov 2005 09:41:54 +0100</blockquote>
+Alexandre Fayolle &lt;<a class="reference" href="mailto:alexandre.fayolle&#64;logilab.fr">alexandre.fayolle&#64;logilab.fr</a>&gt;, Fri, 18 Nov 2005 15:00:58 +0100</blockquote>
 </div>
 </div>
 </body>
