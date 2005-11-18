@@ -9,7 +9,7 @@
 <!--       <nevow:slot name="actionlabel" /> -->
 <!--     </a> -->
     <center>
-    <img src="images/maay.png" />
+    <img src="images/maay.png" /><br /><br />
     <form action="search" accept-charset="utf-8">
       <table>
         <tr>
@@ -19,9 +19,10 @@
       </table>
     </form>
     <br />
-    <div class="homemessage">Search and share your documents.</div><br />
+    <div class="homemessage">Search your own computer.<br />
+    Publish your documents.</div><br />
     <div class="shortDocStat" nevow:render="shortstat">
-    Searching <nevow:slot name="localDocumentCount" /> documents. Sharing <nevow:slot name="publicDocumentCount" /> documents.
+    <nevow:slot name="localDocumentCount" /> local documents / <nevow:slot name="publicDocumentCount" /> published documents.
     </div>
     </center>
   </nevow:invisible>

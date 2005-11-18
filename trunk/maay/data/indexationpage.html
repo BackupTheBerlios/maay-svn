@@ -39,7 +39,7 @@ function updateStatus(msg) {
    </div>
     <input type="text" name="addPrivateFolder" size="50" />
     <input type="submit" value="Add" />
-  <h2>Search and share these public folders</h2>
+  <h2>Search/Publish these public folders</h2>
     <div nevow:render="sequence" nevow:data="publicfolders">
       <div class="indexedFolderName" nevow:pattern="item" nevow:render="directory"><a><nevow:attr name="href">/indexation?removePublicFolder=<nevow:slot name="name" /></nevow:attr>X</a> - <nevow:slot name="name" /></div>
     </div>

@@ -25,6 +25,7 @@ from datetime import datetime
 from itertools import cycle
 from tempfile import mkdtemp
 import os, os.path as osp
+import stat
 
 from zope.interface import Interface, implements
 from twisted.web import static
@@ -142,18 +143,18 @@ class IndexationPage(athena.LivePage):
     def newDocumentIndexed(self, filename):
         IndexationPage.indexedDocuments += 1
         if (IndexationPage.indexedDocuments % 10) == 0:
-            self.updateStatus(u'Indexation in progress - %s documents indexed (%s left untouched)'
-                              % (IndexationPage.indexedDocuments, IndexationPage.untouchedDocuments))
+            self.updateStatus(u'Indexation in progress - %s new documents / %s total'
+                % (IndexationPage.indexedDocuments, IndexationPage.indexedDocuments + IndexationPage.untouchedDocuments))
 
     def documentUntouched(self, filename):
         IndexationPage.untouchedDocuments += 1
         if (IndexationPage.untouchedDocuments % 10) == 0:
-            self.updateStatus(u'Indexation in progress - %s documents indexed (%s left untouched)'
-                              % (IndexationPage.indexedDocuments, IndexationPage.untouchedDocuments))
+            self.updateStatus(u'Indexation in progress - %s new documents / %s total'
+                % (IndexationPage.indexedDocuments, IndexationPage.indexedDocuments + IndexationPage.untouchedDocuments))
         
     def indexationCompleted(self):
-        self.updateStatus(u'Indexation completed (%s documents indexed - %s left untouched)' %
-                          (IndexationPage.indexedDocuments, IndexationPage.untouchedDocuments))
+        self.updateStatus(u'Indexation finished - %s new documents / %s total'
+            % (IndexationPage.indexedDocuments, IndexationPage.indexedDocuments + IndexationPage.untouchedDocuments))
 
 
     def render_message(self, context, data):
