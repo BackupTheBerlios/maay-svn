@@ -149,7 +149,7 @@ class Indexer:
             skipped = self.indexerConfig.skip_dir
             print "private indexation of", indexed, "omitting", skipped
         else:
-            indexed = self.indexerConfig.public_dir
+            indexed = self.indexerConfig.public_dir[:]
             indexed.append(self.indexerConfig.download_dir)
             skipped = self.indexerConfig.skip_dir
             print "public indexation of", indexed, "omitting", skipped
