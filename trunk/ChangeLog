@@ -5,6 +5,9 @@ Maay-0.2.2 2005-11-21
 	* Fixed ranking bug to display more recent documents first
 	* return a maximum of 50 results per peer
 	* improved Internet Explorer compatibility
+	* Fix a communication bug when non-standard ports are used, and thus ...
+	* Is incompatible with prior versions (won't answer to queries from old version)
+
 	
 
 Maay-0.2.1 2005-11-16
