@@ -71,7 +71,15 @@ class QueryVersionMismatch(Exception):
         self.local_version = local_version
         self.query_version = query_version
 
-# XXX should P2pQuery derive from query.Query? (auc : no)
+# This variable is hardcoded for now and describes the maximum
+# number of results relayed by each peer.
+# This might cause the results to be very incomplete and it will
+# be improved in the future, but for now:
+#  - 50 results per node with a good ranking system is
+#    acceptable
+#  - it should lightweight the network
+LIMIT = 50
+
 class P2pQuery:
 
     _version = 2
@@ -96,6 +104,8 @@ class P2pQuery:
         #self.port = originator_port
         self.ttl = ttl
         self.query = query
+        # explicitly set the 'limit' attribute for P2P queries
+        self.query.limit = LIMIT
         self.documents_ids = set()
         # *** client_host: IP adress of immediate client (computed at reception)
         # *** client_port: rpc port of immediate client (provided by client)
@@ -278,9 +288,7 @@ class P2pQuerier:
         query.hop()        
         if query.ttl > 0:
             self.sendQuery(query)
-
         documents = self.querier.findDocuments(query.query)
-
         if len(documents) == 0:
             print " ... no document matching the query, won't answer."
             return
@@ -313,7 +321,6 @@ class P2pQuerier:
               % (query.client_host, query.client_port)
         
         toSend = []
-        
         for document in answer.documents:
             if not isinstance(document, dict):
                 document = document.__dict__

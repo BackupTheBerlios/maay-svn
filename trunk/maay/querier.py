@@ -156,7 +156,8 @@ class AnonymousQuerier:
         try:
             cursor = self._cnx.cursor()
             return Document.selectContaining(cursor, words, query.filetype,
-                                             query.offset, self.searchInPrivate)
+                                             query.offset, query.limit,
+                                             self.searchInPrivate)
         finally:
             traceback.print_exc()
             cursor.close()

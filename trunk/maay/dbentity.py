@@ -230,7 +230,10 @@ class Document(DBEntity):
         return self.text[:200]
     abstract = property(get_abstract)
 
-    def _selectContainingQuery(cls, words, mimetype=None, offset=0, allowPrivate=False):
+    # XXX Please rewrite this method. The way we build the SQL
+    #     query is quite messy
+    def _selectContainingQuery(cls, words, mimetype=None, offset=0,
+                               limit=None, allowPrivate=False):
         # XXX mimetype handling is a HACK. It needs to be integrated
         #     nicely in order to handle any kind of restrictions easily
         #word = WORDS_RGX.finditer(normalizeText(' '.join(words)))
@@ -265,16 +268,21 @@ class Document(DBEntity):
                  "HAVING count(DS.db_document_id) = %%s "
                  "ORDER BY D.publication_time DESC " % \
                  (', '.join(['%s'] * len(words)), restriction))
+        # XXX SQL: how to specify only the OFFSET ???????
+        if limit or offset:
+            query += " LIMIT %s OFFSET %s" % (limit or 50, offset)
         return query, words + restrictionParams + [len(words)]
 
     _selectContainingQuery = classmethod(_selectContainingQuery)
 
-    def selectContaining(cls, cursor, words, mimetype=None, offset=0, allowPrivate=False):
+    def selectContaining(cls, cursor, words, mimetype=None, offset=0,
+                         limit=None, allowPrivate=False):
         print "Document selectContaining %s" % words
         if not words:
             return []
         query, params = cls._selectContainingQuery(words, mimetype,
                                                    offset=offset,
+                                                   limit=limit,
                                                    allowPrivate=allowPrivate)
         if query:
             cursor.execute(query, params)

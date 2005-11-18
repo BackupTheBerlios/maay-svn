@@ -53,6 +53,7 @@ class Query(object):
         self.offset = offset
         self.filetype = filetype
         self.filename = filename
+        self.limit = None
 
     def fromRawQuery(rawQuery, offset=0):
         """:type rawQuery: str"""
