@@ -16,15 +16,19 @@
 
 * What's Next
 
+ - ajouter icône pour désinstaller Maay
+ - créer un lien vers http://localhost:7777 dans le menu démarrer et sur le bureau
+ - afficher la page principale de Maay dans le navigateur après l'installation.
  - GC des noeuds morts (ping ? heartbeats ? etc.)
  - envoi paresseux des documents par les fournisseurs
- - admin panel plus interactif (chemins éditables, progression de l'indexation)
+ - admin panel plus interactif (chemins éditables)
  - table Node cohérente avec ce qui a été fait sur présence server (nodeId <=> (ip, port))
  - maay passerelle (deux+ interfaces rezo)
 
 
 * Done
 
+ - admin panel plus interactif (progression de l'indexation)
  - "le serveur d'enregistrement" est un serveur de présence (vocabulaire)
  - autologin (<=> ne travailler qu'en mode loggé)
  - serveur de présence ne doit être utilisé qu'à l'amorçage. Chaque
