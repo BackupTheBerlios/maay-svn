@@ -214,6 +214,8 @@ class Document(DBEntity):
     key = ('db_document_id',)
     
     def readable_size(self):
+        if not self.size:
+            return 'XXX NO KNOWN SIZE'
         bytes = int(self.size)
         if bytes < 1000:
             return u'%s' % bytes
@@ -473,15 +475,31 @@ class Node(DBEntity):
     tableName = 'nodes'
     attributes = ('node_id', 'ip', 'port', 'last_seen_time', 'counter',
                   'claim_count', 'affinity', 'bandwidth')
-    key = ('node_id',)
+    key = ('ip', 'port')
 
-    #TODO: ensure nodeID <=> (ip, port)
+    ## def _insertQuery(self):
+##         """generates an INSERT query according to object's state
+##            also update node_id on collisions on (ip, port)"""
+##         values = ['%%(%s)s' % attr for attr in self.attributes
+##                   if hasattr(self, attr)]
+##         query = "INSERT INTO %s (%s) VALUES (%s) " %\
+##                 (self.tableName,
+##                  ', '.join(self.boundAttributes()),
+##                  ', '.join(values))
+##         query += "ON DUPLICATE KEY UPDATE node_id='%s'" % getattr(self, 'node_id')
+##         # update facultative queries
+##         for attr in ('last_seen_time', 'bandwidth', 'counter', 'claim_count', 'affinity'):
+##             if hasattr(self, attr):
+##                 query += ", %s=%s" % (attr, getattr(self, attr))
+##         return query
+
+    # here, insert manages all the cases
+    #_updateQuery = _insertQuery
 
     def _selectRegisteredNodesQuery(cls):
         query = cls._selectQuery()
         query += " WHERE node_id != %s ORDER BY last_seen_time DESC LIMIT %s"
         return query
-    
     _selectRegisteredNodesQuery = classmethod(_selectRegisteredNodesQuery)
 
     def selectRegistered(cls, cursor, currentNodeId, maxResults):

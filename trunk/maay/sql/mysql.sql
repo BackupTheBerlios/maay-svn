@@ -119,16 +119,16 @@ CREATE TABLE `node_interests` (
 -- 
 
 CREATE TABLE `nodes` (
-  `node_id` char(40) NOT NULL default '',
-  `ip` char(15) NOT NULL default '',
+  `node_id` char(40) NOT NULL default '' UNIQUE,
+  `ip` char(15) NOT NULL, -- default '', oh !
 -- FIXME: this should be unsigned smallint
-  `port` smallint(11) NOT NULL default '0',
-  `last_seen_time` int(11) default NULL,
+  `port` smallint(11) NOT NULL, -- default '0', why ?
+  `last_seen_time` int(11) default 0,
   `counter` int(11) NOT NULL default '0',
   `claim_count` float NOT NULL default '0',
   `affinity` double NOT NULL default '0',
   `bandwidth` int(11) NOT NULL default '0',
-  PRIMARY KEY  (`node_id`)
+  PRIMARY KEY  (`ip`, `port`)
 ) TYPE=MyISAM;
 
 -- --------------------------------------------------------

@@ -277,7 +277,7 @@ class AnonymousQuerier:
             return
         lastSeenTime = lastSeenTime or int(time.time())
         cursor = self._cnx.cursor()
-        node = Node.selectOrInsertWhere(cursor, node_id=nodeId)[0]
+        node = Node.selectOrInsertWhere(cursor, ip=ip, port=port, node_id=nodeId)[0]
         node.ip = ip
         node.port = port
         node.bandwidth = bandwidth or 1
