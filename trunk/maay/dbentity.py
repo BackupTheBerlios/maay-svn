@@ -189,7 +189,9 @@ class Document(DBEntity):
     and only a few words are known
 
     * UNKNOWN_STATE (???): not documented in the thesis, has a strange
-      value (1<<9) since it gets stored in a char or a signed byte
+      value (1<<9) since it gets stored in a char or a signed byte.
+      In fact, this state was (plan to be) used in the prototype for
+      debugging purpose. So it is a useless state... 
     """
 
     # Caution : in the maay.orig branch, this parameter gets stored as
@@ -303,6 +305,19 @@ class Document(DBEntity):
         return results[0]
     selectUrlAndTypeWhereDocid = classmethod(selectUrlAndTypeWhereDocid)
 
+    # for stat purpose
+    def getDocumentCount(cls, cursor):
+        query = "SELECT state, count(*) FROM documents GROUP BY state"
+        cursor.execute(query)
+        results = cursor.fetchall()
+
+        docCounts = {Document.PUBLISHED_STATE:0, Document.PRIVATE_STATE:0,
+            Document.CACHED_STATE:0, Document.KNOWN_STATE:0}
+
+        for result in results:
+            docCounts[int(result[0])] = result[1]
+        return docCounts
+    getDocumentCount = classmethod(getDocumentCount)
     
 class Result(Document):
     """Results are temporary relations created/destroyed on the fly

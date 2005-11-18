@@ -32,6 +32,11 @@ table.loginTable {
 }
 
 /** search page *******/
+div.shortDocStat {
+  font-size: 60%;
+}
+
+
 input.searchButton {
   background: #FFF0FF;
   border: 1px outset #ff2222;

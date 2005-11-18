@@ -18,6 +18,10 @@
             <input type="text" name="words" value="" />
               <input type="submit" class="searchButton" value="search" />
           </form>
+          <font color="orange" size="+1">Search and share your documents.</font><br /><br />
+          <div class="shortDocStat" nevow:render="shortstat">
+            Searching <nevow:slot name="localDocumentCount" /> documents. Sharing <nevow:slot name="publicDocumentCount" /> documents.
+          </div>
         </td>
       </tr>
     </table>

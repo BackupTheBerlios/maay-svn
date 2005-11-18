@@ -60,6 +60,9 @@ class IQuerier(Interface):
         """returns a list of indexed file names as strings
         """
 
+    def getDocumentCount(self):
+        """get document count"""
+
     def indexDocument(nodeId, futureDoc):
         """Inserts or update information in table documents,
         file_info, document_score and word"""
@@ -417,6 +420,13 @@ class MaayQuerier(AnonymousQuerier):
         self._cnx.commit()
         print "removed %d rows related to unreferenced documents" % rows
         return rows
+
+    def getDocumentCount(self):
+        """get document count"""
+        cursor = self._cnx.cursor()
+        docCounts = Document.getDocumentCount(cursor)
+        cursor.close()
+        return docCounts
 
     def indexDocument(self, nodeId, futureDoc):
         """Inserts or update information in table documents,

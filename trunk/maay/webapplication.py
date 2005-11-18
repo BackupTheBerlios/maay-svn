@@ -193,14 +193,17 @@ class SearchForm(MaayPage):
         self.querier = querier
         self.p2pquerier = p2pquerier
         self.download_dir = indexer.indexerConfig.download_dir
+
+    def render_shortstat(self, context, data):
+        docCounts = self.querier.getDocumentCount()
+        context.fillSlots('localDocumentCount', docCounts[Document.PRIVATE_STATE] + docCounts[Document.PUBLISHED_STATE]) 
+        context.fillSlots('publicDocumentCount', docCounts[Document.PUBLISHED_STATE]) 
+        return context.tag
         
     def logout(self):
         print "Bye %s !" % (self.maayId,)
         # XXX: logout message should be forwarded to presence server
         return None
-
-    def child_peers(self, context):
-        return PeersList(self.maayId, self.querier)
 
     def child_indexation(self, context, _factory=IndexationPageFactory(IndexationPage)):
         # TODO: check if the added folders are valid
