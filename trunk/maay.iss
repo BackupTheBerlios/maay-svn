@@ -6,17 +6,18 @@
 
 [Setup]
 AppName=Maay
-AppVerName=Maay-0.2.1
+AppVerName=Maay-0.2.2
 DefaultDirName={pf}\Maay
 DefaultGroupName=Maay
 UninstallDisplayIcon={app}\maay_node.exe
+Uninstallable=yes
 SolidCompression=yes
 LicenseFile=COPYING
 ; Require 50 MB for the database files. We can tune this later.
 ExtraDiskSpaceRequired=50000000
 ; Win9x is not supported
 MinVersion=0,4.0
-InfoBeforeFile=ReleaseNotes
+InfoBeforeFile=ReleaseNotes.txt
 InfoAfterFile=README.txt
 
 [Dirs]
@@ -40,19 +41,19 @@ Source: "thirdparty\mysql\bin\mysql.exe"; DestDir: "{app}\mysql\bin"
 Source: "thirdparty\antiword\*"; DestDir: "\antiword" ; Flags: recursesubdirs
 Source: "thirdparty\pdftohtml-0.36\*"; DestDir: "{app}\pdftohtml" ; Flags: recursesubdirs
 Source: "maay\configuration\win32\*.ini"; DestDir: "{app}"
+Source: "maay\configuration\win32\Maay.url"; DestDir: "{app}"
+Source: "maay\configuration\win32\Maay.url"; DestDir: "{userdesktop}"
+Source: "maay\configuration\win32\Maay.url"; DestDir: "{userstartmenu}\Programs\Maay\"
 Source: "doc\README.html"; DestDir: "{app}\documentation"
 Source: "doc\default.css"; DestDir: "{app}\documentation"
 Source: "ChangeLog"; DestDir: "{app}"
-Source: "ReleaseNotes"; DestDir: "{app}"
+Source: "ReleaseNotes.txt"; DestDir: "{app}\"
 
 [Icons]
-Name: "{group}\Documentation.html"; Filename: "{app}\documentation\README.html"; Comment: "Required reading before launching Maay"
-Name: "{group}\ReleaseNotes.txt"; Filename: "{app}\ReleaseNotes"; Comment: "Required reading before launching Maay"
-Name: "{group}\Maay Node"; Filename: "{app}\maay_node.exe"; WorkingDir: "{app}"; Comment: "The Maay node component"
-Name: "{group}\Maay Indexer"; Filename: "{app}\maay_indexer.exe"; WorkingDir: "{app}"; Comment: "The Maay indexer component"
-Name: "{group}\node.ini"; Filename: "{app}\node.ini"; Comment: "Maay node configuration"
-Name: "{group}\indexer.ini"; Filename: "{app}\indexer.ini"; Comment: "Maay indexer configuration"
-Name: "{group}\image.ini"; Filename: "{app}\image.ini"; Comment: "Maay indexer configuration"
+Name: "{group}\Documentation"; Filename: "{app}\documentation\README.html"; Comment: "Required reading before launching Maay"
+Name: "{group}\Node Configuration"; Filename: "{app}\node.ini"; Comment: "Maay node configuration"
+Name: "{group}\Release Notes"; Filename: "{app}\ReleaseNotes.txt"; Comment: "Required reading before launching Maay"
+Name: "{group}\Uninstall"; Filename: "{app}\unins000.exe"; Comment: "Maay uninstaller"
 
 
 [Run]
