@@ -141,11 +141,11 @@ class IndexationPage(athena.LivePage):
     def newDocumentIndexed(self, filename):
         IndexationPage.counter += 1
         if (IndexationPage.counter % 10) == 0:
-            self.updateStatus(u'Indexation in progress - %s docouments indexed'
+            self.updateStatus(u'Indexation in progress - %s documents indexed'
                               % IndexationPage.counter)
 
     def indexationCompleted(self):
-        self.updateStatus(u'Indexation completed (%s doucments indexed)' %
+        self.updateStatus(u'Indexation completed (%s documents indexed)' %
                           (IndexationPage.counter,))
 
     def render_message(self, context, data):
