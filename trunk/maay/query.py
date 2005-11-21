@@ -48,12 +48,17 @@ def parseWords(rawWords):
 
 class Query(object):
     restrictions = ('filetype', 'filename', 'searchtype')
-    def __init__(self, words, offset=0, filetype=None, filename=None):
+    def __init__(self, words, offset=0, filetype=None, filename=None,
+                 order=None, direction=None):
         self.words = words # unicode string 
         self.offset = offset
         self.filetype = filetype
         self.filename = filename
         self.limit = None
+        #FIXME: ugly stuff below, related to result
+        #       presentation in the browser
+        self.order = order or 'publication_time'
+        self.direction = direction or 'down'
 
     def fromRawQuery(rawQuery, offset=0):
         """:type rawQuery: str"""

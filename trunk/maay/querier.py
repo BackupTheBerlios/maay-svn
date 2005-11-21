@@ -163,7 +163,9 @@ class AnonymousQuerier:
             cursor = self._cnx.cursor()
             return Document.selectContaining(cursor, words, query.filetype,
                                              query.offset, query.limit,
-                                             self.searchInPrivate)
+                                             self.searchInPrivate,
+                                             order=query.order,
+                                             direction=query.direction)
         finally:
             traceback.print_exc()
             cursor.close()
@@ -320,12 +322,6 @@ class AnonymousQuerier:
             log.debug('No matching node found for id {%s}' % nodeId,
                       category='[warning]')
         cursor.close()        
-
-    def getRegisteredNeighbors(self, nodeId, nbNodes):
-        cursor = self._cnx.cursor() 
-        nodes = Node.selectRegistered(cursor, nodeId, nbNodes) 
-        cursor.close()
-        return nodes
 
     def getActiveNeighbors(self, nodeId, nbNodes):
         cursor = self._cnx.cursor() 

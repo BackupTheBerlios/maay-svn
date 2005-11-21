@@ -149,20 +149,32 @@ class DocumentOrder:
               'score_relevance'  : 2,
               'score_popularity' : 3}
 
-    def __init__(self, order):
+    def __init__(self, order='publication_time', direction='down'):
+        """:param order: see class dict above
+           :param direction: 'up' or 'down'
+        """
         if order in DocumentOrder.orders:
             self.order = DocumentOrder.orders[order]
         else:
             raise NotImplemented("Document ordering %s is unkown" %
                                  order)
+        if direction in ('up', 'down'):
+            if direction == 'up':
+                self.direction = "ASC"
+            else:
+                self.direction = "DESC"
+        else:
+            raise NotImplemented("Document direction %s is unkown" %
+                                 direction)
 
     def __str__(self):
         if self.order == 1:
-            return "ORDER BY D.publication_time DESC "
+            res = "ORDER BY D.publication_time " 
         elif self.order == 2:
-            return "ORDER BY DS.relevance"
+            res = "ORDER BY DS.relevance " 
         else:
-            return "ORDER BY DS.popularity"
+            res = "ORDER BY DS.popularity"
+        return res + self.direction
 
 class Document(DBEntity):
     """Represent a Document in the database
@@ -259,7 +271,7 @@ class Document(DBEntity):
     #     query is quite messy
     def _selectContainingQuery(cls, words, mimetype=None, offset=0,
                                limit=None, allowPrivate=False,
-                               order='publication_time'):
+                               order=None):
         # XXX mimetype handling is a HACK. It needs to be integrated
         #     nicely in order to handle any kind of restrictions easily
         #word = WORDS_RGX.finditer(normalizeText(' '.join(words)))
@@ -273,7 +285,7 @@ class Document(DBEntity):
             restriction += " AND D.state!=%s "
             restrictionParams.append(cls.PRIVATE_STATE)
         # just translate the plain-text ordering to SQL stuff
-        sql_order = str(DocumentOrder(order))
+        sql_order = order or str(DocumentOrder('publication_time'))
         # Question: what is the HAVING clause supposed to do ?
         # Answer: we select all documents containing one of the words
         # that we are looking for, group them by their identifier, and
@@ -303,14 +315,17 @@ class Document(DBEntity):
     _selectContainingQuery = classmethod(_selectContainingQuery)
 
     def selectContaining(cls, cursor, words, mimetype=None, offset=0,
-                         limit=None, allowPrivate=False):
+                         limit=None, allowPrivate=False, order='publication_time',
+                         direction='down'):
         print "Document selectContaining %s" % words
         if not words:
             return []
+        doc_order = str(DocumentOrder(order, direction))
         query, params = cls._selectContainingQuery(words, mimetype,
                                                    offset=offset,
                                                    limit=limit,
-                                                   allowPrivate=allowPrivate)
+                                                   allowPrivate=allowPrivate,
+                                                   order=doc_order)
         if query:
             cursor.execute(query, params)
             results = cursor.fetchall()
@@ -525,6 +540,7 @@ class Node(DBEntity):
                   'counter', 'claim_count', 'affinity', 'bandwidth')
     key = ('node_id',)
 
+## Gibberish belox might be useful later, don't delete it right now, please (auc)
 ##     def _insertOrUpdateQuery(self):
 ##         """generates an INSERT query according to object's state
 ##            also update node_id on collisions on (ip, port)"""
@@ -540,20 +556,6 @@ class Node(DBEntity):
 ##             if hasattr(self, attr):
 ##                 query += ", %s=%s" % (attr, getattr(self, attr))
 ##         return query
-
-    ### select registered will probably be obsoleted very soon (auc, 11/21/05)
-    def _selectRegisteredNodesQuery(cls):
-        query = cls._selectQuery()
-        query += " WHERE node_id != %s ORDER BY last_seen_time DESC LIMIT %s"
-        return query
-    _selectRegisteredNodesQuery = classmethod(_selectRegisteredNodesQuery)
-
-    def selectRegistered(cls, cursor, currentNodeId, maxResults):
-        query = cls._selectRegisteredNodesQuery()
-        cursor.execute(query, (currentNodeId, maxResults))
-        results = cursor.fetchall()
-        return [cls(**dict(zip(cls.attributes, row))) for row in results]
-    selectRegistered = classmethod(selectRegistered)
 
     def _selectActiveNodesQuery(cls):
         query = cls._selectQuery()
