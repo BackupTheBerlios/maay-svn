@@ -56,7 +56,8 @@ class MaayRPCServer(XMLRPC):
     def __init__(self, nodeId, portal):
         XMLRPC.__init__(self)
         print "MaayRPCServer init %s %s" % (nodeId, portal)
-        assert nodeId == portal.config.get_node_id ()
+        #FIXME : is the nodeId param still necessary ?
+        #assert nodeId == portal.config.get_node_id ()
         self._sessions = {}
         self.portal = portal
         self.nodeId = portal.config.get_node_id() 
