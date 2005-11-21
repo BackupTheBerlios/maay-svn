@@ -258,9 +258,8 @@ class P2pQuerier:
             proxy = Proxy(target)
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
-            d.addErrback(P2pErrbacks.sendQueryProblem)
-            # FIXME : mecanism below likely to be bogus
-            P2pErrbacks.setQueryTarget(target)
+            errback = sendQueryErrback(target)
+            d.addErrback(errback)
             self._sentQueries[query.qid] = query
             print " ... query from %s:%s sent to %s %s %s" % (query.client_host,
                                                               query.client_port,
@@ -343,8 +342,8 @@ class P2pQuerier:
                                      answer.provider,
                                      toSend) 
                 d.addCallback(self.querier.registerNodeActivity)
-                d.addErrback(P2pErrbacks.answerQueryProblem)
-                P2pErrbacks.setAnswerTarget(senderUrl)
+                errback = answerQueryErrback(senderUrl)
+                d.addErrback(errback)
             except ValueError:
                 print " ... unknown node %s" % query.sender
         else: 
@@ -359,37 +358,23 @@ class P2pQuerier:
         
 
 
-#FIXME: this should be shot (auc)
+##### Custommized errbacks for send/answer ops
 
-class P2pErrbacks:
-    """a small namespace to hold errbacks and contextual
-       information so as to display meaningful stuff
-    """
-
-    lastQueryTarget = None
-    lastAnswerTarget = None
-
-    def setQueryTarget(target):
-        P2pErrbacks.lastQueryTarget = target
-    setQueryTarget = staticmethod(setQueryTarget)
-        
-    def setAnswerTarget(target):
-        P2pErrbacks.lastAnswerTarget = target
-    setAnswerTarget = staticmethod(setAnswerTarget)
-
-    def sendQueryProblem(failure):
+def sendQueryErrback(target):
+    def QP(failure):
         """Politely displays any problem (bug, unavailability) related
         to an attempt to send a query.
         """
         print " ... problem sending the query (likely to %s) : %s" \
-              % (P2pErrbacks.lastQueryTarget, failure.getTraceback())
-    sendQueryProblem = staticmethod(sendQueryProblem)
+              % (target, failure.getTraceback())
+    return QP
 
-
-    def answerQueryProblem(failure):
+def answerQueryErrback(target):
+    def AP(failure):
         """Politely displays any problem (bug, unavailability) related
         to an attempt to answer a query.
         """
         print " ... problem answering the query (likely to %s) : %s" \
-              % (P2pErrbacks.lastAnswerTarget, failure.getTraceback())
-    answerQueryProblem = staticmethod(answerQueryProblem)
+              % (target, failure.getTraceback())
+    return AP
+
