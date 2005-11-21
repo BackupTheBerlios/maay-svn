@@ -249,23 +249,22 @@ class P2pQuerier:
         """        
         print "P2pQuerier sendQuery %s : %s" % (query.qid, query)
         if self._sentQueries.has_key(query.qid):
-            print " ... my bad, we were going to send query %s to ourselves ..." \
-                  % query.qid
             return
-        #FIXME: avoid to send query to the originator
+        print " ... query from %s:%s" % (query.client_host,
+                                         query.client_port)
         for neighbor in self._selectTargetNeighbors(query):
+            if (neighbor.ip, neighbor.port) == \
+                   (query.client_host, query.client_port):
+                continue
             target = str(neighbor.getRpcUrl())
             proxy = Proxy(target)
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
-            errback = sendQueryErrback(target)
-            d.addErrback(errback)
+            d.addErrback(sendQueryErrback(target))
             self._sentQueries[query.qid] = query
-            print " ... query from %s:%s sent to %s %s %s" % (query.client_host,
-                                                              query.client_port,
-                                                              neighbor.node_id,
-                                                              neighbor.ip,
-                                                              neighbor.port)
+            print "     ... sent to %s:%s %s" % (neighbor.ip,
+                                                 neighbor.port,
+                                                 neighbor.node_id)
 
     def receiveQuery(self, query):
         """
@@ -342,8 +341,7 @@ class P2pQuerier:
                                      answer.provider,
                                      toSend) 
                 d.addCallback(self.querier.registerNodeActivity)
-                errback = answerQueryErrback(senderUrl)
-                d.addErrback(errback)
+                d.addErrback(answerQueryErrback(senderUrl))
             except ValueError:
                 print " ... unknown node %s" % query.sender
         else: 
@@ -356,7 +354,6 @@ class P2pQuerier:
         # TODO: use the neighbors' profiles to route requests
         return self.querier.getActiveNeighbors(self.nodeId, nbNodes)
         
-
 
 ##### Custommized errbacks for send/answer ops
 
