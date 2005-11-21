@@ -123,7 +123,8 @@ CREATE TABLE `nodes` (
   `ip` char(15) NOT NULL default '', -- to satisfy selectOrInsertWhere *
 -- FIXME: this should be unsigned smallint
   `port` smallint(11) NOT NULL default 0, -- to satisfy selectOrInsertWhere *
-  `last_seen_time` int(11) default 0,
+  `last_seen_time` int(11) default 1,
+  `last_sleep_time` int(11) default 0,
   `counter` int(11) NOT NULL default '0',
   `claim_count` float NOT NULL default '0',
   `affinity` double NOT NULL default '0',

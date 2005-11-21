@@ -141,6 +141,29 @@ class FutureDocument:
             setattr(self, attrname, value)
 
 
+class DocumentOrder:
+    """a small helper class to translate search criteria
+       from crystal-clear high-level stuff to SQL junk"""
+    
+    orders = {'publication_time' : 1,
+              'score_relevance'  : 2,
+              'score_popularity' : 3}
+
+    def __init__(self, order):
+        if order in DocumentOrder.orders:
+            self.order = DocumentOrder.orders[order]
+        else:
+            raise NotImplemented("Document ordering %s is unkown" %
+                                 order)
+
+    def __str__(self):
+        if self.order == 1:
+            return "ORDER BY D.publication_time DESC "
+        elif self.order == 2:
+            return "ORDER BY DS.relevance"
+        else:
+            return "ORDER BY DS.popularity"
+
 class Document(DBEntity):
     """Represent a Document in the database
     A Document is different from a file, because several files can store
@@ -235,7 +258,8 @@ class Document(DBEntity):
     # XXX Please rewrite this method. The way we build the SQL
     #     query is quite messy
     def _selectContainingQuery(cls, words, mimetype=None, offset=0,
-                               limit=None, allowPrivate=False):
+                               limit=None, allowPrivate=False,
+                               order='publication_time'):
         # XXX mimetype handling is a HACK. It needs to be integrated
         #     nicely in order to handle any kind of restrictions easily
         #word = WORDS_RGX.finditer(normalizeText(' '.join(words)))
@@ -248,6 +272,8 @@ class Document(DBEntity):
         if not allowPrivate:
             restriction += " AND D.state!=%s "
             restrictionParams.append(cls.PRIVATE_STATE)
+        # just translate the plain-text ordering to SQL stuff
+        sql_order = str(DocumentOrder(order))
         # Question: what is the HAVING clause supposed to do ?
         # Answer: we select all documents containing one of the words
         # that we are looking for, group them by their identifier, and
@@ -267,9 +293,8 @@ class Document(DBEntity):
                  "AND DS.word IN (%s) "
                  " %s "
                  "GROUP BY DS.db_document_id "
-                 "HAVING count(DS.db_document_id) = %%s "
-                 "ORDER BY D.publication_time DESC " % \
-                 (', '.join(['%s'] * len(words)), restriction))
+                 "HAVING count(DS.db_document_id) = %%s ") + sql_order
+        query = query % (', '.join(['%s'] * len(words)), restriction)
         # XXX SQL: how to specify only the OFFSET ???????
         if limit or offset:
             query += " LIMIT %s OFFSET %s" % (limit or 50, offset)
@@ -496,8 +521,8 @@ class Node(DBEntity):
      * int bandwidth: bandwidth of the node
     """
     tableName = 'nodes'
-    attributes = ('node_id', 'ip', 'port', 'last_seen_time', 'counter',
-                  'claim_count', 'affinity', 'bandwidth')
+    attributes = ('node_id', 'ip', 'port', 'last_seen_time', 'last_sleep_time',
+                  'counter', 'claim_count', 'affinity', 'bandwidth')
     key = ('node_id',)
 
 ##     def _insertOrUpdateQuery(self):
@@ -516,6 +541,7 @@ class Node(DBEntity):
 ##                 query += ", %s=%s" % (attr, getattr(self, attr))
 ##         return query
 
+    ### select registered will probably be obsoleted very soon (auc, 11/21/05)
     def _selectRegisteredNodesQuery(cls):
         query = cls._selectQuery()
         query += " WHERE node_id != %s ORDER BY last_seen_time DESC LIMIT %s"
@@ -529,9 +555,19 @@ class Node(DBEntity):
         return [cls(**dict(zip(cls.attributes, row))) for row in results]
     selectRegistered = classmethod(selectRegistered)
 
+    def _selectActiveNodesQuery(cls):
+        query = cls._selectQuery()
+        query += (" WHERE node_id != %s AND last_seen_time > last_sleep_time"
+                  " ORDER BY last_seen_time DESC LIMIT %s")
+        print query
+        return query
+    _selectActiveNodesQuery = classmethod(_selectActiveNodesQuery)
+
     def selectActive(cls, cursor, currentNodeId, maxResults):
-        #TODO: return really active nodes
-        return cls.selectRegistered(cursor, currentNodeId, maxResults)
+        query = cls._selectActiveNodesQuery()
+        cursor.execute(query, (currentNodeId, maxResults))
+        results = cursor.fetchall()
+        return [cls(**dict(zip(cls.attributes, row))) for row in results]
     selectActive = classmethod(selectActive)
 
     def getRpcUrl(self):
@@ -561,4 +597,3 @@ class NodeInterest(DBEntity):
     key = ('node_id', 'word')
 
     
-
