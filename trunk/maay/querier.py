@@ -141,7 +141,7 @@ class AnonymousQuerier:
             self._cnx.commit()
         return results
 
-    def flushTemporaryTable(self):
+    def flushTemporaryTable(self): #FIXME : this is really the results table
         self._execute('DELETE FROM results')
         
     def close(self):
@@ -242,6 +242,8 @@ class AnonymousQuerier:
 
     def _updateDownloadStatistics(self, document, words):
         cursor = self._cnx.cursor()
+        # what's this max(0, doc.count) below ??? it should be set initially
+        # at zero anyway ...
         document.download_count = max(0, document.download_count) + 1
         document.commit(cursor, update=True)
         db_document_id = document.db_document_id
@@ -294,6 +296,7 @@ class AnonymousQuerier:
         cursor.close()
 
     def registerNodeActivity(self, nodeId):
+        """updates last_seen_time attribute"""
         cursor = self._cnx.cursor()
         nodes = Node.selectWhere(cursor, node_id=nodeId)
         if nodes:
@@ -304,6 +307,19 @@ class AnonymousQuerier:
             log.debug('No matching node found for id {%s}' % nodeId,
                       category='[warning]')
         cursor.close()
+
+    def registerNodeInactivity(self, nodeId):
+        """updates last_sleep_time attribute"""
+        cursor = self._cnx.cursor()
+        nodes = Node.selectWhere(cursor, node_id=nodeId)
+        if nodes:
+            node = nodes[0]
+            node.last_sleep_time = int(time.time())
+            node.commit(cursor, update=True)
+        else:
+            log.debug('No matching node found for id {%s}' % nodeId,
+                      category='[warning]')
+        cursor.close()        
 
     def getRegisteredNeighbors(self, nodeId, nbNodes):
         cursor = self._cnx.cursor() 

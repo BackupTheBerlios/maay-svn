@@ -559,7 +559,6 @@ class Node(DBEntity):
         query = cls._selectQuery()
         query += (" WHERE node_id != %s AND last_seen_time > last_sleep_time"
                   " ORDER BY last_seen_time DESC LIMIT %s")
-        print query
         return query
     _selectActiveNodesQuery = classmethod(_selectActiveNodesQuery)
 

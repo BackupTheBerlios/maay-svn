@@ -256,11 +256,10 @@ class P2pQuerier:
             if (neighbor.ip, neighbor.port) == \
                    (query.client_host, query.client_port):
                 continue
-            target = str(neighbor.getRpcUrl())
-            proxy = Proxy(target)
+            proxy = Proxy(str(neighbor.getRpcUrl()))
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
-            d.addErrback(sendQueryErrback(target))
+            d.addErrback(sendQueryErrback(neighbor, self.querier))
             self._sentQueries[query.qid] = query
             print "     ... sent to %s:%s %s" % (neighbor.ip,
                                                  neighbor.port,
@@ -341,7 +340,7 @@ class P2pQuerier:
                                      answer.provider,
                                      toSend) 
                 d.addCallback(self.querier.registerNodeActivity)
-                d.addErrback(answerQueryErrback(senderUrl))
+                d.addErrback(answerQueryErrback(query))
             except ValueError:
                 print " ... unknown node %s" % query.sender
         else: 
@@ -357,21 +356,24 @@ class P2pQuerier:
 
 ##### Custommized errbacks for send/answer ops
 
-def sendQueryErrback(target):
+def sendQueryErrback(target, querier):
+    ':type target: Node'
     def QP(failure):
         """Politely displays any problem (bug, unavailability) related
         to an attempt to send a query.
         """
-        print " ... problem sending the query (likely to %s) : %s" \
-              % (target, failure.getTraceback())
+        print " ... problem sending the query to %s:%s, trace = %s" \
+              % (target.ip, target.port, failure.getTraceback())
+        querier.registerNodeInactivity(target.node_id)
     return QP
 
 def answerQueryErrback(target):
+    ':type target: P2pQuery'
     def AP(failure):
         """Politely displays any problem (bug, unavailability) related
         to an attempt to answer a query.
         """
-        print " ... problem answering the query (likely to %s) : %s" \
-              % (target, failure.getTraceback())
+        print " ... problem answering the query to %s:%s, trace = %s" \
+              % (target.client_host, target.client_port, failure.getTraceback())
     return AP
 
