@@ -33,7 +33,7 @@ class PresenceClient(LineReceiver):
         self._lineCount = 0
         
     def notify(self, nodeId, ip, port, bandwidth) :
-        print "notify to presence server (node %s at %s:%s)" % (nodeId, ip, port)
+        print "PresenceClient notify to presence server (node %s at %s:%s)" % (nodeId, ip, port)
         self.transport.write('notify:%s:%s:%s:%s\r\n' % (nodeId, ip,
                                                      port, bandwidth))
         return self
@@ -88,7 +88,6 @@ class Errbacks:
 def notify(regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidth):
     """registers and transmits the node catalog to querier.registerNode
     """
-    print "PresenceClient notify %s %s" % (nodeIP, xmlrpcPort)
     if querier is not None:
         c = ClientCreator(reactor, PresenceClient, querier.registerNode)
         d = c.connectTCP(regIP, regPort)
@@ -99,11 +98,11 @@ def notify(regIP, regPort, querier, nodeId, nodeIP, xmlrpcPort, bandwidth):
     else:
         print "Login : no querier found => no presence / no P2P"
 
-def logout(reactor, regIp, regPort, nodeId):
-    print "PresenceClient@%s:%s node %s wants to log out." % (regIp, regPort, nodeId)
-    c = ClientCreator(reactor, PresenceClient, None)
-    d = c.connectTCP(regIp, regPort)
-    d.addCallback(PresenceClient.logout)
-    Errbacks.setTarget("%s:%s" % (regIP, regPort))
-    d.addErrback(Errbacks.reportBug)
+## def logout(reactor, regIp, regPort, nodeId):
+##     print "PresenceClient@%s:%s node %s wants to log out." % (regIp, regPort, nodeId)
+##     c = ClientCreator(reactor, PresenceClient, None)
+##     d = c.connectTCP(regIp, regPort)
+##     d.addCallback(PresenceClient.logout)
+##     Errbacks.setTarget("%s:%s" % (regIP, regPort))
+##     d.addErrback(Errbacks.reportBug)
 
