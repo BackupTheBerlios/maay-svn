@@ -498,9 +498,9 @@ class Node(DBEntity):
     tableName = 'nodes'
     attributes = ('node_id', 'ip', 'port', 'last_seen_time', 'counter',
                   'claim_count', 'affinity', 'bandwidth')
-    key = ('ip', 'port')
+    key = ('node_id',)
 
-    ## def _insertQuery(self):
+##     def _insertOrUpdateQuery(self):
 ##         """generates an INSERT query according to object's state
 ##            also update node_id on collisions on (ip, port)"""
 ##         values = ['%%(%s)s' % attr for attr in self.attributes
@@ -515,9 +515,6 @@ class Node(DBEntity):
 ##             if hasattr(self, attr):
 ##                 query += ", %s=%s" % (attr, getattr(self, attr))
 ##         return query
-
-    # here, insert manages all the cases
-    #_updateQuery = _insertQuery
 
     def _selectRegisteredNodesQuery(cls):
         query = cls._selectQuery()

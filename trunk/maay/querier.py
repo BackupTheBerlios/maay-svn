@@ -284,23 +284,14 @@ class AnonymousQuerier:
             return
         lastSeenTime = lastSeenTime or int(time.time())
         cursor = self._cnx.cursor()
-        node = Node.selectOrInsertWhere(cursor, ip=ip, port=port)[0]
+        node = Node.selectOrInsertWhere(cursor, node_id=nodeId)[0]
         node.ip = ip
         node.node_id = nodeId
         node.port = port
         node.bandwidth = bandwidth or 1
         node.last_seen_time = lastSeenTime
-        try:
-            node.commit(cursor, update=True)
-        except IntegrityError:
-            print "Is this a node Id hijack ?" 
-            self._cnx.rollback()
-            cursor.execute('DELETE FROM nodes WHERE node_id = %s', nodeId)
-            cursor.close()
-            self._cnx.commit()
-            self.registerNode(nodeId, ip, port, bandwidth, lastSeenTime)
-        else:
-            cursor.close()
+        node.commit(cursor, update=True)
+        cursor.close()
 
     def registerNodeActivity(self, nodeId):
         cursor = self._cnx.cursor()

@@ -120,17 +120,18 @@ CREATE TABLE `node_interests` (
 
 CREATE TABLE `nodes` (
   `node_id` char(40) NOT NULL default '' UNIQUE,
-  `ip` char(15) NOT NULL, -- default '', oh !
+  `ip` char(15) NOT NULL default '', -- to satisfy selectOrInsertWhere *
 -- FIXME: this should be unsigned smallint
-  `port` smallint(11) NOT NULL, -- default '0', why ?
+  `port` smallint(11) NOT NULL default 0, -- to satisfy selectOrInsertWhere *
   `last_seen_time` int(11) default 0,
   `counter` int(11) NOT NULL default '0',
   `claim_count` float NOT NULL default '0',
   `affinity` double NOT NULL default '0',
   `bandwidth` int(11) NOT NULL default '0',
-  PRIMARY KEY  (`ip`, `port`)
+  PRIMARY KEY  (`node_id`)
 ) TYPE=MyISAM;
 
+-- * but we should do something better
 -- --------------------------------------------------------
 
 -- 
