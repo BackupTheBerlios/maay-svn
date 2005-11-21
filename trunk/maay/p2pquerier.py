@@ -107,10 +107,9 @@ class P2pQuery:
         # explicitly set the 'limit' attribute for P2P queries
         self.query.limit = LIMIT
         self.documents_ids = set()
-        # *** client_host: IP adress of immediate client (computed at reception)
-        # *** client_port: rpc port of immediate client (provided by client)
-        # default args are typically used from webapplication instantiation
-        # but NOT at rpc level, where we MUST use the transmited values
+        # *** client_{host, port} belong to the immediate client
+        # *** default args are typically used from webapplication instantiation
+        # *** but NOT at rpc level, where we MUST use the transmited values
         self.client_host = client_host or NODE_HOST
         self.client_port = client_port or NODE_PORT
         
@@ -132,8 +131,6 @@ class P2pQuery:
         #       we have to restrict to Twisted and Python world)
         return {'qid':          self.qid,
                 'sender':       self.sender,
-                #'host': self.host,
-                #'port':self.port,
                 'client_host' : self.client_host,
                 'client_port' : self.client_port,
                 'ttl':          self.ttl,
