@@ -257,7 +257,7 @@ class Indexer:
                 print "Error indexing %s: %s" % \
                       (safe_encode(futureDoc.filename), exc)
         for obs in self.observers:
-            obs.newDocumentIndexed(futureDoc.filename)
+            obs.newDocumentIndexed(futureDoc.filename, futureDoc.state)
 
 ######### FileIterator
 

@@ -19,6 +19,16 @@ function updateStatus(msg) {
   elt.innerHTML = msg;
 }
 
+function updatePrivateDocumentCount(count) {
+  elt = document.getElementById('privateDocumentCount');
+  elt.innerHTML = count;
+}
+
+function updatePublicDocumentCount(count) {
+  elt = document.getElementById('publicDocumentCount');
+  elt.innerHTML = count;
+}
+
     </script>
   </head>
   <body onload="live();">
@@ -34,21 +44,26 @@ function updateStatus(msg) {
   <div class="message"><b>Status: </b><span id="statusMessage"><span nevow:render="message" /></span></div>
   <br />
   <h2>Search these private folders</h2>
+   <div class="documentCount"><span id="privateDocumentCount"><span nevow:render="privateDocumentCount" /></span> private documents.</div>
    <div nevow:render="sequence" nevow:data="privatefolders">
       <div class="indexedFolderName" nevow:pattern="item" nevow:render="directory"><a><nevow:attr name="href">/indexation?removePrivateFolder=<nevow:slot name="name" /></nevow:attr>X</a> - <nevow:slot name="name" /></div>
    </div>
+   <br />
     <input type="text" name="addPrivateFolder" size="50" />
     <input type="submit" value="Add" />
   <h2>Search/Publish these public folders</h2>
+   <div class="documentCount"><span id="publicDocumentCount"><span nevow:render="publicDocumentCount" /></span> public documents.</div>
     <div nevow:render="sequence" nevow:data="publicfolders">
       <div class="indexedFolderName" nevow:pattern="item" nevow:render="directory"><a><nevow:attr name="href">/indexation?removePublicFolder=<nevow:slot name="name" /></nevow:attr>X</a> - <nevow:slot name="name" /></div>
     </div>
+    <br />
     <input type="text" name="addPublicFolder" size="50" />
     <input type="submit" value="Add" />
   <h2>Don't search these folders</h2>
     <div nevow:render="sequence" nevow:data="skippedfolders">
       <div class="skippedFolderName" nevow:pattern="item" nevow:render="directory"><a><nevow:attr name="href">/indexation?removeSkippedFolder=<nevow:slot name="name" /></nevow:attr>X</a> - <nevow:slot name="name" /></div>
     </div>
+    <br />
     <input type="text" name="addSkippedFolder" size="50" />
     <input type="submit" value="Add" />
  

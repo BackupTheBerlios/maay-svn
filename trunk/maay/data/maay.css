@@ -143,14 +143,18 @@ div.sort {
 
 
 /** indexation page *******/
+div.documentCount {
+  font-size: 80%;
+}
+
 div.indexedFolderName {
-  font-size: 60%;
+  font-size: 80%;
   color: #448844; 
   margin-left: 10px;
 }
 
 div.skippedFolderName {
-  font-size: 60%;
+  font-size: 80%;
   color: #884444; 
   margin-left: 10px;
 }

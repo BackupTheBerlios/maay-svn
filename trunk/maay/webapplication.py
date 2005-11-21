@@ -116,6 +116,11 @@ class IndexationPage(athena.LivePage):
     # share counter among instances
     indexedDocuments = 0
     untouchedDocuments = 0
+
+    privateDocuments = 0
+    publicDocuments = 0
+
+    querier = None
     
     def __init__(self):
         athena.LivePage.__init__(self)
@@ -140,11 +145,30 @@ class IndexationPage(athena.LivePage):
     def updateStatus(self, message):
         self.callRemote('updateStatus', message)
 
-    def newDocumentIndexed(self, filename):
+    def updateDocumentStats(self):
+        docCounts = IndexationPage.querier.getDocumentCount()
+        IndexationPage.privateDocuments = docCounts[Document.PRIVATE_STATE]
+        IndexationPage.publicDocuments = docCounts[Document.PUBLISHED_STATE]
+
+    def updatePrivateDocumentCount(self):
+        self.callRemote('updatePrivateDocumentCount', IndexationPage.privateDocuments)
+
+    def updatePublicDocumentCount(self):
+        self.callRemote('updatePublicDocumentCount', IndexationPage.publicDocuments)
+
+    def newDocumentIndexed(self, filename, state):
         IndexationPage.indexedDocuments += 1
+
+        if state == Document.PRIVATE_STATE:
+            IndexationPage.privateDocuments += 1
+        elif state == Document.PUBLIC_STATE:
+            IndexationPage.publicDocuments += 1
+
         if (IndexationPage.indexedDocuments % 10) == 0:
             self.updateStatus(u'Indexation in progress - %s new documents / %s total'
                 % (IndexationPage.indexedDocuments, IndexationPage.indexedDocuments + IndexationPage.untouchedDocuments))
+            self.updatePrivateDocumentCount()
+            self.updatePublicDocumentCount()
 
     def documentUntouched(self, filename):
         IndexationPage.untouchedDocuments += 1
@@ -159,8 +183,19 @@ class IndexationPage(athena.LivePage):
         IndexationPage.untouchedDocuments = 0
         IndexationPage.indexedDocuments = 0
 
+        self.updateDocumentStats()
+        self.updatePrivateDocumentCount()
+        self.updatePublicDocumentCount()
+
+
     def render_message(self, context, data):
         return self.msg
+
+    def render_privateDocumentCount(self, context, data):
+        return IndexationPage.privateDocuments
+
+    def render_publicDocumentCount(self, context, data):
+        return IndexationPage.publicDocuments
 
     def render_alert(self, context, data):
         context.fillSlots("message", self.alertmessage)
@@ -189,9 +224,9 @@ class IndexationPage(athena.LivePage):
 class IndexationPageFactory(athena.LivePageFactory):
     implements(indexer.IIndexerObserver)
 
-    def newDocumentIndexed(self, filename):
+    def newDocumentIndexed(self, filename, state):
         for webpage in self.clients.itervalues():
-            webpage.newDocumentIndexed(filename)
+            webpage.newDocumentIndexed(filename, state)
         
     def documentUntouched(self, filename):
         for webpage in self.clients.itervalues():
@@ -200,7 +235,6 @@ class IndexationPageFactory(athena.LivePageFactory):
     def indexationCompleted(self):
         for webpage in self.clients.itervalues():
             webpage.indexationCompleted()
-    
 
 class SearchForm(MaayPage):
     """default search form"""
@@ -294,6 +328,11 @@ class SearchForm(MaayPage):
 
         start = int(context.arg('start', 0))
         indexationPage = _factory.clientFactory(context)
+
+        # FIXME: porky way to pass the querier ref to the indexationPage
+        IndexationPage.querier = self.querier
+        indexationPage.updateDocumentStats()
+        
         if start == 0:
             if indexer.is_running():
                 msg = "Indexer running"
