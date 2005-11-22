@@ -142,7 +142,7 @@ class PresenceServerTC(unittest.TestCase):
                           {('1.2.3.4', '567') : 'FOONODEB',})
        
     def testAutoLogout(self):
-        PresenceServer._autoExpirationDelayInSecs = 1
+        PresenceServer._autoExpirationDelayInSecs = .1
         self.srv.transport = MockTransport('1.2.3.4')
         mockLineReceiver = MockLineReceiver()
         self.srv.sendLine = mockLineReceiver.sendLine
@@ -156,7 +156,7 @@ class PresenceServerTC(unittest.TestCase):
                           ('FOONODEB','1.2.3.4','567','8'))
         import time
         time.sleep(2)
-        self.srv._auto_logout_everybody()
+        PresenceServer._auto_logout_everybody()
         self.assertEquals(self.srv._registeredUsers, {})
         self.assertEquals(self.srv._ruReverseMap, {})
         self.assertEquals(self.srv._ruTimestamp, {})

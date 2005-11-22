@@ -39,9 +39,10 @@ class PresenceServer(LineReceiver):
     _autoExpirationDelayInSecs = 3600*24
 
     def __del__(self):
-        self._auto_logout_everybody()
+        PresenceServer._auto_logout_everybody()
 
-    def _auto_logout_everybody(self):
+    # TODO: probe the servers that are to be evicted before removing them
+    def _auto_logout_everybody():
         """evicts registered nodes after some time
         """
         now = datetime.utcnow()
@@ -54,6 +55,7 @@ class PresenceServer(LineReceiver):
                 del PresenceServer._registeredUsers[nodeId]
                 del PresenceServer._ruReverseMap[(ip, port)]
                 del PresenceServer._ruTimestamp[nodeId]
+    _auto_logout_everybody = staticmethod (_auto_logout_everybody)
         
     def lineReceived(self, line):
         """received lines should match the following format :
