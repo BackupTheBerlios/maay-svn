@@ -278,22 +278,21 @@ class AnonymousQuerier:
         cursor.close()
         self._cnx.commit()
 
-
+        
     def registerNode(self, nodeId, ip, port, bandwidth=None, lastSeenTime=None):
+        # lastseentime param should probably never be used
         """this will be used as a callback in registrationclient/login"""
-        print "AnonymousQuerier registerNode (callback) %s %s:%s" % \
-            (nodeId, ip, port)
+        print " ... registerNode %s:%s (%s)" % (ip, port, nodeId)
         if ip == "127.0.0.1":
             print " ... 127.0.0.1 is not an acceptable IP, we don't register this"
             return
-        lastSeenTime = lastSeenTime or int(time.time())
         cursor = self._cnx.cursor()
         node = Node.selectOrInsertWhere(cursor, node_id=nodeId)[0]
         node.ip = ip
         node.node_id = nodeId
         node.port = port
         node.bandwidth = bandwidth or 1
-        node.last_seen_time = lastSeenTime
+        node.last_seen_time = lastSeenTime or int(time.time())
         node.commit(cursor, update=True)
         cursor.close()
 
@@ -303,9 +302,11 @@ class AnonymousQuerier:
         nodes = Node.selectWhere(cursor, node_id=nodeId)
         if nodes:
             node = nodes[0]
+            print " ... registerNodeActivity %s:%s (%s)" % (node.ip, node.port, nodeId)
             node.last_seen_time = int(time.time())
             node.commit(cursor, update=True)
         else:
+            #FIXME: that's not a warning but a BUG 
             log.debug('No matching node found for id {%s}' % nodeId,
                       category='[warning]')
         cursor.close()
