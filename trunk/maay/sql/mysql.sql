@@ -148,7 +148,6 @@ CREATE TABLE `words` (
  
 
 CREATE TABLE `results` (
---  `db_document_id` varchar(40) NOT NULL,
   `document_id` varchar(40) NOT NULL default '',
   `query_id` varchar(64) NOT NULL,
   `node_id` char(40) NOT NULL default '',
@@ -157,6 +156,8 @@ CREATE TABLE `results` (
   `size` int(11) default NULL,
   `text` text,
   `publication_time` int(14) default NULL,
+  `score_relevance` int(14) default NULL,
+  `score_popularity` int(14) default NULL,
   `url` varchar(255) NOT NULL default '',
   `host` varchar(15),
   `port` int(11), -- check this

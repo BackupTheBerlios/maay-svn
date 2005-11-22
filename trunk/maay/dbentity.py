@@ -127,8 +127,6 @@ class DBEntity:
         return '%s: %s' % (self.__class__.__name__,
                            ', '.join(['%s=%s' % (attr, getattr(self, attr))
                                       for attr in self.boundAttributes()]))
-##     def __repr__(self):
-##         return str(self)
 
 
 class FutureDocument:
@@ -141,9 +139,11 @@ class FutureDocument:
             assert attrname in self.attributes, 'Unknown attribute %s' % attrname
             setattr(self, attrname, value)
 
+#TODO : shoot me !
 class DocumentOrder:
     """a small helper class to translate search criteria
        from crystal-clear high-level stuff to SQL junk"""
+    # This is really strongly coupled with Document._selectContaining
     
     orders = {'publication_time' : 1,
               'score_relevance'  : 2,
@@ -167,14 +167,26 @@ class DocumentOrder:
             raise NotImplemented("Document direction %s is unkown" %
                                  direction)
 
-    def __str__(self):
+    def sqlOrder(self):
         if self.order == 1:
             res = "ORDER BY D.publication_time " 
         elif self.order == 2:
             res = "ORDER BY DS.relevance " 
         else:
-            res = "ORDER BY DS.popularity"
+            res = "ORDER BY DS.popularity "
         return res + self.direction
+
+    def sqlCriterium(self):
+        return ("D.publication_time, "
+                "DS.relevance, "
+                "DS.popularity ")
+        # yes, code below is currently unreachable
+        if self.order == 1:
+            return "D.publication_time "
+        elif self.order == 1:
+            return "DS.relevance "
+        else:
+            return "DS.popularity "
 
 
 class Document(DBEntity):
@@ -270,9 +282,8 @@ class Document(DBEntity):
 
     # XXX Please rewrite this method. The way we build the SQL
     #     query is quite messy
-    def _selectContainingQuery(cls, words, mimetype=None, offset=0,
-                               limit=None, allowPrivate=False,
-			       order=None):
+    def _selectContainingQuery(cls, words, order, mimetype=None, offset=0,
+                               limit=None, allowPrivate=False):
         # XXX mimetype handling is a HACK. It needs to be integrated
         #     nicely in order to handle any kind of restrictions easily
         #word = WORDS_RGX.finditer(normalizeText(' '.join(words)))
@@ -285,8 +296,6 @@ class Document(DBEntity):
         if not allowPrivate:
             restriction += " AND D.state!=%s "
             restrictionParams.append(cls.PRIVATE_STATE)
-	# just translate the plain-text ordering to SQL stuff
-	sql_order = order or str(DocumentOrder('publication_time'))
         # Question: what is the HAVING clause supposed to do ?
         # Answer: we select all documents containing one of the words
         # that we are looking for, group them by their identifier, and
@@ -299,14 +308,15 @@ class Document(DBEntity):
                         "D.size, "
                         "D.text, "
                         "D.url, "
-                        "D.mime_type, "
-                        "D.publication_time "
-                 "FROM documents D, document_scores DS "
-                 "WHERE DS.db_document_id=D.db_document_id "
-                 "AND DS.word IN (%s) "
-                 " %s "
-                 "GROUP BY DS.db_document_id "
-                 "HAVING count(DS.db_document_id) = %%s ") + sql_order
+                        "D.mime_type, ")
+        query += order.sqlCriterium()
+        query += ("FROM documents D, document_scores DS "
+                  "WHERE DS.db_document_id=D.db_document_id "
+                  "AND DS.word IN (%s) "
+                  " %s "
+                  "GROUP BY DS.db_document_id "
+                  "HAVING count(DS.db_document_id) = %%s ")
+        query += order.sqlOrder()
 	query = query % (', '.join(['%s'] * len(words)), restriction)
         # XXX SQL: how to specify only the OFFSET ???????
         if limit or offset:
@@ -321,12 +331,12 @@ class Document(DBEntity):
         print "Document selectContaining %s" % words
         if not words:
             return []
-	doc_order = str(DocumentOrder(order, direction))
-        query, params = cls._selectContainingQuery(words, mimetype,
+        doc_order = DocumentOrder(order, direction)
+        query, params = cls._selectContainingQuery(words, doc_order,
+                                                   mimetype=mimetype,
                                                    offset=offset,
                                                    limit=limit,
-                                                   allowPrivate=allowPrivate,
-						   order=doc_order)
+                                                   allowPrivate=allowPrivate)
         if query:
             cursor.execute(query, params)
             results = cursor.fetchall()
@@ -365,7 +375,8 @@ class Result(Document):
        they contain documents matching both local and distributed requests
     """
     attributes = ('document_id', 'query_id', 'node_id', 'mime_type',
-                  'title', 'size', 'text', 'publication_time', 'url',
+                  'title', 'size', 'text', 'publication_time',
+                  'score_relevance', 'score_popularity', 'url',
                   'host', 'port', 'login', 'record_ts')
     key = ('document_id', 'query_id')
     tableName = 'results'
@@ -567,7 +578,7 @@ class Node(DBEntity):
 	query = cls._selectQuery()
         query += (" WHERE node_id != %s AND last_seen_time > last_sleep_time"
                   " ORDER BY last_seen_time DESC LIMIT %s")
-         return query
+        return query
     _selectActiveNodesQuery = classmethod(_selectActiveNodesQuery)
 
     def _selectRegisteredNodesQuery(cls):
