@@ -77,17 +77,17 @@ def win32_launcher(commandline):
                                          None, 0, 0, None, None,
                                          startupInfo)
     while (win32process.GetExitCodeProcess(hProcess) == win32con.STILL_ACTIVE):
-       win32api.Sleep(2)
-	# FIXME: try to get the errcode
+        win32api.Sleep(2)
+    # FIXME: try to get the errcode
     return 0
 
 # Not use os.system for win32 system because it displays msdos command to launch
 # it
 if sys.platform == 'win32':
-		import win32api, win32con, win32process
-		launcher = win32_launcher
+    import win32api, win32con, win32process
+    launcher = win32_launcher
 else:
-		launcher = os.system
+    launcher = os.system
 
 class IndexationFailure(Exception):
     """raised when an indexation has failed"""
