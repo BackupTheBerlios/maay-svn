@@ -26,6 +26,7 @@ import platform
 import time
 import os
 import socket
+from threading import Thread
 
 from logilab.common.compat import set
 
@@ -36,10 +37,13 @@ from maay.configuration import NodeConfiguration
 from maay.query import Query
 
 nodeConfig=NodeConfiguration()
-nodeConfig.load()
+nodeConfig.load() #FIXME : load from file would be better
+
 NODE_HOST = socket.gethostbyname(socket.gethostname())
 NODE_PORT = nodeConfig.rpcserver_port
 NODE_ID = nodeConfig.get_node_id()
+
+QUERIER = None
 
 def hashIt(item, uname=''.join(platform.uname())):
     hasher = sha.sha()
@@ -65,6 +69,9 @@ def getUserLogin():
         # could not guess username, use host name
         return socket.gethostname()
 
+NODE_LOGIN = getUserLogin()
+
+
 class QueryVersionMismatch(Exception):
     """we beginning a versionning nightmare trip on queries
        maybe I'll be shot for this, but who knows"""
@@ -76,14 +83,14 @@ class QueryVersionMismatch(Exception):
 # number of results relayed by each peer.
 # This might cause the results to be very incomplete and it will
 # be improved in the future, but for now:
-#  - 50 results per node with a good ranking system is
+#  - 50 results per node with a good ranking system (duh!) is
 #    acceptable
 #  - it should lightweight the network
 LIMIT = 50
 
 class P2pQuery:
 
-    _version = 2
+    _version = 3
     
     def __init__(self, sender, query, ttl=5,
                  qid=None, client_host=None, client_port=None):
@@ -142,12 +149,11 @@ class P2pQuery:
 
     def fromDict(dic):
         """dual of asKwargs"""
-        if dic.has_key('version'):
-            if dic['version'] > P2pQuery._version:
-                print "******* Query Version Mismatch ********"
-                print "(we don't understand queries version %s)" % dic['version']
-                raise QueryVersionMismatch(query_version=dic['version'],
-                                           local_version=P2pQuery._version)
+        if not compatible(P2pQuery._version, dic['version']):
+            print "******* Query Version Mismatch ********"
+            print "(we don't understand queries version %s)" % dic['version']
+            raise QueryVersionMismatch(query_version=dic['version'],
+                                       local_version=P2pQuery._version)
         _query = Query(' '.join(dic['words']), filetype=dic['mime_type'])
         p2pquery = P2pQuery(qid=dic['qid'],
                             sender=dic['sender'],
@@ -161,6 +167,11 @@ class P2pQuery:
     def getWords(self):
         return self.query.words
 
+
+def compatible(localversion, distantversion):
+    if distantversion < 2:
+        return False
+    return True
 
 class P2pAnswer:
     def __init__(self, queryId, provider, documents):
@@ -193,6 +204,8 @@ class P2pQuerier:
     def __init__(self, nodeId, querier):
         self.nodeId = nodeId  
         self.querier = querier
+        global QUERIER
+        QUERIER = querier # yes, a global
         self._answerCallbacks = {}
         # now, read a config. provided value for EXPIRATION_TIME
         # and fire the garbage collector
@@ -234,8 +247,8 @@ class P2pQuerier:
     ######### Callback ops (who to feed the results of a query)
 
     def addAnswerCallback(self, queryId, callback):
-        print "P2pQuerier : registering callback (%s, %s) for results" \
-              % (queryId, callback)
+        #print "P2pQuerier : registering callback (%s, %s) for results" \
+        #      % (queryId, callback)
         self._answerCallbacks.setdefault(queryId, []).append(callback)
 
     def _notifyAnswerCallbacks(self, queryId, provider, results):
@@ -259,7 +272,6 @@ class P2pQuerier:
                 continue
             proxy = Proxy(str(neighbor.getRpcUrl()))
             d = proxy.callRemote('distributedQuery', query.asKwargs())
-            d.addCallback(self.querier.registerNodeActivity)
 	    d.addErrback(sendQueryErrback(neighbor, self.querier))
             self._sentQueries[query.qid] = query
             print "     ... sent to %s:%s %s" % (neighbor.ip,
@@ -270,14 +282,13 @@ class P2pQuerier:
         """
         :type query: `maay.p2pquerier.P2pQuery`
         """
-        print "P2pQuerier receiveQuery : %s" % query
         if query.qid in self._receivedQueries or \
            query.qid in self._sentQueries:
-            print " ... we already know query %s, this ends the trip" % query.qid
             return
 
         if query.qid not in self._sentQueries:
-            print " ... %s is a new query, let's work ..." % query.qid
+            print "P2pQuerier receiveQuery : %s from %s:%s " \
+                  % (query.getWords(), query.client_host, query.client_port)
             self._receivedQueries[query.qid] = query 
 
         query.hop()        
@@ -293,9 +304,9 @@ class P2pQuerier:
             doc.text = untagText(removeSpace(abstract))
 
         # provider is a 4-uple (login, node_id, IP, xmlrpc-port)
-        provider = (getUserLogin(),
+        provider = (NODE_LOGIN,
                     NODE_ID,
-                    socket.gethostbyname(socket.gethostname()),
+                    NODE_HOST,
                     NODE_PORT)
             
         self.relayAnswer(P2pAnswer(query.qid, provider, documents))
@@ -304,7 +315,10 @@ class P2pQuerier:
         """record and forward answers to a query.
         If local is True, then the answers come from a local query,
         and thus must not be recorded in the database"""
-        print "P2pQuerier relayAnswer : %s document(s)" % len(answer.documents)
+        print "P2pQuerier relayAnswer : %s document(s) from %s:%s" \
+              % (len(answer.documents),
+                 answer.provider[1],
+                 answer.provider[2])
         query = self._receivedQueries.get(answer.queryId)
         if not query :
             query = self._sentQueries.get(answer.queryId)
@@ -313,9 +327,15 @@ class P2pQuerier:
             else:
                 print " ... bug or dos : we had no query for this answer"
                 return
-        print " ... relaying Answer to %s:%s ..." \
-              % (query.client_host, query.client_port)
-        
+
+            try:
+                self.querier.registerNode(answer.provider[1],
+                                          answer.provider[2],
+                                          answer.provider[3])
+            except:
+                print "  ... version mismatch with %s:%s" \
+                      % (answer.provider[1], answer.provider[2])
+                
         toSend = []
         for document in answer.documents:
             if not isinstance(document, dict):
@@ -330,21 +350,17 @@ class P2pQuerier:
                 query.addMatch(document)
                 toSend.append(document)
         
-        if query.sender != self.nodeId: 
-            try:
-                (host, port) = (query.client_host, query.client_port)
-                print " ... will send answer to %s:%s" % (host, port)
-                senderUrl = 'http://%s:%s' % (host, port)
-                proxy = Proxy(senderUrl)
-                d = proxy.callRemote('distributedQueryAnswer',
-                                     query.qid,
-                                     self.nodeId,
-                                     answer.provider,
-                                     toSend)
-                d.addCallback(self.querier.registerNodeActivity)
-                d.addErrback(answerQueryErrback(query))
-            except ValueError:
-                print " ... unknown node %s" % query.sender
+        if query.sender != self.nodeId:
+            (host, port) = (query.client_host, query.client_port)
+            print " ... relaying Answer to %s:%s ..." % (host, port)
+            senderUrl = 'http://%s:%s' % (host, port)
+            proxy = Proxy(senderUrl)
+            d = proxy.callRemote('distributedQueryAnswer',
+                                 query.qid,
+                                 self.nodeId,
+                                 answer.provider,
+                                 toSend) 
+            d.addErrback(answerQueryErrback(query))
         else: 
             self._notifyAnswerCallbacks(answer.queryId, answer.provider, toSend)
     
@@ -366,6 +382,7 @@ def sendQueryErrback(target, querier):
         """
         print " ... problem sending the query to %s:%s, trace = %s" \
               % (target.ip, target.port, failure.getTraceback())
+        registerSleeping(target)
         querier.registerNodeInactivity(target.node_id)
     return QP
 
@@ -376,3 +393,71 @@ def answerQueryErrback(target):
         print " ... problem answering the query to %s:%s, trace = %s" \
               % (target.client_host, target.client_port, failure.getTraceback())
     return AP
+
+
+##### Background task that probes periodically sleeping nodes
+
+## The call chain :
+##
+## registerSleeping --(first to sleep ?)--> checkOldest --> backgroundProbe --> nodeSleeps
+##                                          ^                             |
+##                                          |                             |
+##                                          +------(sleeping nodes ?)-----+
+
+SLEEPING_NODES = {}
+CHECK_DELAY = 15 # time in secs before we probe the oldest sleeping node
+
+
+def registerSleeping(node):
+    # beware that not on all platforms we get sub-second values with time()
+    # in this case we risk collisions (checked on Linux & Win2003)
+    print "registerSleeping node %s scheduled for sleep check" % node.node_id
+    stamp = time.time()
+    sleeping = len(SLEEPING_NODES)
+    if sleeping == 0:
+        reactor.callLater(CHECK_DELAY, checkOldest)
+    SLEEPING_NODES [stamp] = node
+
+
+def checkOldest():
+    assert len(SLEEPING_NODES) > 0
+    stamps = SLEEPING_NODES.keys()
+    stamps.sort()
+    old_stamp = stamps[0]
+    old_node = SLEEPING_NODES[old_stamp]
+    del SLEEPING_NODES[old_stamp]
+    thread = Thread(target=backgroundProbe, args=(old_node, old_stamp))
+    thread.start()
+
+
+PROBE_COUNT = 0
+
+def backgroundProbe(node, stamp):
+    now = time.time()
+    global PROBE_COUNT
+    PROBE_COUNT += PROBE_COUNT
+    if nodeSleeps(node.ip, node.port):
+        # we reschedule it
+        if not PROBE_COUNT % 30:
+            print "backgroundProbe node at %s:%s was still sleeping" \
+                  % (node.ip, node.port)
+        now = time.time()
+        SLEEPING_NODES[now] = node
+    else:
+        print "backgroundProbe node at %s:%s has awaken" \
+              % (node.ip, node.port)
+        QUERIER.registerNodeActivity(node.node_id)
+    right_now = time.time()
+    if len(SLEEPING_NODES) > 0:
+        reactor.callLater(abs(CHECK_DELAY - right_now + now), checkOldest)
+
+socket.setdefaulttimeout(3)
+def nodeSleeps(node_ip, node_port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((node_ip, node_port))
+        s.close()
+    except socket.error, exc:
+        return True 
+    else:
+        return False
