@@ -28,6 +28,7 @@ from sets import Set
 
 from maay.texttool import normalizeText, WORD_MIN_LEN, WORD_MAX_LEN,\
      WORDS_RGX
+from maay.p2pquerier import NODE_ID
 
 class DBEntity:
     attributes = []
@@ -140,7 +141,6 @@ class FutureDocument:
             assert attrname in self.attributes, 'Unknown attribute %s' % attrname
             setattr(self, attrname, value)
 
-
 class DocumentOrder:
     """a small helper class to translate search criteria
        from crystal-clear high-level stuff to SQL junk"""
@@ -175,6 +175,7 @@ class DocumentOrder:
         else:
             res = "ORDER BY DS.popularity"
         return res + self.direction
+
 
 class Document(DBEntity):
     """Represent a Document in the database
@@ -271,7 +272,7 @@ class Document(DBEntity):
     #     query is quite messy
     def _selectContainingQuery(cls, words, mimetype=None, offset=0,
                                limit=None, allowPrivate=False,
-                               order=None):
+			       order=None):
         # XXX mimetype handling is a HACK. It needs to be integrated
         #     nicely in order to handle any kind of restrictions easily
         #word = WORDS_RGX.finditer(normalizeText(' '.join(words)))
@@ -284,8 +285,8 @@ class Document(DBEntity):
         if not allowPrivate:
             restriction += " AND D.state!=%s "
             restrictionParams.append(cls.PRIVATE_STATE)
-        # just translate the plain-text ordering to SQL stuff
-        sql_order = order or str(DocumentOrder('publication_time'))
+	# just translate the plain-text ordering to SQL stuff
+	sql_order = order or str(DocumentOrder('publication_time'))
         # Question: what is the HAVING clause supposed to do ?
         # Answer: we select all documents containing one of the words
         # that we are looking for, group them by their identifier, and
@@ -306,7 +307,7 @@ class Document(DBEntity):
                  " %s "
                  "GROUP BY DS.db_document_id "
                  "HAVING count(DS.db_document_id) = %%s ") + sql_order
-        query = query % (', '.join(['%s'] * len(words)), restriction)
+	query = query % (', '.join(['%s'] * len(words)), restriction)
         # XXX SQL: how to specify only the OFFSET ???????
         if limit or offset:
             query += " LIMIT %s OFFSET %s" % (limit or 50, offset)
@@ -316,16 +317,16 @@ class Document(DBEntity):
 
     def selectContaining(cls, cursor, words, mimetype=None, offset=0,
                          limit=None, allowPrivate=False, order='publication_time',
-                         direction='down'):
+			 direction='down'):
         print "Document selectContaining %s" % words
         if not words:
             return []
-        doc_order = str(DocumentOrder(order, direction))
+	doc_order = str(DocumentOrder(order, direction))
         query, params = cls._selectContainingQuery(words, mimetype,
                                                    offset=offset,
                                                    limit=limit,
                                                    allowPrivate=allowPrivate,
-                                                   order=doc_order)
+						   order=doc_order)
         if query:
             cursor.execute(query, params)
             results = cursor.fetchall()
@@ -363,22 +364,23 @@ class Result(Document):
     """Results are temporary relations created/destroyed on the fly
        they contain documents matching both local and distributed requests
     """
-    attributes = ('document_id', 'query_id', 'mime_type',
+    attributes = ('document_id', 'query_id', 'node_id', 'mime_type',
                   'title', 'size', 'text', 'publication_time', 'url',
-                  'host', 'port', 'login', 'providers')
+                  'host', 'port', 'login', 'record_ts')
     key = ('document_id', 'query_id')
     tableName = 'results'
 
-    def _insertQuery(self):
-        """generates an INSERT query according to object's state
-           also update provider count on collisions on (queryId, document_id)"""
-        values = ['%%(%s)s' % attr for attr in self.attributes
-                  if hasattr(self, attr)]
-        query = "INSERT INTO %s (%s) VALUES (%s) " % (self.tableName,
-                                                      ', '.join(self.boundAttributes()),
-                                                      ', '.join(values))
-        query += "ON DUPLICATE KEY UPDATE providers=providers+1"
-        return query
+
+##     def _insertQuery(self):
+##         """generates an INSERT query according to object's state
+##            also update provider count on collisions on (queryId, document_id)"""
+##         values = ['%%(%s)s' % attr for attr in self.attributes
+##                   if hasattr(self, attr)]
+##         query = "INSERT INTO %s (%s) VALUES (%s) " % (self.tableName,
+##                                                       ', '.join(self.boundAttributes()),
+##                                                       ', '.join(values))
+##         query += "ON DUPLICATE KEY UPDATE providers=providers+1"
+##         return query
 
     def fromDocument(document, queryId, provider=None):
         stateDict = document.stateDict
@@ -386,10 +388,11 @@ class Result(Document):
             if key not in Result.attributes or not value:
                 del stateDict[key]
         if provider:
-            stateDict['login'], stateDict['host'], stateDict['port'] = provider
+            stateDict['login'], stateDict['node_id'], stateDict['host'], stateDict['port'] = provider
         else:
             stateDict['host'] = 'localhost'
             stateDict['port'] = 0
+            stateDict['node_id'] = NODE_ID # local node id
         stateDict['query_id'] = queryId
         return Result(**stateDict)
     fromDocument = staticmethod(fromDocument)
@@ -404,7 +407,9 @@ class Result(Document):
             where += " AND host != 'localhost' "
         elif onlyLocal:
             where += " AND host = 'localhost' "
-        query = 'SELECT %s FROM %s%s ORDER BY publication_time DESC LIMIT %s OFFSET %s' % (
+        query = 'SELECT %s FROM %s%s GROUP BY document_id ' \
+                'HAVING record_ts=MIN(record_ts) ' \
+                'ORDER BY publication_time DESC LIMIT %s OFFSET %s' % (
             ', '.join(cls.attributes),
             cls.tableName,
             where, limit, offset)
@@ -417,6 +422,7 @@ class Result(Document):
         results = cursor.fetchall()
         return [cls(**dict(zip(cls.attributes, row))) for row in results]
     selectWhere = classmethod(selectWhere)
+
 
 class FileInfo(DBEntity):
     """
@@ -537,7 +543,7 @@ class Node(DBEntity):
     """
     tableName = 'nodes'
     attributes = ('node_id', 'ip', 'port', 'last_seen_time', 'last_sleep_time',
-                  'counter', 'claim_count', 'affinity', 'bandwidth')
+		  'counter', 'claim_count', 'affinity', 'bandwidth')
     key = ('node_id',)
 
 ## Gibberish belox might be useful later, don't delete it right now, please (auc)
@@ -558,14 +564,20 @@ class Node(DBEntity):
 ##         return query
 
     def _selectActiveNodesQuery(cls):
-        query = cls._selectQuery()
+	query = cls._selectQuery()
         query += (" WHERE node_id != %s AND last_seen_time > last_sleep_time"
                   " ORDER BY last_seen_time DESC LIMIT %s")
-        return query
+         return query
     _selectActiveNodesQuery = classmethod(_selectActiveNodesQuery)
 
+    def _selectRegisteredNodesQuery(cls):
+        query = cls._selectQuery()
+        query += " WHERE node_id != %s ORDER BY last_seen_time DESC LIMIT %s"
+        return query
+    _selectRegisteredNodesQuery = classmethod(_selectRegisteredNodesQuery)
+
     def selectActive(cls, cursor, currentNodeId, maxResults):
-        query = cls._selectActiveNodesQuery()
+	query = cls._selectActiveNodesQuery()
         cursor.execute(query, (currentNodeId, maxResults))
         results = cursor.fetchall()
         return [cls(**dict(zip(cls.attributes, row))) for row in results]
@@ -598,3 +610,4 @@ class NodeInterest(DBEntity):
     key = ('node_id', 'word')
 
     
+

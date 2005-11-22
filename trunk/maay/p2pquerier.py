@@ -39,6 +39,7 @@ nodeConfig=NodeConfiguration()
 nodeConfig.load()
 NODE_HOST = socket.gethostbyname(socket.gethostname())
 NODE_PORT = nodeConfig.rpcserver_port
+NODE_ID = nodeConfig.get_node_id()
 
 def hashIt(item, uname=''.join(platform.uname())):
     hasher = sha.sha()
@@ -164,7 +165,7 @@ class P2pQuery:
 class P2pAnswer:
     def __init__(self, queryId, provider, documents):
         """
-        :type provider: 3-tuple (login, IP, xmlrpc-port)
+        :type provider: 4-tuple (login, nodeID, IP, xmlrpc-port)
         """
         self.queryId = queryId
         self.provider = provider
@@ -259,7 +260,7 @@ class P2pQuerier:
             proxy = Proxy(str(neighbor.getRpcUrl()))
             d = proxy.callRemote('distributedQuery', query.asKwargs())
             d.addCallback(self.querier.registerNodeActivity)
-            d.addErrback(sendQueryErrback(neighbor, self.querier))
+	    d.addErrback(sendQueryErrback(neighbor, self.querier))
             self._sentQueries[query.qid] = query
             print "     ... sent to %s:%s %s" % (neighbor.ip,
                                                  neighbor.port,
@@ -291,8 +292,9 @@ class P2pQuerier:
             abstract = makeAbstract(doc.text, query.getWords())
             doc.text = untagText(removeSpace(abstract))
 
-        # provider is a triple (login, IP, xmlrpc-port)
+        # provider is a 4-uple (login, node_id, IP, xmlrpc-port)
         provider = (getUserLogin(),
+                    NODE_ID,
                     socket.gethostbyname(socket.gethostname()),
                     NODE_PORT)
             
@@ -338,7 +340,7 @@ class P2pQuerier:
                                      query.qid,
                                      self.nodeId,
                                      answer.provider,
-                                     toSend) 
+                                     toSend)
                 d.addCallback(self.querier.registerNodeActivity)
                 d.addErrback(answerQueryErrback(query))
             except ValueError:
@@ -367,13 +369,10 @@ def sendQueryErrback(target, querier):
         querier.registerNodeInactivity(target.node_id)
     return QP
 
+
 def answerQueryErrback(target):
     ':type target: P2pQuery'
     def AP(failure):
-        """Politely displays any problem (bug, unavailability) related
-        to an attempt to answer a query.
-        """
         print " ... problem answering the query to %s:%s, trace = %s" \
               % (target.client_host, target.client_port, failure.getTraceback())
     return AP
-

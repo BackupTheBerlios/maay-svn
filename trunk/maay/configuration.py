@@ -259,7 +259,7 @@ class NodeConfiguration(Configuration):
 
 def _download_dir():
     if sys.platform == 'win32':
-        theDir = r'C:\Documents and Settings\All Users\Desktop\Maay Documents\downloaded'
+        theDir = r'\Documents and Settings\All Users\Desktop\Maay Documents\downloaded'
     else:
         theDir = osp.expanduser('~/maay-downloads/')
     if not osp.exists(theDir):

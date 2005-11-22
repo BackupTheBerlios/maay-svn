@@ -36,6 +36,7 @@ from twisted.python import log
 from nevow import rend, tags, loaders, athena, inevow
 
 from logilab.common.textutils import normalize_text
+from logilab.common.compat import set
 
 from maay.querier import WEB_AVATARID
 from maay.configuration import get_path_of
@@ -111,17 +112,7 @@ class PeersList(MaayPage):
 
 class IndexationPage(athena.LivePage):
     docFactory = loaders.xmlfile(get_path_of('indexationpage.html'))
-    implements(indexer.IIndexerObserver)
 
-    # share counter among instances
-    indexedDocuments = 0
-    untouchedDocuments = 0
-
-    privateDocuments = 0
-    publicDocuments = 0
-
-    querier = None
-    
     def __init__(self):
         athena.LivePage.__init__(self)
         self.indexerConfig = indexer.indexerConfig
@@ -145,57 +136,16 @@ class IndexationPage(athena.LivePage):
     def updateStatus(self, message):
         self.callRemote('updateStatus', message)
 
-    def updateDocumentStats(self):
-        docCounts = IndexationPage.querier.getDocumentCount()
-        IndexationPage.privateDocuments = docCounts[Document.PRIVATE_STATE]
-        IndexationPage.publicDocuments = docCounts[Document.PUBLISHED_STATE]
+    def countersUpdated(self, old, new):
+        self.updateStatus(u'Indexation in progress - %s new documents / %s total' %
+                          (new, old + new))
 
-    def updatePrivateDocumentCount(self):
-        self.callRemote('updatePrivateDocumentCount', IndexationPage.privateDocuments)
-
-    def updatePublicDocumentCount(self):
-        self.callRemote('updatePublicDocumentCount', IndexationPage.publicDocuments)
-
-    def newDocumentIndexed(self, filename, state):
-        IndexationPage.indexedDocuments += 1
-
-        if state == Document.PRIVATE_STATE:
-            IndexationPage.privateDocuments += 1
-        elif state == Document.PUBLIC_STATE:
-            IndexationPage.publicDocuments += 1
-
-        if (IndexationPage.indexedDocuments % 10) == 0:
-            self.updateStatus(u'Indexation in progress - %s new documents / %s total'
-                % (IndexationPage.indexedDocuments, IndexationPage.indexedDocuments + IndexationPage.untouchedDocuments))
-            self.updatePrivateDocumentCount()
-            self.updatePublicDocumentCount()
-
-    def documentUntouched(self, filename):
-        IndexationPage.untouchedDocuments += 1
-        if (IndexationPage.untouchedDocuments % 10) == 0:
-            self.updateStatus(u'Indexation in progress - %s new documents / %s total'
-                % (IndexationPage.indexedDocuments, IndexationPage.indexedDocuments + IndexationPage.untouchedDocuments))
-        
     def indexationCompleted(self):
         self.updateStatus(u'Indexation finished - %s new documents / %s total'
             % (IndexationPage.indexedDocuments, IndexationPage.indexedDocuments + IndexationPage.untouchedDocuments))
-        # reset counters for the next indexation
-        IndexationPage.untouchedDocuments = 0
-        IndexationPage.indexedDocuments = 0
-
-        self.updateDocumentStats()
-        self.updatePrivateDocumentCount()
-        self.updatePublicDocumentCount()
-
 
     def render_message(self, context, data):
         return self.msg
-
-    def render_privateDocumentCount(self, context, data):
-        return IndexationPage.privateDocuments
-
-    def render_publicDocumentCount(self, context, data):
-        return IndexationPage.publicDocuments
 
     def render_alert(self, context, data):
         context.fillSlots("message", self.alertmessage)
@@ -224,17 +174,33 @@ class IndexationPage(athena.LivePage):
 class IndexationPageFactory(athena.LivePageFactory):
     implements(indexer.IIndexerObserver)
 
-    def newDocumentIndexed(self, filename, state):
-        for webpage in self.clients.itervalues():
-            webpage.newDocumentIndexed(filename, state)
+    def __init__(self, pageFactory):
+        athena.LivePageFactory.__init__(self, pageFactory)
+        self.untouchedDocuments = 0
+        self.indexedDocuments = 0
+
+    def newDocumentIndexed(self, filename):
+        self.indexedDocuments += 1
+        # refresh pages for each group of 10 indexed files
+        if (self.indexedDocuments % 10) == 0:
+            for webpage in self.clients.itervalues():
+                webpage.countersUpdated(self.untouchedDocuments,
+                                        self.indexedDocuments)
         
     def documentUntouched(self, filename):
-        for webpage in self.clients.itervalues():
-            webpage.documentUntouched(filename)
-        
+        self.untouchedDocuments += 1
+        if (self.untouchedDocuments % 10) == 0:
+            for webpage in self.clients.itervalues():
+                webpage.countersUpdated(self.untouchedDocuments,
+                                        self.indexedDocuments)
+    
     def indexationCompleted(self):
         for webpage in self.clients.itervalues():
             webpage.indexationCompleted()
+        # reset counters after indexation is finished
+        self.untouchedDocuments = 0
+        self.indexedDocuments = 0
+    
 
 class SearchForm(MaayPage):
     """default search form"""
@@ -333,7 +299,7 @@ class SearchForm(MaayPage):
         IndexationPage.querier = self.querier
         indexationPage.updateDocumentStats()
         
-        if start == 0:
+	if start == 0:
             if indexer.is_running():
                 msg = "Indexer running"
             else:
@@ -371,16 +337,18 @@ class SearchForm(MaayPage):
         """download distant file and put it in a public indexable directory"""
         host = context.arg('host')
         port = context.arg('port')
+        queryId = context.arg('qid')
         words = context.arg('words').split()
         filename = context.arg('filename')
         docid = context.arg('docid')
         if not host or not port or not docid:
             return Maay404()
-        print "SearchForm distantfile"
+        self.proivderSet = set()
         proxy = Proxy('http://%s:%s' % (host, port))
         d = proxy.callRemote('downloadFile', docid, words)
         d.addCallback(self.gotDataBack, filename)
-        d.addErrback(self.onDownloadFileError, filename)
+        d.addErrback(self.tryOtherProviders, filename, words, host,
+                     port, docid, queryId)
         return d
 
     def gotDataBack(self, rpcFriendlyData, filename):
@@ -395,6 +363,24 @@ class SearchForm(MaayPage):
     def onDownloadFileError(self, error, filename):
         msg = "Error while downloading file: %s" % (filename,)
         return Maay404(msg)
+
+    def tryOtherProviders(self, error, filename, words, host, port, docId, queryId):
+        """starts to explore the list of other providers"""
+        providers = self.querier.getProvidersFor(docId, queryId)
+        self.providerSet.remove((host, port))
+        return self.retryWithOtherProvider(words, docId, filename)
+    
+    def retryWithOtherProvider(self, words, docId, filename):
+        if self.providerSet:
+            nextHost, nextPort = self.providerSet.pop()
+            proxy = Proxy('http://%s:%s' % (nextHost, nextPort))
+            d = proxy.callRemote('downloadFile', docId, words)
+            d.addCallback(self.gotDataBack, filename)
+            d.addErrback(self.retryWithOtherProvider, words, docId, filename)
+            return d
+        else:
+            return self.onDownloadFileError('no provider available', filename)
+    
     
 class DistantFilePage(static.File):
     def __init__(self, filepath):
@@ -507,6 +493,7 @@ class ResultsPageMixIn:
             baseurl += '&port=%s' % (document.port,)
         baseurl += '&filename=%s' % osp.basename(document.url)
         baseurl += '&words=%s' % '+'.join(self.query.words)
+        baseurl += '&qid=%s' % (self.queryId,)
         context.fillSlots('url', baseurl)
         return context.tag
     

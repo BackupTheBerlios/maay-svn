@@ -163,9 +163,9 @@ class AnonymousQuerier:
             cursor = self._cnx.cursor()
             return Document.selectContaining(cursor, words, query.filetype,
                                              query.offset, query.limit,
-                                             self.searchInPrivate,
-                                             order=query.order,
-                                             direction=query.direction)
+					     self.searchInPrivate,
+					     order=query.order,
+					     direction=query.direction)
         finally:
             traceback.print_exc()
             cursor.close()
@@ -244,8 +244,8 @@ class AnonymousQuerier:
 
     def _updateDownloadStatistics(self, document, words):
         cursor = self._cnx.cursor()
-        # what's this max(0, doc.count) below ??? it should be set initially
-        # at zero anyway ...
+	# what's this max(0, doc.count) below ??? it should be set initially
+	# at zero anyway ...
         document.download_count = max(0, document.download_count) + 1
         document.commit(cursor, update=True)
         db_document_id = document.db_document_id
@@ -298,7 +298,7 @@ class AnonymousQuerier:
         cursor.close()
 
     def registerNodeActivity(self, nodeId):
-        """updates last_seen_time attribute"""
+	"""updates last_seen_time attribute"""
         cursor = self._cnx.cursor()
         nodes = Node.selectWhere(cursor, node_id=nodeId)
         if nodes:
@@ -353,6 +353,21 @@ class AnonymousQuerier:
                                      onlyLocal, onlyDistant, query_id=queryId)
         cursor.close()
         return results
+
+    def getProvidersFor(self, docId, queryId):
+        """returns a list of couples (ip, port) corresponding to
+        each node that can provide the document.
+        queryId is needed only to avoid small conflicts with previous
+        queries that returned the same documents
+        (we don't want 'old' providers to appear in the list)
+        """
+        cursor = self._cnx.cursor()
+        query = 'SELECT host, port FROM results WHERE query_id=%(queryId) ' \
+                'AND document_id=%(docId)'
+        cursor.execute(query, locals())
+        providers = cursor.fetchall()
+        cursor.close()
+        return providers
         
     def pushDocuments(self, queryId, documents, provider=None):
         """push <documents> into the temporary table built for

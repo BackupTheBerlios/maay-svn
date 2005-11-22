@@ -123,8 +123,8 @@ CREATE TABLE `nodes` (
   `ip` char(15) NOT NULL default '', -- to satisfy selectOrInsertWhere *
 -- FIXME: this should be unsigned smallint
   `port` smallint(11) NOT NULL default 0, -- to satisfy selectOrInsertWhere *
-  `last_seen_time` int(11) default 1,
-  `last_sleep_time` int(11) default 0,
+  `last_seen_time` int(11) default 0,
+  `last_sleep_time` int(11) default 1,
   `counter` int(11) NOT NULL default '0',
   `claim_count` float NOT NULL default '0',
   `affinity` double NOT NULL default '0',
@@ -151,6 +151,7 @@ CREATE TABLE `results` (
 --  `db_document_id` varchar(40) NOT NULL,
   `document_id` varchar(40) NOT NULL default '',
   `query_id` varchar(64) NOT NULL,
+  `node_id` char(40) NOT NULL default '',
   `mime_type` varchar(40) NOT NULL default '',
   `title` varchar(255) default NULL,
   `size` int(11) default NULL,
@@ -161,8 +162,7 @@ CREATE TABLE `results` (
   `port` int(11), -- check this
   `login` varchar(255),
   `record_ts` TIMESTAMP(8), -- DEFAULT NOW() is not necessary because records are not updated
-  `providers` int(11) default 1, -- number of providers for the document
-  PRIMARY KEY (`document_id`, `query_id`)
+  PRIMARY KEY (`document_id`, `query_id`, `node_id`)
 --  PRIMARY KEY (`db_document_id`, `query_id`, `host`, `port`)
 --  KEY `document_id` (`document_id`),
 --  KEY `url` (`url`)
