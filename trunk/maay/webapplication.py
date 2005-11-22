@@ -328,6 +328,7 @@ class SearchForm(MaayPage):
             if osp.isfile(docurl):
                 return static.File(docurl)
             else:
+                #TODO: automatically reindex
                 return Maay404("File %s does not exist any more. Please re-index." %
                                docurl)
         else:
@@ -495,6 +496,13 @@ class ResultsPageMixIn:
         baseurl += '&words=%s' % '+'.join(self.query.words)
         baseurl += '&qid=%s' % (self.queryId,)
         context.fillSlots('url', baseurl)
+        try:
+            document.score_relevance
+        except:
+            document.score_relevance = 'no relevance is provided'
+            document.score_popularity = 'no popularity is provided'
+        context.fillSlots('relevance', document.score_relevance)
+        context.fillSlots('popularity', document.score_popularity)
         return context.tag
     
 
@@ -611,7 +619,7 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
 class ResultsPageFactory(athena.LivePageFactory):
     def getLivePage(self, context):
         livepageId = inevow.IRequest(context).getHeader('Livepage-Id')
-        print "*** livepage id =", livepageId
+        #print "*** livepage id =", livepageId
         if livepageId is not None:
             return self.clients.get(livepageId)
         else:
