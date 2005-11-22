@@ -172,18 +172,18 @@ class MaayRPCServer(XMLRPC):
     def xmlrpc_distributedQuery(self, queryDict):
         """On node has sent a p2p query (P2pQuerier.sendQuery)
         """
-        print "MaayRPCServer distributedQuery : %s " % queryDict['words']
+        #print "MaayRPCServer distributedQuery : %s " % queryDict['words']
         query = P2pQuery.fromDict(queryDict)
         querier = self._sessions[ANONYMOUS_AVATARID]
-        querier.registerNode(query.sender, query.client_host, query.client_port)
+        #querier.registerNode(query.sender, query.client_host, query.client_port)
         # schedule the query for later processing and return immediately
         # this enables the sender to query several nodes in a row
         reactor.callLater(.01, getP2pQuerier().receiveQuery, query)
         return self.nodeId
 
     def xmlrpc_distributedQueryAnswer(self, queryId, senderId, provider, documents):
-        print "MaayRPCServer distributedQueryAnswer : %s document(s) fom %s" % \
-              (len(documents), provider)
+        #print "MaayRPCServer distributedQueryAnswer : %s document(s) fom %s" % \
+        #      (len(documents), provider)
         answer = P2pAnswer(queryId, provider, documents)
         reactor.callLater(.01, getP2pQuerier().relayAnswer, answer)
         return self.nodeId
