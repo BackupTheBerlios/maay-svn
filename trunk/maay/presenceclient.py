@@ -62,8 +62,8 @@ class PresenceClient(LineReceiver):
             self.transport.loseConnection()
             return
         time, nodeId, nodeIP, nodePort, nodeBandwidth = data.split('\t')
-        lastSeenTime = parseTime(time)
-        self._callback(nodeId, nodeIP, nodePort, nodeBandwidth, lastSeenTime)
+        lastSeenTime = parseTime(time) # in fact we don't need to trust this
+        self._callback(nodeId, nodeIP, nodePort, nodeBandwidth)
         
 
 def parseTime(isodatetime):
