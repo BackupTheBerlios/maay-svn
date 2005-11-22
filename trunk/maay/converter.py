@@ -49,6 +49,7 @@ from mimetypes import guess_type, types_map
 from tempfile import mkdtemp
 import gzip
 import bz2
+import sys
 
 from maay.texttool import TextParser, MaayHTMLParser as HTMLParser, ParsingError
 
@@ -67,6 +68,26 @@ types_map.update ({
     '.patch': 'text/plain'
     })
 
+def win32_launcher(commandline):
+    startupInfo = win32process.STARTUPINFO()
+    startupInfo.dwFlags = win32process.DETACHED_PROCESS | win32process.STARTF_USESHOWWINDOW
+    startupInfo.wShowWindow = win32con.SW_HIDE
+    hProcess, hThread, dwProcessId, dwThreadId = \
+              win32process.CreateProcess(None, commandline, None,
+                                         None, 0, 0, None, None,
+                                         startupInfo)
+    while (win32process.GetExitCodeProcess(hProcess) == win32con.STILL_ACTIVE):
+       win32api.Sleep(2)
+	# FIXME: try to get the errcode
+    return 0
+
+# Not use os.system for win32 system because it displays msdos command to launch
+# it
+if sys.platform == 'win32':
+		import win32api, win32con, win32process
+		launcher = win32_launcher
+else:
+		launcher = os.system
 
 class IndexationFailure(Exception):
     """raised when an indexation has failed"""
@@ -184,7 +205,7 @@ class CommandBasedConverter(BaseConverter):
             cmd = self.COMMAND % command_args
 
             #print "Executing %r" % cmd
-            errcode = os.system(cmd)
+            errcode = launcher(cmd)
             if errcode: # NOK
                 raise IndexationFailure('Unable to index %r' % filepath)
 
