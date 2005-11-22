@@ -28,7 +28,7 @@ from twisted.internet import reactor
 class MyService(win32serviceutil.ServiceFramework):
     _svc_name_ = "Maay"
     _svc_display_name_ = "Maay"
-    _svc_deps_ = ["EventLog"]
+    _svc_deps_ = ["EventLog", "MySQL"]
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self, args)
 

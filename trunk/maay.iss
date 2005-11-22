@@ -61,7 +61,7 @@ Filename: "{app}\mysql\bin\mysqld-max-nt.exe"; Parameters:"--install MySQL --def
 Filename: "NET"; Parameters:"start MySQL"; StatusMsg: "Starting MySQL server"; WorkingDir:"{app}\mysql"; Flags:runhidden
 Filename: "{app}\createdb.exe"; StatusMsg: "Installing database"; WorkingDir:"{app}"; Flags:runhidden
 Filename: "{app}\updateconfig.exe"; Parameters:"""{userdesktop}"" ""{userdocs}"""; WorkingDir:"{app}"; StatusMsg: "Auto configuration";
-Filename: "{app}\maay.exe"; Parameters:"-install"; StatusMsg: "Registering Maay as a service"; WorkingDir:"{app}"; Flags:runhidden
+Filename: "{app}\maay.exe"; Parameters:"-install -auto"; StatusMsg: "Registering Maay as a service"; WorkingDir:"{app}"; Flags:runhidden
 Filename: "NET"; Parameters: "start Maay"; StatusMsg: "Starting Maay node"; Flags:runhidden
 ;Filename: "{app}\maay_node.exe"; StatusMsg: "Launching maay node"; WorkingDir:"{app}"; Flags:postinstall nowait
 
