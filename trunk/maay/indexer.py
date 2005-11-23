@@ -49,7 +49,7 @@ from twisted.python import log
 
 class IIndexerObserver(Interface):
 
-    def newDocumentIndexed(filename):
+    def newDocumentIndexed(filename, state):
         """called by indexer when a document was just indexed"""
 
     def documentUntouched(filename):
