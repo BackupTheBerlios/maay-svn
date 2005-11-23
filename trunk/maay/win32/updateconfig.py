@@ -47,6 +47,7 @@ password=maay
 private-dir=%(private)s
 public-dir=%(public)s
 skip-dir=%(skip)s
+download-dir=%(download)s
 """
 
 node_config = """[NODE]
@@ -56,7 +57,6 @@ user=maay
 password=maay
 presence-host=%(presence)s
 presence-port=%(port)d
-download-index-dir=%(download)s
 """
 import socket
 
@@ -65,6 +65,7 @@ def createConfigFile(myDesktop, myDocuments):
     values = {'private'     : '%s,%s' % (myDesktop, myDocuments),
               'public'      : '%s\\Maay Documents' % myDesktop,
               'skip' : '',
+              'download': '%s\\Maay Documents\\downloaded' % myDesktop
               }
     f.write(indexer_config % values)
     f.close()
@@ -72,8 +73,7 @@ def createConfigFile(myDesktop, myDocuments):
     f = open("node.ini", "w")
     presence, port = probe_presence_config()
     values = {'presence': presence,
-              'port': port,
-              'download': '%s\\Maay Documents\\downloaded' % myDesktop,}
+              'port': port}
     f.write(node_config % values)
     f.close()
 

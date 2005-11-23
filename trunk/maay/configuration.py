@@ -330,7 +330,7 @@ class IndexerConfiguration(Configuration):
          {'type': 'string',
           'metavar': '<downloads>',
           'help': 'downloaded files will go there and be immediately indexed',
-          'default' : _download_dir()
+          'default' : None
           })
         
         ]
@@ -339,6 +339,9 @@ class IndexerConfiguration(Configuration):
 
     def __init__(self):
         Configuration.__init__(self, name="Indexer")
+        if not self.download_dir:
+            self.download_dir = _download_dir()
+
 
     def save(self):
         # FIXME: since there may be several configuration files, which
