@@ -43,7 +43,7 @@ from maay.configuration import get_path_of
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
 from maay.query import Query
 from maay.p2pquerier import P2pQuerier, P2pQuery
-from maay.dbentity import ScoredDocument
+from maay.dbentity import ScoredDocument, Document
 from maay import indexer 
 
 
@@ -69,6 +69,9 @@ class MaayPage(rend.Page):
     def render_custom_htmlheader(self, context):
         return ''
 
+    def render_onload(self, context):
+        return ''
+    
 class Maay404(MaayPage, rend.FourOhFour):
     """Maay specific resource for 404 errors"""
     # loader = loaders.xmlfile(get_path_of('notfound.html'))
@@ -239,6 +242,7 @@ class SearchForm(MaayPage):
     """default search form"""
     bodyFactory = loaders.xmlfile(get_path_of('searchform.html'))
     addSlash = True
+    child_versionjs = static.File(get_path_of('version.js'))
 
     def __init__(self, maayId, querier, p2pquerier=None):
         MaayPage.__init__(self, maayId)
@@ -250,11 +254,14 @@ class SearchForm(MaayPage):
         return [
             tags.script(type='text/javascript', src='http://maay.netofpeers.net/version.js'),
             tags.script(type='text/javascript')[
-                tags.raw('current_version = "%s";' % VERSION)
+                tags.raw('current_version = "%s";' % VERSION),
                 ],
-            tags.script(type='text/javascript', src=url.here.child('version.js')),
+            tags.script(type='text/javascript', src=url.here.child('versionjs')),
             ]
 
+    def render_onload(self, context):
+        return 'checkNewRelease();'
+    
     # TODO: since getDocumentCount might be quite costly to compute for the
     # DBMS, cache the value and update it every 10 mn
     def render_shortstat(self, context, data):
@@ -422,7 +429,6 @@ class SearchForm(MaayPage):
             return d
         else:
             return self.onDownloadFileError('no provider available', filename)
-    
     
 class DistantFilePage(static.File):
     def __init__(self, filepath):
