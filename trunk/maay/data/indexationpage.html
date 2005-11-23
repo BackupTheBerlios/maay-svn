@@ -14,11 +14,6 @@ function live() {
   server.callRemote('live');
 }
 
-function updateStatus(msg) {
-  elt = document.getElementById('statusMessage');
-  elt.innerHTML = msg;
-}
-
 function updatePrivateDocumentCount(count) {
   elt = document.getElementById('privateDocumentCount');
   elt.innerHTML = count;
@@ -28,6 +23,14 @@ function updatePublicDocumentCount(count) {
   elt = document.getElementById('publicDocumentCount');
   elt.innerHTML = count;
 }
+
+function updateStatus(msg, private, public) {
+  elt = document.getElementById('statusMessage');
+  elt.innerHTML = msg;
+  updatePrivateDocumentCount(private);
+  updatePublicDocumentCount(public);
+}
+
 
     </script>
   </head>

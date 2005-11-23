@@ -1,4 +1,3 @@
-#     Maay : a network of peers for document search
 #
 #     Copyright (C) 2005 France Telecom R&D
 #
@@ -38,7 +37,7 @@ from nevow import rend, tags, loaders, athena, inevow
 from logilab.common.textutils import normalize_text
 from logilab.common.compat import set
 
-from maay.querier import WEB_AVATARID
+from maay.querier import IQuerier, WEB_AVATARID
 from maay.configuration import get_path_of
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
 from maay.query import Query
@@ -133,16 +132,30 @@ class IndexationPage(athena.LivePage):
         if name in self._javascript:
             return static.File(get_path_of(self._javascript[name]))
 
-    def updateStatus(self, message):
-        self.callRemote('updateStatus', message)
+    def updateStatus(self, message, private, public):
+        self.callRemote('updateStatus', message, private, public)
 
-    def countersUpdated(self, old, new):
+    def countersUpdated(self, old, new, private, public):
         self.updateStatus(u'Indexation in progress - %s new documents / %s total' %
-                          (new, old + new))
+                          (new, old + new), private, public)
 
-    def indexationCompleted(self):
+    def indexationCompleted(self, old, new, private, public):
         self.updateStatus(u'Indexation finished - %s new documents / %s total'
-            % (IndexationPage.indexedDocuments, IndexationPage.indexedDocuments + IndexationPage.untouchedDocuments))
+            % (new, old + new), private, public)
+
+    def updatePrivateDocumentCount(self, count):
+        self.callRemote('updatePrivateDocumentCount', count)
+
+    def updatePublicDocumentCount(self, count):
+        self.callRemote('updatePublicDocumentCount', count)
+
+    def render_privateDocumentCount(self, context, data):
+        querier = IQuerier(context)
+        return querier.getDocumentCount()[Document.PRIVATE_STATE]
+
+    def render_publicDocumentCount(self, context, data):
+        querier = IQuerier(context)
+        return querier.getDocumentCount()[Document.PUBLISHED_STATE]
 
     def render_message(self, context, data):
         return self.msg
@@ -178,14 +191,25 @@ class IndexationPageFactory(athena.LivePageFactory):
         athena.LivePageFactory.__init__(self, pageFactory)
         self.untouchedDocuments = 0
         self.indexedDocuments = 0
-
-    def newDocumentIndexed(self, filename):
+        self.privateDocuments = 0
+        self.publicDocuments = 0
+    
+    def newDocumentIndexed(self, filename, state):
         self.indexedDocuments += 1
+        print "newDocument indexed", filename, state
+        if state == Document.PRIVATE_STATE:
+            self.privateDocuments += 1
+        else:
+            self.publicDocuments += 1
         # refresh pages for each group of 10 indexed files
         if (self.indexedDocuments % 10) == 0:
             for webpage in self.clients.itervalues():
                 webpage.countersUpdated(self.untouchedDocuments,
-                                        self.indexedDocuments)
+                                        self.indexedDocuments,
+                                        self.privateDocuments,
+                                        self.publicDocuments)
+                # webpage.updatePrivateDocumentCount(self.privateDocuments)
+                # webpage.updatePublicDocumentCount(self.publicDocuments)
         
     def documentUntouched(self, filename):
         self.untouchedDocuments += 1
@@ -196,7 +220,12 @@ class IndexationPageFactory(athena.LivePageFactory):
     
     def indexationCompleted(self):
         for webpage in self.clients.itervalues():
-            webpage.indexationCompleted()
+            webpage.indexationCompleted(self.untouchedDocuments,
+                                        self.indexedDocuments,
+                                        self.privateDocuments,
+                                        self.publicDocuments)
+            # webpage.updatePrivateDocumentCount(self.privateDocuments)
+            # webpage.updatePublicDocumentCount(self.publicDocuments)
         # reset counters after indexation is finished
         self.untouchedDocuments = 0
         self.indexedDocuments = 0
@@ -238,6 +267,7 @@ class SearchForm(MaayPage):
 
     def child_indexation(self, context, _factory=IndexationPageFactory(IndexationPage)):
         alertMsg = ""
+        context.remember(self.querier, IQuerier)
         # TODO: check if the added folders are valid
 
         # Actions (add/remove) on private folders
@@ -295,10 +325,6 @@ class SearchForm(MaayPage):
         start = int(context.arg('start', 0))
         indexationPage = _factory.clientFactory(context)
 
-        # FIXME: porky way to pass the querier ref to the indexationPage
-        IndexationPage.querier = self.querier
-        indexationPage.updateDocumentStats()
-        
 	if start == 0:
             if indexer.is_running():
                 msg = "Indexer running"
