@@ -523,11 +523,9 @@ class ResultsPageMixIn:
         baseurl += '&words=%s' % '+'.join(self.query.words)
         baseurl += '&qid=%s' % (self.queryId,)
         context.fillSlots('url', baseurl)
-        try:
-            document.score_relevance
-        except:
-            document.score_relevance = 'no relevance is provided'
-            document.score_popularity = 'no popularity is provided'
+        if document.score_relevance is None:
+            document.score_relevance = 'no relevance provided'
+            document.score_popularity = 'no popularity provided'
         context.fillSlots('relevance', document.score_relevance)
         context.fillSlots('popularity', document.score_popularity)
         return context.tag

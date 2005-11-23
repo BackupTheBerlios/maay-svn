@@ -139,50 +139,18 @@ class FutureDocument:
             assert attrname in self.attributes, 'Unknown attribute %s' % attrname
             setattr(self, attrname, value)
 
-#TODO : shoot me !
-class DocumentOrder:
-    """a small helper class to translate search criteria
-       from crystal-clear high-level stuff to SQL junk"""
-    # This is really strongly coupled with Document._selectContaining
-    
-    orders = {'publication_time' : 1,
-              'score_relevance'  : 2,
-              'score_popularity' : 3}
+        
+def sqlCriterium(foo):
+    return ("D.publication_time, "
+            "DS.relevance, "
+            "DS.popularity ")
 
-    def __init__(self, order='publication_time', direction='DESC'):
-        """:param order: see class dict above
-           :param direction: 'ASC' or 'DESC'
-        """
-        if order in DocumentOrder.orders:
-            self.order = DocumentOrder.orders[order]
-        else:
-            raise NotImplemented("Document ordering %s is unkown" %
-                                 order)
-        direction = direction.upper()
-        assert direction in ('ASC', 'DESC'), "Document direction %s is unkown" \
-            % direction
-        self.direction = direction
-
-    def sqlOrder(self):
-        if self.order == 1:
-            res = "ORDER BY D.publication_time " 
-        elif self.order == 2:
-            res = "ORDER BY DS.relevance " 
-        else:
-            res = "ORDER BY DS.popularity "
-        return res + self.direction
-
-    def sqlCriterium(self):
-        return ("D.publication_time, "
-                "DS.relevance, "
-                "DS.popularity ")
-        # yes, code below is currently unreachable
-        if self.order == 1:
-            return "D.publication_time "
-        elif self.order == 1:
-            return "DS.relevance "
-        else:
-            return "DS.popularity "
+def sqlOrder(order, direction):
+    if order == 'publication_time':
+        prefix = 'ORDER BY D.'
+    else:
+        prefix = 'ORDER BY DS.'
+    return prefix + order + ' ' + direction
 
 
 class Document(DBEntity):
@@ -278,7 +246,7 @@ class Document(DBEntity):
 
     # XXX Please rewrite this method. The way we build the SQL
     #     query is quite messy
-    def _selectContainingQuery(cls, words, order, mimetype=None, offset=0,
+    def _selectContainingQuery(cls, words, order, direction, mimetype=None, offset=0,
                                limit=None, allowPrivate=False):
         # XXX mimetype handling is a HACK. It needs to be integrated
         #     nicely in order to handle any kind of restrictions easily
@@ -305,14 +273,14 @@ class Document(DBEntity):
                         "D.text, "
                         "D.url, "
                         "D.mime_type, ")
-        query += order.sqlCriterium()
+        query += sqlCriterium("foo") #to be fixed soon
         query += ("FROM documents D, document_scores DS "
                   "WHERE DS.db_document_id=D.db_document_id "
                   "AND DS.word IN (%s) "
                   " %s "
                   "GROUP BY DS.db_document_id "
                   "HAVING count(DS.db_document_id) = %%s ")
-        query += order.sqlOrder()
+        query += sqlOrder(order, direction)
 	query = query % (', '.join(['%s'] * len(words)), restriction)
         # XXX SQL: how to specify only the OFFSET ???????
         if limit or offset:
@@ -327,8 +295,7 @@ class Document(DBEntity):
         print "Document selectContaining %s" % words
         if not words:
             return []
-        doc_order = DocumentOrder(order, direction)
-        query, params = cls._selectContainingQuery(words, doc_order,
+        query, params = cls._selectContainingQuery(words, order, direction,
                                                    mimetype=mimetype,
                                                    offset=offset,
                                                    limit=limit,
@@ -376,18 +343,6 @@ class Result(Document):
                   'host', 'port', 'login', 'record_ts')
     key = ('document_id', 'query_id')
     tableName = 'results'
-
-
-##     def _insertQuery(self):
-##         """generates an INSERT query according to object's state
-##            also update provider count on collisions on (queryId, document_id)"""
-##         values = ['%%(%s)s' % attr for attr in self.attributes
-##                   if hasattr(self, attr)]
-##         query = "INSERT INTO %s (%s) VALUES (%s) " % (self.tableName,
-##                                                       ', '.join(self.boundAttributes()),
-##                                                       ', '.join(values))
-##         query += "ON DUPLICATE KEY UPDATE providers=providers+1"
-##         return query
 
     def fromDocument(document, queryId, provider=None):
         stateDict = document.stateDict

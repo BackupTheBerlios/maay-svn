@@ -48,6 +48,7 @@ def parseWords(rawWords):
 
 class Query(object):
     restrictions = ('filetype', 'filename', 'searchtype')
+    
     def __init__(self, words, offset=0, filetype=None, filename=None,
                  order=None, direction=None):
         self.words = words # unicode string 
@@ -85,6 +86,32 @@ class Query(object):
 
     def joinwords(self, join):
         return join.join(self._words)
+
+    ###### Order & Direction accessors
+    def getorder(self):
+        return getattr(self, '_order', None)
+
+    def setorder(self, order):
+        orders = ('publication_time', 'relevance', 'popularity')
+        if order in orders:
+            self._order = order
+        else:
+            raise NotImplemented("order must be in %s" % orders)
+
+    order = property(getorder, setorder)
+
+    def getdirection(self):
+        return getattr(self, '_direction', None)
+
+    def setdirection(self, direction):
+        direction = direction.upper()
+        directions = ('ASC', 'DESC')
+        if direction in directions:
+            self._direction = direction
+        else:
+            raise NotImplemented("direction must be in %s" % directions)
+
+    direction = property(getdirection, setdirection)
 
     ###### Filetype accessors
     def getFiletype(self):
