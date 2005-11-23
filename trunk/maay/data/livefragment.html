@@ -3,19 +3,24 @@
 
 <div id="resultsDiv" xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
   <div class="message" nevow:render="title">Results <b><nevow:slot name="start_result" /></b> - <b><nevow:slot name="end_result" /></b> of <b><nevow:slot name="count" /></b> for <b><nevow:slot name="words" /></b>.</div>
-  <table>
-    <tr>
-      <td><b>Filter :</b></td>
-      <td><div class="localPublicResult"><a href="javascript: onlyLocalResults();">local result</a> (<span nevow:render="localcount" />)</div></td>
-      <td> - </td>
-      <td> <div class="distantResult"><a href="javascript: onlyDistantResults();">remote result</a>(<span nevow:render="distantcount" />)</div></td>
-      <td>-</td>
-      <td><a href="javascript: allResults();">all results </a>(<span nevow:render="totalcount" />)</td>
-    </tr>
-  </table>
-  <div class="sortBar">
-    Sort by: <a href="javascript: sortBy('relevance');">relevance</a> - <a href="javascript: sortBy('popularity');">popularity</a> - <a href="javascript: sortBy('publication_time');">publication date</a>
-  </div>
+    <table>
+      <tr>
+        <td><b>Filter :</b></td>
+        <td><div class="localPublicResult"><a href="javascript: onlyLocalResults();">local result</a> (<span nevow:render="localcount" />)</div></td>
+        <td> - </td>
+        <td> <div class="distantResult"><a href="javascript: onlyDistantResults();">remote result</a>(<span nevow:render="distantcount" />)</div></td>
+        <td>-</td>
+        <td><a href="javascript: allResults();">all results </a>(<span nevow:render="totalcount" />)</td>
+        <div class="sortBar">
+          <td> - <b> Sorted by: </b></td>
+          <td><a href="javascript: sortBy('relevance');"><div class="relevance"><span nevow:render="sort_rel" /></div></a></td>
+          <td> - </td>
+          <td><a href="javascript: sortBy('popularity');"><div class="popularity"><span nevow:render="sort_pop" /></div></a></td>
+          <td> - </td>
+          <td><a href="javascript: sortBy('publication_time');"><div class="publication"><span nevow:render="sort_pub" /></div></a></td>
+        </div>
+      </tr>
+    </table>
   <center>
   <nevow:invisible nevow:macro="prevnext" />
   </center>

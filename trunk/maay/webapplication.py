@@ -476,6 +476,21 @@ class ResultsPageMixIn:
         _, distantCount = self.querier.countResults(self.qid)
         return distantCount
 
+    def render_sort_rel(self, context, data):
+        if self.query.order == 'relevance':
+            return '[relevance]'
+        return 'relevance'
+    
+    def render_sort_pop(self, context, data):
+        if self.query.order == 'popularity':
+            return '[popularity]'
+        return 'popularity'
+        
+    def render_sort_pub(self, context, data):
+        if self.query.order == 'publication_time':
+            return '[publication time]'
+        return 'publication time'
+
     def render_totalcount(self, context, data):
         localCount, distantCount = self.querier.countResults(self.qid)
         return localCount + distantCount
