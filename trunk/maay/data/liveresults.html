@@ -39,6 +39,11 @@ function allResults() {
  var d = server.callRemote('unsetFlags');
  d.addCallback(updateResults);
 }
+
+function sortBy(sortCriteria) {
+ var d = server.callRemote('sortBy', sortCriteria);
+ d.addCallback(updateResults);
+}
     </script>
 
   </head>

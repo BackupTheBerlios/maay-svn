@@ -571,12 +571,14 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
             p2pQuery = P2pQuery(sender=webappConfig.get_node_id(),
                                 query=self.query)
             self.queryId = p2pQuery.qid
+            # XXX: attach queryId to query object. Will be handled cleanly
+            #      in a next release
+            self.query.queryId = self.queryId
             self.p2pQuery = p2pQuery
             # purge old results
             self.querier.purgeOldResults()
             self.querier.pushDocuments(self.queryId, results, provider=None)
-            self.results = self.querier.getQueryResults(self.queryId, offset=0)
-            # self.results = self.querier.getQueryResults(self.query)
+            self.results = self.querier.getQueryResults(self.query)
             
     # XXX (refactoring): provide a common base class for LivePages
     # Maay / py2exe / win32 related trick : we provide our own javascript
@@ -589,8 +591,7 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
     def onNewResults(self, provider, results):
         results = [Document(**params) for params in results]
         self.querier.pushDocuments(self.queryId, results, provider)
-        # results = self.querier.getQueryResults(self.query,
-        results = self.querier.getQueryResults(self.queryId, offset=self.query.offset,
+        results = self.querier.getQueryResults(self.query,
                                                onlyLocal=self.onlyLocal,
                                                onlyDistant=self.onlyDistant)
         page = PleaseCloseYourEyes(results, self.querier, self.query, self.queryId,
@@ -609,7 +610,7 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
     
     def remote_browseResults(self, context, offset):
         self.query.offset = offset
-        results = self.querier.getQueryResults(self.queryId, offset=offset,
+        results = self.querier.getQueryResults(self.query,
                                                onlyLocal=self.onlyLocal,
                                                onlyDistant=self.onlyDistant)
         page = PleaseCloseYourEyes(results, self.querier, self.query, self.queryId,
@@ -635,7 +636,12 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         self.query.offset = 0
         return self.remote_browseResults(context, self.query.offset)
     
+    def remote_sortBy(self, context, sortCriteria):
+        self.query.order = sortCriteria
+        # reset counter to 0
+        return self.remote_browseResults(context, 0)
 
+    
 class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     """This resource and the way it is called is kind of ugly.
     It will be refactored later. The idea is to have something working

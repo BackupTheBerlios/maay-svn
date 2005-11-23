@@ -241,7 +241,7 @@ class Document(DBEntity):
 
     def boundAttributes(self):
         """returns the list of attributes for which a value is specified"""
-        return [attr for attr in self.extended_attrs]
+        return [attr for attr in self.extended_attrs if hasattr(self, attr)]
 
     
     def readable_size(self):
@@ -379,27 +379,26 @@ class Result(Document):
         return Result(**stateDict)
     fromDocument = staticmethod(fromDocument)
 
-    def _selectQuery(cls, limit, offset, onlyLocal=False, onlyDistant=False, whereColumns=()):
-        if whereColumns:
-            wheres = ['%s=%%(%s)s' % (attr, attr) for attr in whereColumns]
-            where =  ' WHERE ' + ' AND '.join(wheres)
-        else:
-            where = ''
+    def _selectQuery(cls, query, onlyLocal=False, onlyDistant=False):
+        wheres = ['query_id=%(query_id)s']
         if onlyDistant:
-            where += " AND host != 'localhost' "
+            wheres.append("host != 'localhost'")
         elif onlyLocal:
-            where += " AND host = 'localhost' "
-        query = 'SELECT %s FROM %s%s GROUP BY document_id ' \
-                'HAVING record_ts=MIN(record_ts) ' \
-                'ORDER BY publication_time DESC LIMIT %s OFFSET %s' % (
-            ', '.join(cls.attributes),
-            cls.tableName,
-            where, limit, offset)
-        return query
+            wheres.append("host = 'localhost'")
+        sqlQuery = 'SELECT %s FROM %s WHERE %s GROUP BY document_id ' \
+            'HAVING record_ts=MIN(record_ts) ' \
+            'ORDER BY %s %s ' \
+            'LIMIT %s OFFSET %s' % (', '.join(cls.attributes),
+                                    cls.tableName,
+                                    ' AND '.join(wheres),
+                                    query.order, query.direction,
+                                    query.limit, query.offset,
+                                    )
+        return sqlQuery, {'query_id' : query.queryId}
     _selectQuery = classmethod(_selectQuery)
 
-    def selectWhere(cls, cursor, limit, offset, onlyLocal=False, onlyDistant=False, **args):
-        query = cls._selectQuery(limit, offset, onlyLocal, onlyDistant, args.keys())
+    def selectWhere(cls, cursor, query, onlyLocal=False, onlyDistant=False):
+        query, args = cls._selectQuery(query, onlyLocal, onlyDistant)
         cursor.execute(query, args)
         results = cursor.fetchall()
         return [cls(**dict(zip(cls.attributes, row))) for row in results]
