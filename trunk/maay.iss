@@ -6,7 +6,7 @@
 
 [Setup]
 AppName=Maay
-AppVerName=Maay-0.2.2
+AppVerName=Maay-0.2.4
 DefaultDirName={pf}\Maay
 DefaultGroupName=Maay
 UninstallDisplayIcon={app}\maay_node.exe
@@ -27,6 +27,7 @@ Name: "{userdesktop}\Maay Documents\downloaded";
 [Files]
 Source: "dist\*"; DestDir: "{app}"
 Source: "maay\data\*.css"; DestDir: "{app}\data"
+Source: "maay\data\*.js"; DestDir: "{app}\data"
 Source: "maay\data\*.html"; DestDir: "{app}\data"
 Source: "maay\data\images\*.gif"; DestDir: "{app}\data\images"
 Source: "maay\data\images\*.png"; DestDir: "{app}\data\images"
@@ -43,7 +44,7 @@ Source: "thirdparty\pdftohtml-0.36\*"; DestDir: "{app}\pdftohtml" ; Flags: recur
 Source: "maay\configuration\win32\*.ini"; DestDir: "{app}"
 Source: "maay\configuration\win32\Maay.url"; DestDir: "{app}"
 Source: "maay\configuration\win32\Maay.url"; DestDir: "{userdesktop}"
-Source: "maay\configuration\win32\Maay.url"; DestDir: "{userstartmenu}\Programs\Maay\"
+Source: "maay\configuration\win32\Maay.url"; DestDir: "{group}"
 Source: "doc\README.html"; DestDir: "{app}\documentation"
 Source: "doc\default.css"; DestDir: "{app}\documentation"
 Source: "ChangeLog"; DestDir: "{app}"
