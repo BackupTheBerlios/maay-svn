@@ -580,8 +580,6 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
             p2pQuery = P2pQuery(sender=webappConfig.get_node_id(),
                                 query=self.query)
             self.qid = p2pQuery.qid
-            # XXX: attach queryId to query object. Will be handled cleanly
-            #      in a next release
             self.p2pQuery = p2pQuery
             # purge old results
             self.querier.purgeOldResults()

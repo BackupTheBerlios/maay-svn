@@ -378,11 +378,16 @@ class Result(Document):
     fromDocument = staticmethod(fromDocument)
 
     def _selectQuery(cls, query, onlyLocal=False, onlyDistant=False):
+        limit = query.limit or 15
         wheres = ['query_id=%(query_id)s']
         if onlyDistant:
             wheres.append("host != 'localhost'")
         elif onlyLocal:
             wheres.append("host = 'localhost'")
+        if query.order == 'publication_time':
+            orderClause = 'publication_time, relevance'
+        else:
+            orderClause = '%s, publication_time' % (query.order,)
         sqlQuery = 'SELECT %s FROM %s WHERE %s GROUP BY document_id ' \
             'HAVING record_ts=MIN(record_ts) ' \
             'ORDER BY %s %s ' \
