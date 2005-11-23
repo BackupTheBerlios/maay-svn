@@ -149,23 +149,19 @@ class DocumentOrder:
               'score_relevance'  : 2,
               'score_popularity' : 3}
 
-    def __init__(self, order='publication_time', direction='down'):
+    def __init__(self, order='publication_time', direction='DESC'):
         """:param order: see class dict above
-           :param direction: 'up' or 'down'
+           :param direction: 'ASC' or 'DESC'
         """
         if order in DocumentOrder.orders:
             self.order = DocumentOrder.orders[order]
         else:
             raise NotImplemented("Document ordering %s is unkown" %
                                  order)
-        if direction in ('up', 'down'):
-            if direction == 'up':
-                self.direction = "ASC"
-            else:
-                self.direction = "DESC"
-        else:
-            raise NotImplemented("Document direction %s is unkown" %
-                                 direction)
+        direction = direction.upper()
+        assert direction in ('ASC', 'DESC'), "Document direction %s is unkown" \
+            % direction
+        self.direction = direction
 
     def sqlOrder(self):
         if self.order == 1:
@@ -327,7 +323,7 @@ class Document(DBEntity):
 
     def selectContaining(cls, cursor, words, mimetype=None, offset=0,
                          limit=None, allowPrivate=False, order='publication_time',
-			 direction='down'):
+			 direction='DESC'):
         print "Document selectContaining %s" % words
         if not words:
             return []

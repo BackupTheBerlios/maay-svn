@@ -58,7 +58,7 @@ class Query(object):
         #FIXME: ugly stuff below, related to result
         #       presentation in the browser
         self.order = order or 'publication_time'
-        self.direction = direction or 'down'
+        self.direction = direction or 'DESC'
 
     def fromRawQuery(rawQuery, offset=0):
         """:type rawQuery: str"""
