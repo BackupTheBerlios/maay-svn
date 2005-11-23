@@ -32,6 +32,13 @@ table.loginTable {
 }
 
 /** search page *******/
+
+div.newReleaseMessage {
+  width: 100%;
+  color: red;
+  text-align: center;
+}
+
 div.homemessage {
   font-size: 120%;
   color: orange;
