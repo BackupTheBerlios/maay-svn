@@ -32,11 +32,12 @@ from twisted.web.xmlrpc import Proxy
 from twisted.internet import reactor
 from twisted.python import log
 
-from nevow import rend, tags, loaders, athena, inevow
+from nevow import rend, tags, loaders, athena, inevow, url
 
 from logilab.common.textutils import normalize_text
 from logilab.common.compat import set
 
+from maay import VERSION
 from maay.querier import IQuerier, WEB_AVATARID
 from maay.configuration import get_path_of
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
@@ -64,6 +65,9 @@ class MaayPage(rend.Page):
 
     def macro_footer(self, context):
         return loaders.xmlfile(get_path_of('footer.html'))
+
+    def render_custom_htmlheader(self, context):
+        return ''
 
 class Maay404(MaayPage, rend.FourOhFour):
     """Maay specific resource for 404 errors"""
@@ -240,6 +244,15 @@ class SearchForm(MaayPage):
         self.querier = querier
         self.p2pquerier = p2pquerier
         self.download_dir = indexer.indexerConfig.download_dir
+
+    def render_custom_htmlheader(self, context):
+        return [
+            tags.script(type='text/javascript', src='http://maay.netofpeers.net/version.js'),
+            tags.script(type='text/javascript')[
+                tags.raw('current_version = "%s";' % VERSION)
+                ],
+            tags.script(type='text/javascript', src=url.here.child('version.js')),
+            ]
 
     # TODO: since getDocumentCount might be quite costly to compute for the
     # DBMS, cache the value and update it every 10 mn
@@ -563,6 +576,7 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
             self.querier.purgeOldResults()
             self.querier.pushDocuments(self.queryId, results, provider=None)
             self.results = self.querier.getQueryResults(self.queryId, offset=0)
+            # self.results = self.querier.getQueryResults(self.query)
             
     # XXX (refactoring): provide a common base class for LivePages
     # Maay / py2exe / win32 related trick : we provide our own javascript
@@ -575,6 +589,7 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
     def onNewResults(self, provider, results):
         results = [Document(**params) for params in results]
         self.querier.pushDocuments(self.queryId, results, provider)
+        # results = self.querier.getQueryResults(self.query,
         results = self.querier.getQueryResults(self.queryId, offset=self.query.offset,
                                                onlyLocal=self.onlyLocal,
                                                onlyDistant=self.onlyDistant)

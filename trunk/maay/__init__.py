@@ -19,5 +19,5 @@
 """MAAY project
 """
 
-
+VERSION = '0.2.4'
 __revision__ = '$Id$'

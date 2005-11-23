@@ -86,6 +86,11 @@ div.distantResult {
   border-left-color: #ff0000;
 }
 
+div.message {
+  text-align: right;
+  background: #e5ecf9;
+  border-top: 1px solid blue;
+}
 
 div.resultDesc {
   /* display: block; */
