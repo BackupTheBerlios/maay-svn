@@ -196,7 +196,6 @@ class IndexationPageFactory(athena.LivePageFactory):
     
     def newDocumentIndexed(self, filename, state):
         self.indexedDocuments += 1
-        print "newDocument indexed", filename, state
         if state == Document.PRIVATE_STATE:
             self.privateDocuments += 1
         else:
@@ -370,8 +369,8 @@ class SearchForm(MaayPage):
         docid = context.arg('docid')
         if not host or not port or not docid:
             return Maay404()
-        self.proivderSet = set()
         proxy = Proxy('http://%s:%s' % (host, port))
+        print "[webapp] trying to donwload %r from %s:%s" % (filename, host, port)
         d = proxy.callRemote('downloadFile', docid, words)
         d.addCallback(self.gotDataBack, filename)
         d.addErrback(self.tryOtherProviders, filename, words, host,
@@ -394,12 +393,14 @@ class SearchForm(MaayPage):
     def tryOtherProviders(self, error, filename, words, host, port, docId, queryId):
         """starts to explore the list of other providers"""
         providers = self.querier.getProvidersFor(docId, queryId)
-        self.providerSet.remove((host, port))
-        return self.retryWithOtherProvider(words, docId, filename)
+        self.providerSet = set(providers)
+        self.providerSet.remove((host, int(port)))
+        return self.retryWithOtherProvider('...', words, docId, filename)
     
-    def retryWithOtherProvider(self, words, docId, filename):
+    def retryWithOtherProvider(self, error, words, docId, filename):
         if self.providerSet:
             nextHost, nextPort = self.providerSet.pop()
+            print "[webapp] trying to donwload %r from %s:%s" % (filename, nextHost, nextPort)
             proxy = Proxy('http://%s:%s' % (nextHost, nextPort))
             d = proxy.callRemote('downloadFile', docId, words)
             d.addCallback(self.gotDataBack, filename)

@@ -363,8 +363,8 @@ class AnonymousQuerier:
         (we don't want 'old' providers to appear in the list)
         """
         cursor = self._cnx.cursor()
-        query = 'SELECT host, port FROM results WHERE query_id=%(queryId) ' \
-                'AND document_id=%(docId)'
+        query = 'SELECT host, port FROM results WHERE query_id=%(queryId)s ' \
+                'AND document_id=%(docId)s'
         cursor.execute(query, locals())
         providers = cursor.fetchall()
         cursor.close()
