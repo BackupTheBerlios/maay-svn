@@ -3,20 +3,27 @@
 #     Copyright (C) 2005 France Telecom R&D
 #
 #     This library is free software; you can redistribute it and/or
-#     modify it under the terms of the GNU Lesser General Public
+#     modify it under the terms of the GNU General Public
 #     License as published by the Free Software Foundation; either
 #     version 2.1 of the License, or (at your option) any later version.
 #
 #     This library is distributed in the hope that it will be useful,
 #     but WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#     Lesser General Public License for more details.
+#     General Public License for more details.
 #
-#     You should have received a copy of the GNU Lesser General Public
+#     You should have received a copy of the GNU General Public
 #     License along with this library; if not, write to the Free Software
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 __revision__ = '$Id$'
+
+import sha
+import time
+
+from maay.nodeconfig import nodeConfig
+
+NODE_ID = nodeConfig.get_node_id()
 
 def normalizeMimetype(fileExtension):
     import mimetypes
@@ -46,11 +53,18 @@ def parseWords(rawWords):
                 words.append(word)
     return words, restrictions
 
+def hashIt(item, random_id):
+    hasher = sha.sha()
+    hasher.update('%s' % id(item))
+    hasher.update('%s' % time.time())
+    return hasher.hexdigest()
+
 class Query(object):
     restrictions = ('filetype', 'filename', 'searchtype')
     
     def __init__(self, words, offset=0, filetype=None, filename=None,
-                 order=None, direction=None):
+                 order=None, direction=None, qid=None):
+        self.qid = qid or hashIt(NODE_ID, self)
         self.words = words # unicode string 
         self.offset = offset
         self.filetype = filetype

@@ -33,24 +33,16 @@ from logilab.common.compat import set
 from twisted.web.xmlrpc import Proxy
 from twisted.internet import reactor
 from maay.texttool import makeAbstract, removeSpace, untagText
-from maay.configuration import NodeConfiguration
+from maay.nodeconfig import nodeConfig
 from maay.query import Query
 from maay.localinfo import NODE_LOGIN, NODE_HOST
 
-nodeConfig=NodeConfiguration()
-nodeConfig.load() #FIXME : load from file would be better
+nodeConfig.load()
 
 NODE_PORT = nodeConfig.rpcserver_port
 NODE_ID = nodeConfig.get_node_id()
 
 QUERIER = None
-
-def hashIt(item, uname=''.join(platform.uname())):
-    hasher = sha.sha()
-    hasher.update(uname)
-    hasher.update('%s' % id(item))
-    hasher.update('%s' % time.time())
-    return hasher.hexdigest()
 
 class QueryVersionMismatch(Exception):
     """we beginning a versionning nightmare trip on queries
@@ -73,7 +65,7 @@ class P2pQuery:
     _version = 3
     
     def __init__(self, sender, query, ttl=5,
-                 qid=None, client_host=None, client_port=None):
+                 client_host=None, client_port=None):
         """
         :param sender: really a nodeId
         :type sender: str
@@ -84,10 +76,6 @@ class P2pQuery:
         :param qid: query identifier
         :type qid: str
         """
-        if qid:
-            self.qid = qid
-        else:
-            self.qid = hashIt(sender)
         self.sender = sender
         #self.port = originator_port
         self.ttl = ttl
@@ -100,6 +88,18 @@ class P2pQuery:
         # *** but NOT at rpc level, where we MUST use the transmited values
         self.client_host = client_host or NODE_HOST
         self.client_port = client_port or NODE_PORT
+
+    #### qid accessors
+
+    def setqid(self, qid):
+        raise NotImplemented
+
+    def getqid(self):
+        return self.query.qid
+
+    qid = property(getqid, setqid)
+
+    #### other stuff
         
     def hop(self):
         self.ttl -= 1
@@ -109,6 +109,8 @@ class P2pQuery:
 
     def isKnown(self, document):
         return document['document_id'] in self.documents_ids
+
+    #### serialization 
  
     def asKwargs(self):
         """return a dictionnary of arguments suitable for use as a
@@ -134,9 +136,10 @@ class P2pQuery:
             print "(we don't understand queries version %s)" % dic['version']
             raise QueryVersionMismatch(query_version=dic['version'],
                                        local_version=P2pQuery._version)
-        _query = Query(' '.join(dic['words']), filetype=dic['mime_type'])
-        p2pquery = P2pQuery(qid=dic['qid'],
-                            sender=dic['sender'],
+        _query = Query(' '.join(dic['words']),
+                       filetype=dic['mime_type'],
+                       qid=dic['qid'])
+        p2pquery = P2pQuery(sender=dic['sender'],
                             client_host=dic['client_host'],
                             client_port=dic['client_port'],
                             ttl=dic['ttl'],
@@ -154,11 +157,11 @@ def compatible(localversion, distantversion):
     return True
 
 class P2pAnswer:
-    def __init__(self, queryId, provider, documents):
+    def __init__(self, qid, provider, documents):
         """
         :type provider: 4-tuple (login, nodeID, IP, xmlrpc-port)
         """
-        self.queryId = queryId
+        self.qid = qid
         self.provider = provider
         self.documents = documents
 
@@ -178,11 +181,10 @@ class P2pQuerier:
     """
     _EXPIRATION_TIME = 10 # secs, this is a min default guard value
     _markedQueries = {}
-    _receivedQueries = {} # key : queryId, val : query
+    _receivedQueries = {} # key : qid, val : query
     _sentQueries = {}
 
-    def __init__(self, nodeId, querier):
-        self.nodeId = nodeId  
+    def __init__(self, querier):
         self.querier = querier
         global QUERIER
         QUERIER = querier # yes, a global
@@ -226,13 +228,14 @@ class P2pQuerier:
 
     ######### Callback ops (who to feed the results of a query)
 
-    def addAnswerCallback(self, queryId, callback):
+    def addAnswerCallback(self, qid, callback):
         #print "P2pQuerier : registering callback (%s, %s) for results" \
-        #      % (queryId, callback)
-        self._answerCallbacks.setdefault(queryId, []).append(callback)
+        #      % (qid, callback)
+        self._answerCallbacks.setdefault(qid, []).append(callback)
 
-    def _notifyAnswerCallbacks(self, queryId, provider, results):
-        for cb in self._answerCallbacks.get(queryId, []):
+    def _notifyAnswerCallbacks(self, qid, provider, results):
+        #print "P2pQuerier : we notify the callbacks"
+        for cb in self._answerCallbacks.get(qid, []):
             cb(provider, results)
 
     ######### True p2p ops (send, receive, answer ...)
@@ -274,7 +277,9 @@ class P2pQuerier:
         query.hop()        
         if query.ttl > 0:
             self.sendQuery(query)
+
         documents = self.querier.findDocuments(query.query)
+
         if len(documents) == 0:
             print " ... no document matching the query, won't answer."
             return
@@ -291,30 +296,17 @@ class P2pQuerier:
             
         self.relayAnswer(P2pAnswer(query.qid, provider, documents))
 
-    def relayAnswer(self, answer, local=False): # local still unused
-        """record and forward answers to a query.
-        If local is True, then the answers come from a local query,
-        and thus must not be recorded in the database"""
+    def relayAnswer(self, answer): 
+        """record and forward answers to a query."""
         print "P2pQuerier relayAnswer : %s document(s) from %s:%s" \
-              % (len(answer.documents),
-                 answer.provider[1],
+              % (len(answer.documents), answer.provider[1],
                  answer.provider[2])
-        query = self._receivedQueries.get(answer.queryId)
+        query = self._receivedQueries.get(answer.qid)
         if not query :
-            query = self._sentQueries.get(answer.queryId)
-            if query:
-                print " ... originator : we got an answer !"
-            else:
+            query = self._sentQueries.get(answer.qid)
+            if not query:
                 print " ... bug or dos : we had no query for this answer"
                 return
-
-            try:
-                self.querier.registerNode(answer.provider[1],
-                                          answer.provider[2],
-                                          answer.provider[3])
-            except:
-                print "  ... version mismatch with %s:%s" \
-                      % (answer.provider[1], answer.provider[2])
                 
         toSend = []
         for document in answer.documents:
@@ -323,43 +315,47 @@ class P2pQuerier:
                 if 'url' in document:
                     document['url'] = os.path.basename(document['url'])
             # TODO: record answer in database if local is False
-            # auc : to cache them ?
+            # auc : to have them in Document with state == KNOWN
             if not query.isKnown(document):
                 abstract = makeAbstract(document['text'], query.getWords())
                 document['text'] = untagText(removeSpace(abstract))
                 query.addMatch(document)
                 toSend.append(document)
-        
-        if query.sender != self.nodeId:
+            else:
+                print "we already know this doc !!!@~^#{"
+
+        if query.sender != NODE_ID:
+            self.querier.registerNodeActivity(answer.provider[1])
             (host, port) = (query.client_host, query.client_port)
             print " ... relaying Answer to %s:%s ..." % (host, port)
             senderUrl = 'http://%s:%s' % (host, port)
             proxy = Proxy(senderUrl)
             d = proxy.callRemote('distributedQueryAnswer',
                                  query.qid,
-                                 self.nodeId,
+                                 NODE_ID,
                                  answer.provider,
                                  toSend) 
             d.addErrback(answerQueryErrback(query))
-        else: 
-            self._notifyAnswerCallbacks(answer.queryId, answer.provider, toSend)
+        else:
+            print " ... originator : we got an answer !"
+            self._notifyAnswerCallbacks(answer.qid, answer.provider, toSend)
     
     def _selectTargetNeighbors(self, query):
         """return a list of nodes to which the query will be sent.
         """
         nbNodes = 2**(max(5, query.ttl))
         # TODO: use the neighbors' profiles to route requests
-        return self.querier.getActiveNeighbors(self.nodeId, nbNodes)
+        return self.querier.getActiveNeighbors(NODE_ID, nbNodes)
         
 
 ##### Custommized errbacks for send/answer ops
 
 def sendQueryErrback(target, querier):
+    """Politely displays any problem (bug, unavailability) related
+       to an attempt to send a query.
+    """
     ':type target: Node'
     def QP(failure):
-        """Politely displays any problem (bug, unavailability) related
-        to an attempt to send a query.
-        """
         print " ... problem sending the query to %s:%s, trace = %s" \
               % (target.ip, target.port, failure.getTraceback())
         registerSleeping(target)
@@ -368,6 +364,9 @@ def sendQueryErrback(target, querier):
 
 
 def answerQueryErrback(target):
+    """Politely displays any problem (bug, unavailability) related
+       to an attempt to answer a query.
+    """
     ':type target: P2pQuery'
     def AP(failure):
         print " ... problem answering the query to %s:%s, trace = %s" \
@@ -418,7 +417,7 @@ def backgroundProbe(node, stamp):
     PROBE_COUNT += PROBE_COUNT
     if nodeSleeps(node.ip, node.port):
         # we reschedule it
-        if not PROBE_COUNT % 30:
+        if not PROBE_COUNT % 250:
             print "backgroundProbe node at %s:%s was still sleeping" \
                   % (node.ip, node.port)
         now = time.time()

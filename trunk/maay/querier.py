@@ -333,13 +333,13 @@ class AnonymousQuerier:
         cursor.close()
         return nodes
 
-    def countResults(self, queryId):
+    def countResults(self, qid):
         """returns a couple (number of local results, number of distant results)
-        for <queryId>
+        for <qid>
         """
         cursor = self._cnx.cursor()
-        localCountQuery = "SELECT COUNT(*) from results WHERE query_id='%s' AND host='localhost';" % (queryId,)
-        distantCountQuery = "SELECT COUNT(*) from results WHERE query_id='%s' AND host!='localhost';" % (queryId,)
+        localCountQuery = "SELECT COUNT(*) from results WHERE query_id='%s' AND host='localhost';" % (qid,)
+        distantCountQuery = "SELECT COUNT(*) from results WHERE query_id='%s' AND host!='localhost';" % (qid,)
         cursor.execute(localCountQuery)
         localCount = cursor.fetchall()[0][0]
         cursor.execute(distantCountQuery)
@@ -349,36 +349,36 @@ class AnonymousQuerier:
     
     def getQueryResults(self, query, onlyLocal=False, onlyDistant=False):
         """builds and returns Result' instances by searching in
-        the temporary table built for <queryId>
+        the temporary table built for <qid>
         """
         cursor = self._cnx.cursor()
         results = Result.selectWhere(cursor, query, onlyLocal, onlyDistant)
         cursor.close()
         return results
 
-    def getProvidersFor(self, docId, queryId):
+    def getProvidersFor(self, docId, qid):
         """returns a list of couples (ip, port) corresponding to
         each node that can provide the document.
-        queryId is needed only to avoid small conflicts with previous
+        qid is needed only to avoid small conflicts with previous
         queries that returned the same documents
         (we don't want 'old' providers to appear in the list)
         """
         cursor = self._cnx.cursor()
-        query = 'SELECT host, port FROM results WHERE query_id=%(queryId)s ' \
+        query = 'SELECT host, port FROM results WHERE query_id=%(qid)s ' \
                 'AND document_id=%(docId)s'
         cursor.execute(query, locals())
         providers = cursor.fetchall()
         cursor.close()
         return providers
         
-    def pushDocuments(self, queryId, documents, provider=None):
+    def pushDocuments(self, qid, documents, provider=None):
         """push <documents> into the temporary table built for
-        <queryId>
+        <qid>
         """
         cursor = self._cnx.cursor()
         try:
             for document in documents:
-                res = Result.fromDocument(document, queryId, provider)
+                res = Result.fromDocument(document, qid, provider)
                 res.commit(cursor, update=False)
             cursor.close()
             self._cnx.commit()

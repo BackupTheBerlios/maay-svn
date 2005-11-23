@@ -360,7 +360,7 @@ class Result(Document):
     key = ('document_id', 'query_id')
     tableName = 'results'
 
-    def fromDocument(document, queryId, provider=None):
+    def fromDocument(document, qid, provider=None):
         stateDict = document.__dict__ # document.stateDict is wrong
         for key, value in stateDict.items():
             if key not in Result.attributes or value is None:
@@ -372,7 +372,7 @@ class Result(Document):
             stateDict['port'] = 0
             stateDict['node_id'] = NODE_ID # local node id
             stateDict['login'] = NODE_LOGIN
-        stateDict['query_id'] = queryId
+        stateDict['query_id'] = qid
         stateDict['record_ts'] = time.time()
         return Result(**stateDict)
     fromDocument = staticmethod(fromDocument)
@@ -392,7 +392,7 @@ class Result(Document):
                                     query.order, query.direction,
                                     query.limit, query.offset,
                                     )
-        return sqlQuery, {'query_id' : query.queryId}
+        return sqlQuery, {'query_id' : query.qid}
     _selectQuery = classmethod(_selectQuery)
 
     def selectWhere(cls, cursor, query, onlyLocal=False, onlyDistant=False):

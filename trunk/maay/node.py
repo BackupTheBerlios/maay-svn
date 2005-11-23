@@ -24,9 +24,7 @@ an xmlrpc server for the indexer and distributed queries.
 
 __revision__ = '$Id$'
 
-from maay.configuration import NodeConfiguration
-nodeConfig = NodeConfiguration()
-nodeConfig.load()
+from maay.nodeconfig import nodeConfig
 
 import platform
 import sha
@@ -66,6 +64,10 @@ from maay.webapplication import Maay404, INodeConfiguration, SearchForm
 
 
 ## nevow app/server setup ############################################
+
+NODE_HOST = socket.gethostbyname(socket.gethostname())
+NODE_PORT = nodeConfig.rpcserver_port
+
 
 # MaayMindFactory might be helpful to access request informations
 # in portal. (not sure it's really aimed to be used this way :-)
@@ -155,8 +157,8 @@ class MaayPortal(object, portal.Portal):
         else:
             realm.createUserSession(WEB_AVATARID, webQuerier)
             webQuerier.registerNode(self.config.get_node_id(),
-                                    ip=socket.gethostbyname(socket.gethostname()),
-                                    port=nodeConfig.rpcserver_port,
+                                    ip=NODE_HOST,
+                                    port=NODE_PORT,
                                     bandwidth=nodeConfig.bandwidth)
         self.webQuerier = webQuerier
         self.anonymousQuerier = AnonymousQuerier(host=nodeConfig.db_host,
@@ -264,8 +266,7 @@ def run():
                           nodeConfig.rpcserver_port,
                           nodeConfig.bandwidth)
     
-    rpcserver = server.Site(MaayRPCServer(nodeConfig.get_node_id(),
-                                          maayPortal))
+    rpcserver = server.Site(MaayRPCServer(maayPortal))
     reactor.listenTCP(nodeConfig.webserver_port, website)
     reactor.listenTCP(nodeConfig.rpcserver_port, rpcserver)
     try:

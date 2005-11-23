@@ -39,6 +39,10 @@ from maay.querier import IQuerier, ANONYMOUS_AVATARID, WEB_AVATARID
 from maay.dbentity import FutureDocument, Document
 from maay.p2pquerier import P2pQuerier, P2pQuery, P2pAnswer
 from maay.query import Query
+from maay.nodeconfig import nodeConfig
+
+NODE_ID = nodeConfig.get_node_id()
+
 
 def make_uid(username, password):
     """forge a unique identifier"""
@@ -53,19 +57,16 @@ class MaayRPCServer(XMLRPC):
     #     access from webapplication (who can't see the instance)
     theP2pQuerier = None
 
-    def __init__(self, nodeId, portal):
+    def __init__(self, portal):
         XMLRPC.__init__(self)
-        print "MaayRPCServer init %s %s" % (nodeId, portal)
-        #FIXME : is the nodeId param still necessary ?
-        #assert nodeId == portal.config.get_node_id ()
+        print "MaayRPCServer init %s" % (portal)
         self._sessions = {}
         self.portal = portal
         self.nodeId = portal.config.get_node_id() 
         self._sessions[WEB_AVATARID] = portal.webQuerier 
         self._sessions[ANONYMOUS_AVATARID] = portal.anonymousQuerier
         self._lastClient = None
-        #self._p2pQuerier = P2pQuerier(nodeId, portal.webQuerier)
-        MaayRPCServer.theP2pQuerier = P2pQuerier(nodeId, portal.anonymousQuerier)
+        MaayRPCServer.theP2pQuerier = P2pQuerier(portal.anonymousQuerier)
 
     def render(self, request):
         #XXX: check the correctness of this stuff
@@ -181,10 +182,10 @@ class MaayRPCServer(XMLRPC):
         reactor.callLater(.01, getP2pQuerier().receiveQuery, query)
         return self.nodeId
 
-    def xmlrpc_distributedQueryAnswer(self, queryId, senderId, provider, documents):
-        #print "MaayRPCServer distributedQueryAnswer : %s document(s) fom %s" % \
-        #      (len(documents), provider)
-        answer = P2pAnswer(queryId, provider, documents)
+    def xmlrpc_distributedQueryAnswer(self, qid, senderId, provider, documents):
+        print "MaayRPCServer distributedQueryAnswer : %s document(s) fom %s" % \
+              (len(documents), provider)
+        answer = P2pAnswer(qid, provider, documents)
         reactor.callLater(.01, getP2pQuerier().relayAnswer, answer)
         return self.nodeId
 

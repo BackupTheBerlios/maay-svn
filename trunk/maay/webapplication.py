@@ -41,7 +41,7 @@ from maay import VERSION
 from maay.querier import IQuerier, WEB_AVATARID
 from maay.configuration import get_path_of
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
-from maay.query import Query
+from maay.query import Query, parseWords
 from maay.p2pquerier import P2pQuerier, P2pQuery
 from maay.dbentity import ScoredDocument, Document
 from maay import indexer 
@@ -368,8 +368,9 @@ class SearchForm(MaayPage):
     def child_download(self, context):
         """download *local* file"""
         docid = context.arg('docid')
-        query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'))
-        docurl = self.querier.notifyDownload(docid, query.words)
+        words = parseWords(context.arg('words'))
+        #query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'))
+        docurl = self.querier.notifyDownload(docid, words)
         if docurl:
             if osp.isfile(docurl):
                 return static.File(docurl)
@@ -384,7 +385,7 @@ class SearchForm(MaayPage):
         """download distant file and put it in a public indexable directory"""
         host = context.arg('host')
         port = context.arg('port')
-        queryId = context.arg('qid')
+        qid = context.arg('qid')
         words = context.arg('words').split()
         filename = context.arg('filename')
         docid = context.arg('docid')
@@ -395,7 +396,7 @@ class SearchForm(MaayPage):
         d = proxy.callRemote('downloadFile', docid, words)
         d.addCallback(self.gotDataBack, filename)
         d.addErrback(self.tryOtherProviders, filename, words, host,
-                     port, docid, queryId)
+                     port, docid, qid)
         return d
 
     def gotDataBack(self, rpcFriendlyData, filename):
@@ -411,9 +412,9 @@ class SearchForm(MaayPage):
         msg = "Error while downloading file: %s" % (filename,)
         return Maay404(msg)
 
-    def tryOtherProviders(self, error, filename, words, host, port, docId, queryId):
+    def tryOtherProviders(self, error, filename, words, host, port, docId, qid):
         """starts to explore the list of other providers"""
-        providers = self.querier.getProvidersFor(docId, queryId)
+        providers = self.querier.getProvidersFor(docId, qid)
         self.providerSet = set(providers)
         self.providerSet.remove((host, int(port)))
         return self.retryWithOtherProvider('...', words, docId, filename)
@@ -451,7 +452,7 @@ class ResultsPageMixIn:
         return loaders.xmlfile(get_path_of('livefragment.html'))
     
     def render_title(self, context, data):
-        localCount, distantCount = self.querier.countResults(self.queryId)
+        localCount, distantCount = self.querier.countResults(self.qid)
         if self.onlyDistant:
             resultsCount = distantCount
         elif self.onlyLocal:
@@ -466,15 +467,15 @@ class ResultsPageMixIn:
         return context.tag
 
     def render_localcount(self, context, data):
-        localCount, _ = self.querier.countResults(self.queryId)
+        localCount, _ = self.querier.countResults(self.qid)
         return localCount
 
     def render_distantcount(self, context, data):
-        _, distantCount = self.querier.countResults(self.queryId)
+        _, distantCount = self.querier.countResults(self.qid)
         return distantCount
 
     def render_totalcount(self, context, data):
-        localCount, distantCount = self.querier.countResults(self.queryId)
+        localCount, distantCount = self.querier.countResults(self.qid)
         return localCount + distantCount
 
     def render_searchfield(self, context, data):
@@ -483,7 +484,7 @@ class ResultsPageMixIn:
 
     def render_next(self, context, data):
         """computes 'Next' link"""
-        localCount, distantCount = self.querier.countResults(self.queryId)
+        localCount, distantCount = self.querier.countResults(self.qid)
         if self.onlyDistant:
             resultsCount = distantCount
         elif self.onlyLocal:
@@ -541,7 +542,7 @@ class ResultsPageMixIn:
             baseurl += '&port=%s' % (document.port,)
         baseurl += '&filename=%s' % osp.basename(document.url)
         baseurl += '&words=%s' % '+'.join(self.query.words)
-        baseurl += '&qid=%s' % (self.queryId,)
+        baseurl += '&qid=%s' % (self.qid,)
         context.fillSlots('url', baseurl)
         context.fillSlots('relevance', document.relevance)
         context.fillSlots('popularity', document.popularity)
@@ -577,14 +578,13 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
             webappConfig = INodeConfiguration(context)
             p2pQuery = P2pQuery(sender=webappConfig.get_node_id(),
                                 query=self.query)
-            self.queryId = p2pQuery.qid
+            self.qid = p2pQuery.qid
             # XXX: attach queryId to query object. Will be handled cleanly
             #      in a next release
-            self.query.queryId = self.queryId
             self.p2pQuery = p2pQuery
             # purge old results
             self.querier.purgeOldResults()
-            self.querier.pushDocuments(self.queryId, results, provider=None)
+            self.querier.pushDocuments(self.qid, results, provider=None)
             self.results = self.querier.getQueryResults(self.query)
             
     # XXX (refactoring): provide a common base class for LivePages
@@ -597,11 +597,11 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         
     def onNewResults(self, provider, results):
         results = [ScoredDocument(**params) for params in results]
-        self.querier.pushDocuments(self.queryId, results, provider)
+        self.querier.pushDocuments(self.qid, results, provider)
         results = self.querier.getQueryResults(self.query,
                                                onlyLocal=self.onlyLocal,
                                                onlyDistant=self.onlyDistant)
-        page = PleaseCloseYourEyes(results, self.querier, self.query, self.queryId,
+        page = PleaseCloseYourEyes(results, self.querier, self.query, self.qid,
                                    self.onlyLocal, self.onlyDistant).renderSynchronously()
         page = unicode(page, 'utf-8')
         self.callRemote('updateResults', page)
@@ -620,7 +620,7 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         results = self.querier.getQueryResults(self.query,
                                                onlyLocal=self.onlyLocal,
                                                onlyDistant=self.onlyDistant)
-        page = PleaseCloseYourEyes(results, self.querier, self.query, self.queryId,
+        page = PleaseCloseYourEyes(results, self.querier, self.query, self.qid,
                                    self.onlyLocal, self.onlyDistant).renderSynchronously()
         page = unicode(page, 'utf-8')
         return page
@@ -656,12 +656,12 @@ class PleaseCloseYourEyes(rend.Page, ResultsPageMixIn):
     """
     docFactory = loaders.xmlfile(get_path_of('livefragment.html'))
     
-    def __init__(self, results, querier, query, queryId,
+    def __init__(self, results, querier, query, qid,
                  onlyLocal=False, onlyDistant=False):
         self.results = results
         self.querier = querier
         self.query = query
-        self.queryId = queryId
+        self.qid = qid
         self.onlyLocal = onlyLocal
         self.onlyDistant = onlyDistant
 

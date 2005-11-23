@@ -26,9 +26,9 @@ TODO: analyse the God class into something understandable
 __revision__ = '$Id$'
 
 from maay.configuration import IndexerConfiguration
+
 indexerConfig = IndexerConfiguration()
 indexerConfig.load()
-
 
 import os
 import sys
