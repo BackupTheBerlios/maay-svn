@@ -405,7 +405,7 @@ def answerQueryErrback(target):
 ##                                          +------(sleeping nodes ?)-----+
 
 SLEEPING_NODES = {}
-CHECK_DELAY = 15 # time in secs before we probe the oldest sleeping node
+CHECK_DELAY = 20 # time in secs before we probe the oldest sleeping node
 
 
 def registerSleeping(node):
@@ -451,13 +451,18 @@ def backgroundProbe(node, stamp):
     if len(SLEEPING_NODES) > 0:
         reactor.callLater(abs(CHECK_DELAY - right_now + now), checkOldest)
 
-socket.setdefaulttimeout(3)
+
 def nodeSleeps(node_ip, node_port):
+    socket.setdefaulttimeout(5)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        s.connect((node_ip, node_port))
-        s.close()
-    except socket.error, exc:
-        return True 
-    else:
-        return False
+        try:
+            s.connect((node_ip, node_port))
+            s.close()
+        except socket.error, exc:
+            return True 
+        else:
+            return False
+    finally:
+        socket.setdefaulttimeout(30)
+
