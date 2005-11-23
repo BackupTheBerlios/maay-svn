@@ -393,7 +393,7 @@ class SearchForm(MaayPage):
         docid = context.arg('docid')
         if not host or not port or not docid:
             return Maay404()
-        proxy = Proxy('http://%s:%s' % (host, port))
+        proxy = Proxy(str('http://%s:%s' % (host, port)))
         print "[webapp] trying to donwload %r from %s:%s" % (filename, host, port)
         d = proxy.callRemote('downloadFile', docid, words)
         d.addCallback(self.gotDataBack, filename)
@@ -425,7 +425,7 @@ class SearchForm(MaayPage):
         if self.providerSet:
             nextHost, nextPort = self.providerSet.pop()
             print "[webapp] trying to donwload %r from %s:%s" % (filename, nextHost, nextPort)
-            proxy = Proxy('http://%s:%s' % (nextHost, nextPort))
+            proxy = Proxy(str('http://%s:%s' % (nextHost, nextPort)))
             d = proxy.callRemote('downloadFile', docId, words)
             d.addCallback(self.gotDataBack, filename)
             d.addErrback(self.retryWithOtherProvider, words, docId, filename)
