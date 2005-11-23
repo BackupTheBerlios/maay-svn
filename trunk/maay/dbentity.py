@@ -374,12 +374,12 @@ class Result(Document):
             stateDict['node_id'] = NODE_ID # local node id
             stateDict['login'] = NODE_LOGIN
         stateDict['query_id'] = qid
-        stateDict['record_ts'] = time.time()
         return Result(**stateDict)
     fromDocument = staticmethod(fromDocument)
 
     def _selectQuery(cls, query, onlyLocal=False, onlyDistant=False):
-        limit = query.limit or 15
+        # XXX: HARCODED LIMIT
+        limit = 15
         wheres = ['query_id=%(query_id)s']
         if onlyDistant:
             wheres.append("host != 'localhost'")
@@ -395,8 +395,8 @@ class Result(Document):
             'LIMIT %s OFFSET %s' % (', '.join(cls.attributes),
                                     cls.tableName,
                                     ' AND '.join(wheres),
-                                    query.order, query.direction,
-                                    query.limit, query.offset,
+                                    orderClause, query.direction,
+                                    limit, query.offset,
                                     )
         return sqlQuery, {'query_id' : query.qid}
     _selectQuery = classmethod(_selectQuery)

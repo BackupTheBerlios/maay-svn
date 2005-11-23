@@ -162,7 +162,7 @@ CREATE TABLE `results` (
   `host` varchar(15),
   `port` int(11), -- check this
   `login` varchar(255),
-  `record_ts` int(14), -- let python compute this alone
+  `record_ts` TIMESTAMP(8), -- DEFAULT NOW() is not necessary because records are not updated
   PRIMARY KEY (`document_id`, `query_id`, `node_id`)
 --  PRIMARY KEY (`db_document_id`, `query_id`, `host`, `port`)
 --  KEY `document_id` (`document_id`),
