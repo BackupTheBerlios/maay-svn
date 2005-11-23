@@ -33,8 +33,8 @@ from twisted.python import log
 from zope.interface import Interface, implements
 
 from logilab.common.db import get_dbapi_compliant_module
-from maay.dbentity import Document, FileInfo, DBEntity, \
-     DocumentProvider, DocumentScore, Word, Node, Result
+from maay.dbentity import ScoredDocument, Document, FileInfo, \
+     DBEntity, DocumentProvider, DocumentScore, Word, Node, Result
 from maay.texttool import normalizeText, WORDS_RGX, MAX_STORED_SIZE
 
 IntegrityError = None
@@ -161,11 +161,14 @@ class AnonymousQuerier:
         self._updateQueryStatistics(words)
         try:
             cursor = self._cnx.cursor()
-            return Document.selectContaining(cursor, words, query.filetype,
-                                             query.offset, query.limit,
-					     self.searchInPrivate,
-					     order=query.order,
-					     direction=query.direction)
+            # FIXME: it's quite obvious that we should feed the whole query
+            return ScoredDocument.selectContaining(cursor, words,
+                                                   query.filetype,
+                                                   query.offset,
+                                                   query.limit,
+                                                   self.searchInPrivate,
+                                                   order=query.order,
+                                                   direction=query.direction)
         finally:
             traceback.print_exc()
             cursor.close()

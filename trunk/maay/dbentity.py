@@ -142,18 +142,6 @@ class FutureDocument:
             setattr(self, attrname, value)
 
         
-def sqlCriterium(foo):
-    return ("D.publication_time, "
-            "DS.relevance, "
-            "DS.popularity ")
-
-def sqlOrder(order, direction):
-    if order == 'publication_time':
-        prefix = 'ORDER BY D.'
-    else:
-        prefix = 'ORDER BY DS.'
-    return prefix + order + ' ' + direction
-
 
 class Document(DBEntity):
     """Represent a Document in the database
@@ -191,14 +179,14 @@ class Document(DBEntity):
     The state of a document can be (values in parenthesis give the
     French word used in the PhD thesis):
 
-    * PUBLISHED_STATE (intentionnel): the document was put on purpose by
+    * PUBLISHED_STATE (intentional): the document was put on purpose by
     the user in an indexed directory
 
-    * CACHED_STATE (mis en cache): the document has been downloaded by
+    * CACHED_STATE (put into cache): the document has been downloaded by
     the user using Maay. It is available on the hard drive, but can be
     suppressed if disk space needs to be reclaimed
 
-    * KNOWN_STATE (connu): the document is known through answers to
+    * KNOWN_STATE (known): the document is known through answers to
     requests that have been received. The available profile is lacunar
     and only a few words are known
 
@@ -226,24 +214,10 @@ class Document(DBEntity):
     attributes = ('db_document_id', 'document_id', 'mime_type', 'title',
                   'size', 'text', 'publication_time', 'state', 'download_count',
                   'url', 'matching', 'indexed')
-    extended_attrs = attributes + ('relevance', 'popularity')
     
     tableName = 'documents'
     key = ('db_document_id',)
 
-    def __init__(self, **values):
-        for attrname, value in values.iteritems():
-            assert attrname in self.extended_attrs, 'Unknown attribute %s' % attrname
-            setattr(self, attrname, value)
-        for keyattr in self.key:
-            assert keyattr in self.attributes, \
-                   "invalid value for key: %s" % keyattr
-
-    def boundAttributes(self):
-        """returns the list of attributes for which a value is specified"""
-        return [attr for attr in self.extended_attrs if hasattr(self, attr)]
-
-    
     def readable_size(self):
         if not self.size:
             return 'XXX NO KNOWN SIZE'
@@ -260,6 +234,50 @@ class Document(DBEntity):
     def get_abstract(self):
         return self.text[:200]
     abstract = property(get_abstract)
+
+    def selectUrlAndTypeWhereDocid(cls, cursor, document_id):
+        query = "SELECT url, mime_type FROM documents WHERE document_id=%s"
+        cursor.execute(query, [document_id])
+        results = cursor.fetchall()
+        return results[0]
+    selectUrlAndTypeWhereDocid = classmethod(selectUrlAndTypeWhereDocid)
+
+    # for stat purpose
+    def getDocumentCount(cls, cursor):
+        query = "SELECT state, count(*) FROM documents GROUP BY state"
+        cursor.execute(query)
+        results = cursor.fetchall()
+
+        docCounts = {Document.PUBLISHED_STATE:0, Document.PRIVATE_STATE:0,
+            Document.CACHED_STATE:0, Document.KNOWN_STATE:0}
+
+        for result in results:
+            docCounts[int(result[0])] = result[1]
+        return docCounts
+    getDocumentCount = classmethod(getDocumentCount)
+
+
+def sqlCriterium(foo):
+    return ("D.publication_time, "
+            "DS.relevance, "
+            "DS.popularity ")
+
+def sqlOrder(order, direction):
+    if order == 'publication_time':
+        prefix = 'ORDER BY D.'
+    else:
+        prefix = 'ORDER BY DS.'
+    return prefix + order + ' ' + direction
+
+
+class ScoredDocument(Document):
+    """A read-only transitional Document augmented with popularity and
+       relevance scores, for consumption by Results"""
+
+    attributes = Document.attributes + ('relevance', 'popularity')
+    
+    tableName = 'documents'
+    key = ('db_document_id',)
 
     # XXX Please rewrite this method. The way we build the SQL
     #     query is quite messy
@@ -309,7 +327,7 @@ class Document(DBEntity):
     def selectContaining(cls, cursor, words, mimetype=None, offset=0,
                          limit=None, allowPrivate=False, order='publication_time',
 			 direction='DESC'):
-        print "Document selectContaining %s" % words
+        print "ScoredDocument selectContaining %s" % words
         if not words:
             return []
         query, params = cls._selectContainingQuery(words, order, direction,
@@ -329,26 +347,6 @@ class Document(DBEntity):
             return []
     selectContaining = classmethod(selectContaining)
 
-    def selectUrlAndTypeWhereDocid(cls, cursor, document_id):
-        query = "SELECT url, mime_type FROM documents WHERE document_id=%s"
-        cursor.execute(query, [document_id])
-        results = cursor.fetchall()
-        return results[0]
-    selectUrlAndTypeWhereDocid = classmethod(selectUrlAndTypeWhereDocid)
-
-    # for stat purpose
-    def getDocumentCount(cls, cursor):
-        query = "SELECT state, count(*) FROM documents GROUP BY state"
-        cursor.execute(query)
-        results = cursor.fetchall()
-
-        docCounts = {Document.PUBLISHED_STATE:0, Document.PRIVATE_STATE:0,
-            Document.CACHED_STATE:0, Document.KNOWN_STATE:0}
-
-        for result in results:
-            docCounts[int(result[0])] = result[1]
-        return docCounts
-    getDocumentCount = classmethod(getDocumentCount)
     
 class Result(Document):
     """Results are temporary relations created/destroyed on the fly

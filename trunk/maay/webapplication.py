@@ -43,7 +43,7 @@ from maay.configuration import get_path_of
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
 from maay.query import Query
 from maay.p2pquerier import P2pQuerier, P2pQuery
-from maay.dbentity import Document
+from maay.dbentity import ScoredDocument
 from maay import indexer 
 
 
@@ -119,6 +119,7 @@ class IndexationPage(athena.LivePage):
     def __init__(self):
         athena.LivePage.__init__(self)
         self.indexerConfig = indexer.indexerConfig
+        self.indexerConfig.load_from_files()
         self.msg = 'not running'
 
     def macro_footer(self, context):
@@ -589,7 +590,7 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
             return static.File(get_path_of(self._javascript[name]))
         
     def onNewResults(self, provider, results):
-        results = [Document(**params) for params in results]
+        results = [ScoredDocument(**params) for params in results]
         self.querier.pushDocuments(self.queryId, results, provider)
         results = self.querier.getQueryResults(self.query,
                                                onlyLocal=self.onlyLocal,
