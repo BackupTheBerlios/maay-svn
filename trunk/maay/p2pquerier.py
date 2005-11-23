@@ -452,17 +452,15 @@ def backgroundProbe(node, stamp):
         reactor.callLater(abs(CHECK_DELAY - right_now + now), checkOldest)
 
 
+socket.setdefaulttimeout(30)
 def nodeSleeps(node_ip, node_port):
-    socket.setdefaulttimeout(5)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        try:
-            s.connect((node_ip, node_port))
-            s.close()
-        except socket.error, exc:
-            return True 
-        else:
-            return False
-    finally:
-        socket.setdefaulttimeout(30)
+        s.connect((node_ip, node_port))
+        s.close()
+    except socket.error, exc:
+        return True 
+    else:
+        return False
+
 

@@ -92,11 +92,8 @@ class Query(object):
         return getattr(self, '_order', None)
 
     def setorder(self, order):
-        orders = ('publication_time', 'relevance', 'popularity')
-        if order in orders:
-            self._order = order
-        else:
-            raise NotImplemented("order must be in %s" % orders)
+        assert(order in ('publication_time', 'relevance', 'popularity'))
+        self._order = order
 
     order = property(getorder, setorder)
 
@@ -105,11 +102,8 @@ class Query(object):
 
     def setdirection(self, direction):
         direction = direction.upper()
-        directions = ('ASC', 'DESC')
-        if direction in directions:
-            self._direction = direction
-        else:
-            raise NotImplemented("direction must be in %s" % directions)
+        assert(direction in ('ASC', 'DESC'))
+        self._direction = direction
 
     direction = property(getdirection, setdirection)
 
