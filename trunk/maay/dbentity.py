@@ -25,6 +25,28 @@ __all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore',
 
 import re
 from sets import Set
+import time
+
+######FIXME : put this common stuff in a separated file
+import socket, os
+def getUserLogin():
+    """uses os.getlogin() when available, and if not provides a simple
+    (and *unreliable*) replacement.
+    """
+    try:
+        return os.getlogin()
+    except (OSError, AttributeError):
+        # OSError can occur on some Linux platforms.
+        # AttributeError occurs on any non-UNIX platform
+        # try to make a rough guess ...
+        for var in ('USERNAME', 'USER', 'LOGNAME'):
+            guessed = os.environ.get(var)
+            if guessed:
+                return guessed
+        # could not guess username, use host name
+        return socket.gethostname()
+HOST_LOGIN = getUserLogin()
+
 
 from maay.texttool import normalizeText, WORD_MIN_LEN, WORD_MAX_LEN,\
      WORDS_RGX
@@ -93,7 +115,6 @@ class DBEntity:
         try:
             cursor.execute(query, self.stateDict)
         except Exception, exc:
-            print "######### %s, %s" % (query, self.stateDict)
             print "commit error:", exc
             print query
             raise
@@ -224,8 +245,23 @@ class Document(DBEntity):
     attributes = ('db_document_id', 'document_id', 'mime_type', 'title',
                   'size', 'text', 'publication_time', 'state', 'download_count',
                   'url', 'matching', 'indexed')
+    extended_attrs = attributes + ('relevance', 'popularity')
+    
     tableName = 'documents'
     key = ('db_document_id',)
+
+    def __init__(self, **values):
+        for attrname, value in values.iteritems():
+            assert attrname in self.extended_attrs, 'Unknown attribute %s' % attrname
+            setattr(self, attrname, value)
+        for keyattr in self.key:
+            assert keyattr in self.attributes, \
+                   "invalid value for key: %s" % keyattr
+
+    def boundAttributes(self):
+        """returns the list of attributes for which a value is specified"""
+        return [attr for attr in self.extended_attrs]
+
     
     def readable_size(self):
         if not self.size:
@@ -305,7 +341,7 @@ class Document(DBEntity):
             results = cursor.fetchall()
             return [cls(**dict(zip(['db_document_id', 'document_id', 'title',
                                     'size', 'text', 'url', 'mime_type',
-                                    'publication_time'],
+                                    'publication_time', 'relevance', 'popularity'],
                                    row)))
                     for row in results]
         else:
@@ -339,15 +375,16 @@ class Result(Document):
     """
     attributes = ('document_id', 'query_id', 'node_id', 'mime_type',
                   'title', 'size', 'text', 'publication_time',
-                  'score_relevance', 'score_popularity', 'url',
+                  'relevance', 'popularity', 'url',
                   'host', 'port', 'login', 'record_ts')
+    extended_attrs = attributes
     key = ('document_id', 'query_id')
     tableName = 'results'
 
     def fromDocument(document, queryId, provider=None):
-        stateDict = document.stateDict
+        stateDict = document.__dict__ # document.stateDict is wrong
         for key, value in stateDict.items():
-            if key not in Result.attributes or not value:
+            if key not in Result.attributes or value is None:
                 del stateDict[key]
         if provider:
             stateDict['login'], stateDict['node_id'], stateDict['host'], stateDict['port'] = provider
@@ -355,7 +392,9 @@ class Result(Document):
             stateDict['host'] = 'localhost'
             stateDict['port'] = 0
             stateDict['node_id'] = NODE_ID # local node id
+            stateDict['login'] = HOST_LOGIN
         stateDict['query_id'] = queryId
+        stateDict['record_ts'] = time.time()
         return Result(**stateDict)
     fromDocument = staticmethod(fromDocument)
 
