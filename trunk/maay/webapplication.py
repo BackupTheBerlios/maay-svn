@@ -523,7 +523,7 @@ class ResultsPageMixIn:
     
     def render_peer(self, context, data):
         """:type data: Result"""
-        if data.login is None:
+        if data.port == 0:
             return ''
         return '%s (%s) - ' % (data.login, data.host)
     

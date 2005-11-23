@@ -253,7 +253,7 @@ class MaaySessionWrapper(guard.SessionWrapper):
 
     
 def run():
-    # log.startLogging(open('maay-node.log', 'w'))
+    log.startLogging(open('maay-node.log', 'w'))
     maayPortal = MaayPortal(nodeConfig)
     website = appserver.NevowSite(MaaySessionWrapper(maayPortal,
                                                      mindFactory=MaayMindFactory))
