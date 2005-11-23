@@ -339,15 +339,16 @@ class AnonymousQuerier:
         for <qid>
         """
         cursor = self._cnx.cursor()
-        localCountQuery = "SELECT COUNT(*) from results WHERE query_id='%s' AND host='localhost';" % (qid,)
-        distantCountQuery = "SELECT COUNT(*) from results WHERE query_id='%s' AND host!='localhost';" % (qid,)
+        subQuery = "SELECT * FROM results WHERE query_id='%s' GROUP BY document_id HAVING record_ts=MIN(record_ts)" % qid
+        localCountQuery = "SELECT COUNT(*) FROM (%s) AS T WHERE T.host='localhost'" % subQuery
+        distantCountQuery = "SELECT COUNT(*) FROM (%s) AS T WHERE T.host != 'localhost'" % subQuery
         cursor.execute(localCountQuery)
         localCount = cursor.fetchall()[0][0]
         cursor.execute(distantCountQuery)
         distantCount = cursor.fetchall()[0][0]        
         cursor.close()
         return localCount, distantCount
-    
+
     def getQueryResults(self, query, onlyLocal=False, onlyDistant=False):
         """builds and returns Result' instances by searching in
         the temporary table built for <qid>

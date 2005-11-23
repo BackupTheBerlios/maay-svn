@@ -380,24 +380,23 @@ class Result(Document):
     def _selectQuery(cls, query, onlyLocal=False, onlyDistant=False):
         # XXX: HARCODED LIMIT
         limit = 15
-        wheres = ['query_id=%(query_id)s']
         if onlyDistant:
-            wheres.append("host != 'localhost'")
+            where = "WHERE T.host != 'localhost'"
         elif onlyLocal:
-            wheres.append("host = 'localhost'")
+            where = "WHERE T.host = 'localhost'"
+        else:
+            where = ''
         if query.order == 'publication_time':
             orderClause = 'publication_time, relevance'
         else:
             orderClause = '%s, publication_time' % (query.order,)
-        sqlQuery = 'SELECT %s FROM %s WHERE %s GROUP BY document_id ' \
-            'HAVING record_ts=MIN(record_ts) ' \
-            'ORDER BY %s %s ' \
-            'LIMIT %s OFFSET %s' % (', '.join(cls.attributes),
-                                    cls.tableName,
-                                    ' AND '.join(wheres),
-                                    orderClause, query.direction,
-                                    limit, query.offset,
-                                    )
+        aliasedAttrs = ['T.%s' % attr for attr in cls.attributes]
+        # If only Mysql4.1 supported VIEWS
+        subQuery = 'SELECT * FROM results WHERE query_id=%(query_id)s GROUP BY document_id HAVING record_ts=MIN(record_ts)'
+        sqlQuery = 'SELECT %s FROM (%s) AS T %s ORDER BY %s %s LIMIT %s OFFSET %s' % (
+            ', '.join(aliasedAttrs), subQuery, where,
+            orderClause, query.direction, limit, query.offset)
+        print "QUERY =", sqlQuery
         return sqlQuery, {'query_id' : query.qid}
     _selectQuery = classmethod(_selectQuery)
 
