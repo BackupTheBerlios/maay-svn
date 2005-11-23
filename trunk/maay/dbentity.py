@@ -27,26 +27,7 @@ import re
 from sets import Set
 import time
 
-######FIXME : put this common stuff in a separated file
-import socket, os
-def getUserLogin():
-    """uses os.getlogin() when available, and if not provides a simple
-    (and *unreliable*) replacement.
-    """
-    try:
-        return os.getlogin()
-    except (OSError, AttributeError):
-        # OSError can occur on some Linux platforms.
-        # AttributeError occurs on any non-UNIX platform
-        # try to make a rough guess ...
-        for var in ('USERNAME', 'USER', 'LOGNAME'):
-            guessed = os.environ.get(var)
-            if guessed:
-                return guessed
-        # could not guess username, use host name
-        return socket.gethostname()
-HOST_LOGIN = getUserLogin()
-
+from maay.localinfo import NODE_LOGIN
 
 from maay.texttool import normalizeText, WORD_MIN_LEN, WORD_MAX_LEN,\
      WORDS_RGX
@@ -392,7 +373,7 @@ class Result(Document):
             stateDict['host'] = 'localhost'
             stateDict['port'] = 0
             stateDict['node_id'] = NODE_ID # local node id
-            stateDict['login'] = HOST_LOGIN
+            stateDict['login'] = NODE_LOGIN
         stateDict['query_id'] = queryId
         stateDict['record_ts'] = time.time()
         return Result(**stateDict)

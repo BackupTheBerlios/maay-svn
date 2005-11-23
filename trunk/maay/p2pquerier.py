@@ -35,11 +35,11 @@ from twisted.internet import reactor
 from maay.texttool import makeAbstract, removeSpace, untagText
 from maay.configuration import NodeConfiguration
 from maay.query import Query
+from maay.localinfo import NODE_LOGIN, NODE_HOST
 
 nodeConfig=NodeConfiguration()
 nodeConfig.load() #FIXME : load from file would be better
 
-NODE_HOST = socket.gethostbyname(socket.gethostname())
 NODE_PORT = nodeConfig.rpcserver_port
 NODE_ID = nodeConfig.get_node_id()
 
@@ -51,26 +51,6 @@ def hashIt(item, uname=''.join(platform.uname())):
     hasher.update('%s' % id(item))
     hasher.update('%s' % time.time())
     return hasher.hexdigest()
-
-def getUserLogin():
-    """uses os.getlogin() when available, and if not provides a simple
-    (and *unreliable*) replacement.
-    """
-    try:
-        return os.getlogin()
-    except (OSError, AttributeError):
-        # OSError can occur on some Linux platforms.
-        # AttributeError occurs on any non-UNIX platform
-        # try to make a rough guess ...
-        for var in ('USERNAME', 'USER', 'LOGNAME'):
-            guessed = os.environ.get(var)
-            if guessed:
-                return guessed
-        # could not guess username, use host name
-        return socket.gethostname()
-
-NODE_LOGIN = getUserLogin()
-
 
 class QueryVersionMismatch(Exception):
     """we beginning a versionning nightmare trip on queries
