@@ -234,7 +234,9 @@ class IndexationPageFactory(athena.LivePageFactory):
         if (self.untouchedDocuments % 10) == 0:
             for webpage in self.clients.itervalues():
                 webpage.countersUpdated(self.untouchedDocuments,
-                                        self.indexedDocuments)
+                                        self.indexedDocuments,
+                                        self.privateDocuments,
+                                        self.publicDocuments)
     
     def indexationCompleted(self):
         for webpage in self.clients.itervalues():
@@ -357,7 +359,7 @@ class SearchForm(MaayPage):
                 msg = "Indexer already running"
             else:
                 msg = "Indexer started"
-                indexer.start_as_thread(_factory)
+                indexer.start_as_thread(self.querier, self.maayId, _factory)
         indexationPage.msg = msg
         indexationPage.alertmessage = alertMsg
         return indexationPage
@@ -408,7 +410,7 @@ class SearchForm(MaayPage):
         f=file(filepath,'wb')
         f.write(fileData)
         f.close()
-        return DistantFilePage(filepath)
+        return DistantFilePage(self.querier, self.maayId, filepath)
 
     def onDownloadFileError(self, error, filename):
         msg = "Error while downloading file: %s" % (filename,)
@@ -434,10 +436,10 @@ class SearchForm(MaayPage):
             return self.onDownloadFileError('no provider available', filename)
     
 class DistantFilePage(static.File):
-    def __init__(self, filepath):
+    def __init__(self, querier, nodeId, filepath):
         static.File.__init__(self, filepath)
         self.filepath = filepath
-        indexer.indexJustOneFile(self.filepath)
+        indexer.indexJustOneFile(querier, nodeId, self.filepath)
 
 class ResultsPageMixIn:
 
