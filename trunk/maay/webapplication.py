@@ -482,21 +482,6 @@ class ResultsPageMixIn:
         _, distantCount = self.querier.countResults(self.qid)
         return distantCount
 
-    def render_sort_rel(self, context, data):
-        if self.query.order == 'relevance':
-            return '[relevance]'
-        return ' relevance '
-    
-    def render_sort_pop(self, context, data):
-        if self.query.order == 'popularity':
-            return '[popularity]'
-        return ' popularity '
-        
-    def render_sort_pub(self, context, data):
-        if self.query.order == 'publication_time':
-            return '[publication time]'
-        return ' publication time '
-
     def render_totalcount(self, context, data):
         localCount, distantCount = self.querier.countResults(self.qid)
         return localCount + distantCount
@@ -532,7 +517,34 @@ class ResultsPageMixIn:
         if data.port == 0:
             return ''
         return '%s (%s) - ' % (data.login, data.host)
-    
+
+    def render_relevanceDiv(self, context, data):
+        if self.query.order == 'relevance':
+            return tags.xml('<div class="selectedCriterium">'
+                            'relevance</div>')
+        else:
+            return tags.xml("""<div class="unselectedCriterium"><a href="javascript: sortBy('relevance');">"""
+                            'relevance</div>')
+
+    def render_popularityDiv(self, context, data):
+        if self.query.order == 'popularity':
+            return tags.xml('<div class="selectedCriterium">'
+                            'popularity</div>')
+        else:
+            return tags.xml("""<div class="unselectedCriterium"><a href="javascript: sortBy('popularity');">"""
+                            'popularity</div>')
+
+    def render_publicationDiv(self, context, data):
+        if self.query.order == 'publication_time':
+            return tags.xml('<div class="selectedCriterium">'
+                            'publication time</div>')
+        else:
+            return tags.xml("""<div class="unselectedCriterium"><a href="javascript: sortBy('publication_time');">"""
+                            'publication time</div>')
+
+#    def render_
+
+
     def render_row(self, context, data):
         document = data
         words = self.query.words #WORDS (was .split())
@@ -618,7 +630,7 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         
     def onNewResults(self, provider, results):
         results = [ScoredDocument(**params) for params in results]
-        self.querier.pushDocuments(self.qid, results, provider)
+        self.querier.pushDocuments(self.qid, results, NODE_ID, provider)
         results = self.querier.getQueryResults(self.query,
                                                onlyLocal=self.onlyLocal,
                                                onlyDistant=self.onlyDistant)

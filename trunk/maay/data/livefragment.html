@@ -11,14 +11,12 @@
         <td> <div class="distantResult"><a href="javascript: onlyDistantResults();">remote result</a>(<span nevow:render="distantcount" />)</div></td>
         <td>-</td>
         <td><a href="javascript: allResults();">all results </a>(<span nevow:render="totalcount" />)</td>
-        <div class="sortBar">
-          <td> - <b> Sorted by: </b></td>
-          <td><a href="javascript: sortBy('relevance');"><div class="relevance"><span nevow:render="sort_rel" /></div></a></td>
-          <td> - </td>
-          <td><a href="javascript: sortBy('popularity');"><div class="popularity"><span nevow:render="sort_pop" /></div></a></td>
-          <td> - </td>
-          <td><a href="javascript: sortBy('publication_time');"><div class="publication"><span nevow:render="sort_pub" /></div></a></td>
-        </div>
+        <td> - <b> Sorted by: </b></td>
+        <td><div nevow:render="relevanceDiv"/></td>
+        <td> - </td>
+        <td><div nevow:render="popularityDiv"/></td>
+        <td> - </td>
+        <td><div nevow:render="publicationDiv"/></td>
       </tr>
     </table>
   <center>

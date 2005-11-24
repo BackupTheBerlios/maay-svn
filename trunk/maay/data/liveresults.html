@@ -8,10 +8,16 @@
     <nevow:invisible nevow:render="liveglue" />
 
     <script type='text/javascript' language='javascript'>
+
+var selectedCriterium = 'publication_time';
+
 function updateResults(source) {
  div = document.getElementById('resultsDiv');
  div.innerHTML = source;
  abortNeeded = true;
+
+// new_elt = document.getElementById(selectedCriterium);
+// new_elt.setAttribute('class', 'selectedCriterium');
 }
 
 function startConnection() {
@@ -43,6 +49,7 @@ function allResults() {
 function sortBy(sortCriteria) {
  var d = server.callRemote('sortBy', sortCriteria);
  d.addCallback(updateResults);
+ selectedCriterium = sortCriteria;
 }
     </script>
 
