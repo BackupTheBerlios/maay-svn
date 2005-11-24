@@ -1,18 +1,19 @@
-Release Notes for version 0.2.2
+Release Notes for version 0.2.4
 
 See README.txt for installation and quick start instructions. 
 
 This release is beta-level software, which contains several bug fixes
-and improvements over 0.2.1. 
+and improvements over 0.2.2. The 0.2.3 version was not released
+officially, and only contains a few bugfixes concerning the 
+windows services management.
 
-There may be some problems with the web interface when accessed
-through Microsoft Internet Explorer. Please give some feedback on
-using Maay with this web browser.  Using Firefox or Mozilla should
-work fine.
+If you encounter any problem with the web interface (like 
+never ending requests, pages not updated), please notify us and
+describe the problem. In this case, don't forget to mention which
+browser (name and version) and which platform you're using.
 
 The windows installer will install and set up all the required
 dependencies (including mysql and twisted). It uses Inno Setup and
 Py2exe.
-
 
 

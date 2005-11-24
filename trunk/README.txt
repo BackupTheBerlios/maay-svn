@@ -80,6 +80,7 @@ When reporting a bug or asking for help, don't forget to provide the
 following pieces of information:
 
  * operating system
+ * version and name of browser
  * version of maay
  * on unix: version of python
  * steps to reproduce the bug
