@@ -76,8 +76,6 @@ div.localPrivateResult {
   border-left-color: #00ff00;
 }
 
-
-
 div.distantResult {
   margin-top: 5px;
   margin-bottom: 5px;
@@ -85,6 +83,38 @@ div.distantResult {
   border-left-width: 4px;
   border-left-color: #ff0000;
 }
+
+div.selectedLocalResult { 
+  color: blue;
+  background-color: yellow;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-left-style: solid;
+  border-left-width: 4px;
+  border-left-color: #00ff00;
+ }
+
+div.selectedDistantResult { 
+  color: blue;
+  background-color: yellow;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-left-style: solid;
+  border-left-width: 4px;
+  border-left-color: #ff0000;
+ }
+
+div.selectedCriterium { 
+  color: blue;
+  background-color: yellow;
+ }
+
+div.unselectedCriterium { 
+  color: black; 
+  background-color: white;
+  text-decoration: underline;
+ }
+
 
 div.message {
   text-align: right;
