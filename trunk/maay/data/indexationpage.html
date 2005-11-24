@@ -24,11 +24,11 @@ function updatePublicDocumentCount(count) {
   elt.innerHTML = count;
 }
 
-function updateStatus(msg, private, public) {
+function updateStatus(msg, priv, pub) {
   elt = document.getElementById('statusMessage');
   elt.innerHTML = msg;
-  updatePrivateDocumentCount(private);
-  updatePublicDocumentCount(public);
+  updatePrivateDocumentCount(priv);
+  updatePublicDocumentCount(pub);
 }
 
 
