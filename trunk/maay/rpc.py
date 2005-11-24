@@ -40,10 +40,6 @@ from maay.querier import IQuerier, ANONYMOUS_AVATARID, WEB_AVATARID
 from maay.dbentity import FutureDocument, Document
 from maay.p2pquerier import P2pQuerier, P2pQuery, P2pAnswer
 from maay.query import Query
-from maay.nodeconfig import nodeConfig
-
-NODE_ID = nodeConfig.get_node_id()
-
 
 def make_uid(username, password):
     """forge a unique identifier"""

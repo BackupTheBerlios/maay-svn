@@ -36,8 +36,7 @@ from twisted.internet import reactor
 from maay.texttool import makeAbstract, removeSpace, untagText
 from maay.query import Query
 from maay.localinfo import NODE_LOGIN, NODE_HOST
-from maay.nodeconfig import NODE_PORT, NODE_ID, QUERY_LIFE_TIME
-
+from maay.configuration import NODE_CONFIG
 
 QUERIER = None
 
@@ -84,7 +83,7 @@ class P2pQuery:
         # *** default args are typically used from webapplication instantiation
         # *** but NOT at rpc level, where we MUST use the transmited values
         self.client_host = client_host or NODE_HOST
-        self.client_port = client_port or NODE_PORT
+        self.client_port = client_port or NODE_CONFIG.rpcserver_port
 
     #### qid accessors
 
@@ -188,7 +187,7 @@ class P2pQuerier:
         self._answerCallbacks = {}
         # now, read a config. provided value for EXPIRATION_TIME
         # and fire the garbage collector
-        P2pQuerier._EXPIRATION_TIME = max(QUERY_LIFE_TIME,
+        P2pQuerier._EXPIRATION_TIME = max(NODE_CONFIG.query_life_time,
                                           P2pQuerier._EXPIRATION_TIME)
         reactor.callLater(self._EXPIRATION_TIME, self._markQueries)
 
@@ -287,9 +286,9 @@ class P2pQuerier:
 
         # provider is a 4-uple (login, node_id, IP, xmlrpc-port)
         provider = (NODE_LOGIN,
-                    NODE_ID,
+                    NODE_CONFIG.get_node_id(),
                     NODE_HOST,
-                    NODE_PORT)
+                    NODE_CONFIG.rpcserver_port)
             
         self.relayAnswer(P2pAnswer(query.qid, provider, documents))
 
@@ -323,7 +322,7 @@ class P2pQuerier:
                 #       of duplicates, so as to add a new provider entry ?
                 print "we already know this doc !!!@~^#{"
 
-        if query.sender != NODE_ID:
+        if query.sender != NODE_CONFIG.get_node_id():
             self.querier.registerNodeActivity(answer.provider[1])
             (host, port) = (query.client_host, query.client_port)
             print " ... relaying Answer to %s:%s ..." % (host, port)
@@ -331,7 +330,7 @@ class P2pQuerier:
             proxy = Proxy(senderUrl)
             d = proxy.callRemote('distributedQueryAnswer',
                                  query.qid,
-                                 NODE_ID,
+                                 NODE_CONFIG.get_node_id(),
                                  answer.provider,
                                  toSend) 
             d.addErrback(answerQueryErrback(query))
@@ -344,7 +343,7 @@ class P2pQuerier:
         """
         nbNodes = 2**(max(5, query.ttl))
         # TODO: use the neighbors' profiles to route requests
-        return self.querier.getActiveNeighbors(NODE_ID, nbNodes)
+        return self.querier.getActiveNeighbors(NODE_CONFIG.get_node_id(), nbNodes)
         
 
 ##### Custommized errbacks for send/answer ops

@@ -376,3 +376,7 @@ class NoThumbnailsDir(Exception):
     pass
 
 
+
+INDEXER_CONFIG = IndexerConfiguration()
+NODE_CONFIG = NodeConfiguration()
+

@@ -25,8 +25,6 @@ an xmlrpc server for the indexer and distributed queries.
 
 __revision__ = '$Id$'
 
-from maay.nodeconfig import nodeConfig
-
 import platform
 import sha
 import time
@@ -63,9 +61,14 @@ from maay.rpc import MaayRPCServer
 from maay import presenceclient
 from maay.webapplication import Maay404, INodeConfiguration, SearchForm
 from maay.localinfo import NODE_HOST
-from maay.nodeconfig import NODE_PORT, NODE_ID
+from maay.configuration import NODE_CONFIG, INDEXER_CONFIG
+
 
 ## nevow app/server setup ############################################
+
+NODE_ID = None
+NODE_PORT = None
+NODE_HOST = None
 
 # MaayMindFactory might be helpful to access request informations
 # in portal. (not sure it's really aimed to be used this way :-)
@@ -251,22 +254,29 @@ class MaaySessionWrapper(guard.SessionWrapper):
     
 def run():
     log.startLogging(open('maay-node.log', 'w'))
-    maayPortal = MaayPortal(nodeConfig)
+    NODE_CONFIG.load()
+    global NODE_ID, NODE_PORT, NODE_HOST
+    NODE_ID = NODE_CONFIG.get_node_id()
+    NODE_PORT = NODE_CONFIG.rpcserver_port
+    NODE_HOST = socket.gethostbyname(socket.gethostname())
+    INDEXER_CONFIG.load_from_files()
+    
+    maayPortal = MaayPortal(NODE_CONFIG)
     website = appserver.NevowSite(MaaySessionWrapper(maayPortal,
                                                      mindFactory=MaayMindFactory))
     website.remember(Maay404(), inevow.ICanHandleNotFound)
-    website.remember(nodeConfig, INodeConfiguration)
-    presenceclient.notify(nodeConfig.presence_host,
-                          nodeConfig.presence_port,
+    website.remember(NODE_CONFIG, INodeConfiguration)
+    presenceclient.notify(NODE_CONFIG.presence_host,
+                          NODE_CONFIG.presence_port,
                           maayPortal.webQuerier,
                           NODE_ID,
-                          socket.gethostbyname(socket.gethostname()),
-                          nodeConfig.rpcserver_port,
-                          nodeConfig.bandwidth)
+                          NODE_HOST,
+                          NODE_PORT,
+                          NODE_CONFIG.bandwidth)
     
     rpcserver = server.Site(MaayRPCServer(maayPortal))
-    reactor.listenTCP(nodeConfig.webserver_port, website)
-    reactor.listenTCP(nodeConfig.rpcserver_port, rpcserver)
+    reactor.listenTCP(NODE_CONFIG.webserver_port, website)
+    reactor.listenTCP(NODE_CONFIG.rpcserver_port, rpcserver)
     try:
         try:
             print "-------------Starting Node mainloop-------------"

@@ -22,9 +22,7 @@ __revision__ = '$Id$'
 import sha
 import time
 
-from maay.nodeconfig import nodeConfig
-
-NODE_ID = nodeConfig.get_node_id()
+from maay.configuration import NODE_CONFIG
 
 def normalizeMimetype(fileExtension):
     import mimetypes
@@ -65,7 +63,7 @@ class Query(object):
     
     def __init__(self, words, offset=0, filetype=None, filename=None,
                  order=None, direction=None, qid=None):
-        self.qid = qid or hashIt(NODE_ID, self)
+        self.qid = qid or hashIt(NODE_CONFIG.get_node_id(), self)
         self.words = words # unicode string 
         self.offset = offset
         self.filetype = filetype

@@ -33,6 +33,8 @@ import sha
 from xmlrpclib import ServerProxy, Fault, ProtocolError
 import mimetypes
 import socket
+from threading import Thread
+from twisted.python import log
 
 from logilab.common.compat import set
 
@@ -42,10 +44,7 @@ from maay import converter
 from maay.dbentity import FutureDocument, Document, FileInfo
 from maay.querier import MaayAuthenticationError, MaayQuerier
 from maay.texttool import removeControlChar
-from threading import Thread
-from twisted.python import log
-
-from maay.indexerconfig import indexerConfig
+from maay.configuration import INDEXER_CONFIG
 
 
 class IIndexerObserver(Interface):
@@ -385,7 +384,7 @@ class FileIterator:
 def run(observers=None):
     try:
         try:
-            indexer = Indexer(indexerConfig, observers=observers)
+            indexer = Indexer(INDEXER_CONFIG, observers=observers)
         except MaayAuthenticationError, exc:
             print "AuthenticationError:", exc
             sys.exit(1)
@@ -393,7 +392,7 @@ def run(observers=None):
     except socket.error, exc:
         print "Cannot contact Node:", exc
         print "Check that the Node is running on %s:%s" % \
-              (indexerConfig.host, indexerConfig.port)
+              (INDEXER_CONFIG.host, INDEXER_CONFIG.port)
         sys.exit(1)
 
 
@@ -414,7 +413,7 @@ def is_running():
     return indexer_thread and indexer_thread.isAlive()
 
 def runLocally(localQuerier, observers=None):
-    indexer = LocalIndexer(indexerConfig, localQuerier, observers)
+    indexer = LocalIndexer(INDEXER_CONFIG, localQuerier, observers)
     indexer.start()
     
 def start_as_thread(nodeConfig, webpage):
@@ -437,7 +436,7 @@ def indexJustOneFile(nodeConfig, filepath):
     thread.start()
 
 def _just_one(querier, filepath):
-    indexer = LocalIndexer(indexerConfig, querier)
+    indexer = LocalIndexer(INDEXER_CONFIG, querier)
     print 'going to index file %s', filepath
     try:
         # log.startLogging(open('maay-indexer.log', 'w'))
@@ -446,5 +445,5 @@ def _just_one(querier, filepath):
         print fif
 
 if __name__ == '__main__':
-    indexerConfig.load()
+    INDEXER_CONFIG.load()
     run()

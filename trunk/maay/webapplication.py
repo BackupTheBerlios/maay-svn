@@ -40,15 +40,12 @@ from logilab.common.compat import set
 
 from maay import VERSION
 from maay.querier import IQuerier, WEB_AVATARID
-from maay.configuration import get_path_of
-from maay.nodeconfig import indexerConfig, NODE_ID
+from maay.configuration import get_path_of, INDEXER_CONFIG, NODE_CONFIG
 from maay.texttool import makeAbstract, WORDS_RGX, normalizeText, boldifyText
 from maay.query import Query, parseWords
 from maay.p2pquerier import P2pQuerier, P2pQuery
 from maay.dbentity import ScoredDocument, Document
 import maay.indexer as indexer
-
-
 
 def _is_valid_directory(directory):
     try:
@@ -134,8 +131,7 @@ class IndexationPage(athena.LivePage):
 
     def __init__(self):
         athena.LivePage.__init__(self)
-        self.indexerConfig = indexerConfig
-        self.indexerConfig.load_from_files()
+        self.indexerConfig = INDEXER_CONFIG
         self.msg = 'not running'
 
     def macro_footer(self, context):
@@ -263,7 +259,7 @@ class SearchForm(MaayPage):
         MaayPage.__init__(self, maayId)
         self.querier = querier
         self.p2pquerier = p2pquerier
-        self.download_dir = indexerConfig.download_dir
+        self.download_dir = INDEXER_CONFIG.download_dir
 
     def render_custom_htmlheader(self, context):
         return [
@@ -294,23 +290,22 @@ class SearchForm(MaayPage):
     def child_indexation(self, context, _factory=IndexationPageFactory(IndexationPage)):
         alertMsg = ""
         context.remember(self.querier, IQuerier)
+        INDEXER_CONFIG.load_from_files()
         # TODO: check if the added folders are valid
-
         # Actions (add/remove) on private folders
-
         addPrivateFolder = context.arg('addPrivateFolder', 0)
         if addPrivateFolder:
             if _is_valid_directory(addPrivateFolder):
-                indexerConfig.private_dir.append(addPrivateFolder)
-                indexerConfig.save()
+                INDEXER_CONFIG.private_dir.append(addPrivateFolder)
+                INDEXER_CONFIG.save()
             else:
                 alertMsg = "\\'%s\\' is not a valid folder" % addPrivateFolder
  
         removePrivateFolder = context.arg('removePrivateFolder', 0)
         if removePrivateFolder:
             try:
-                indexerConfig.private_dir.remove(removePrivateFolder)
-                indexerConfig.save()
+                INDEXER_CONFIG.private_dir.remove(removePrivateFolder)
+                INDEXER_CONFIG.save()
             except ValueError:
                 print "Folder '%s' not in the private directory list"
 
@@ -318,16 +313,16 @@ class SearchForm(MaayPage):
         addPublicFolder = context.arg('addPublicFolder', 0)
         if addPublicFolder:
             if _is_valid_directory(addPublicFolder):
-                indexerConfig.public_dir.append(addPublicFolder)
-                indexerConfig.save()
+                INDEXER_CONFIG.public_dir.append(addPublicFolder)
+                INDEXER_CONFIG.save()
             else:
                 alertMsg = "\\'%s\\' is not a valid folder" % addPublicFolder
  
         removePublicFolder = context.arg('removePublicFolder', 0)
         if removePublicFolder:
             try:
-                indexerConfig.public_dir.remove(removePublicFolder)
-                indexerConfig.save()
+                INDEXER_CONFIG.public_dir.remove(removePublicFolder)
+                INDEXER_CONFIG.save()
             except ValueError:
                 print "Folder '%s' not in the private directory list"
 
@@ -335,16 +330,16 @@ class SearchForm(MaayPage):
         addSkippedFolder = context.arg('addSkippedFolder', 0)
         if addSkippedFolder:
             if _is_valid_directory(addSkippedFolder):
-                indexerConfig.skip_dir.append(addSkippedFolder)
-                indexerConfig.save()
+                INDEXER_CONFIG.skip_dir.append(addSkippedFolder)
+                INDEXER_CONFIG.save()
             else:
                 alertMsg = "\\'%s\\' is not a valid folder" % addSkippedFolder
  
         removeSkippedFolder = context.arg('removeSkippedFolder', 0)
         if removeSkippedFolder:
             try:
-                indexerConfig.skip_dir.remove(removeSkippedFolder)
-                indexerConfig.save()
+                INDEXER_CONFIG.skip_dir.remove(removeSkippedFolder)
+                INDEXER_CONFIG.save()
             except ValueError:
                 print "Folder '%s' not in the private directory list"
 
@@ -637,7 +632,7 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
             self.p2pQuery = p2pQuery
             # purge old results
             self.querier.purgeOldResults()
-            self.querier.pushDocuments(self.qid, results, NODE_ID, provider=None)
+            self.querier.pushDocuments(self.qid, results, NODE_CONFIG.get_node_id(), provider=None)
             self.results = self.querier.getQueryResults(self.query)
             
     # XXX (refactoring): provide a common base class for LivePages
@@ -650,7 +645,7 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         
     def onNewResults(self, provider, results):
         results = [ScoredDocument(**params) for params in results]
-        self.querier.pushDocuments(self.qid, results, NODE_ID, provider)
+        self.querier.pushDocuments(self.qid, results, NODE_CONFIG.get_node_id(), provider)
         results = self.querier.getQueryResults(self.query,
                                                onlyLocal=self.onlyLocal,
                                                onlyDistant=self.onlyDistant)
