@@ -216,10 +216,10 @@ class Indexer(AbstractIndexer):
     """
     
     def __init__(self, indexerConfig, observers=None):
-        username = self.indexerConfig.user
-        password = self.indexerConfig.password
-        host = self.indexerConfig.host
-        port = self.indexerConfig.port
+        username = indexerConfig.user
+        password = indexerConfig.password
+        host = indexerConfig.host
+        port = indexerConfig.port
         print "Indexer connecting to Node %s:%s" % (host, port)        
         self.serverProxy = ServerProxy('http://%s:%s' % (host, port),
                                        allow_none=True,
