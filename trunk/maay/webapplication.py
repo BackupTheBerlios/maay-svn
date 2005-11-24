@@ -542,7 +542,27 @@ class ResultsPageMixIn:
             return tags.xml("""<div class="unselectedCriterium"><a href="javascript: sortBy('publication_time');">"""
                             'publication time</div>')
 
-#    def render_
+    def render_localResultsDiv(self, context, data):
+        if self.onlyLocal:
+            return tags.xml('<span class="selectedLocalResults">local results</span>')
+        else:
+            return tags.xml('<span class="localPublicResults">'
+                            '<a href="javascript: onlyLocalResults();">local results</a></span>')
+
+    def render_distantResultsDiv(self, context, data):
+        if self.onlyDistant:
+            return tags.xml('<span class="selectedDistantResults">distant results</span>')
+        else:
+            return tags.xml('<span class="distantResults">'
+                            '<a href="javascript: onlyDistantResults();">distant results</a></span>')
+
+    def render_allResultsDiv(self, context, data):
+        if not (self.onlyLocal or self.onlyDistant):
+            return tags.xml('<span class="selectedAllResults">all results</span>')
+        else:
+            return tags.xml('<span class="allResults">'
+                            '<a href="javascript: allResults();">all results</a></span>')
+           
 
 
     def render_row(self, context, data):
@@ -569,10 +589,10 @@ class ResultsPageMixIn:
         if document.host == 'localhost':
             baseurl = '/download?docid=%s' % (document.document_id,)
             # TODO: make a difference between private and public results
-            context.fillSlots('resultClass', "localPublicResult")
+            context.fillSlots('resultClass', "localPublicResults")
         else:
             baseurl = '/distantfile?docid=%s' % (document.document_id,)
-            context.fillSlots('resultClass', "distantResult")
+            context.fillSlots('resultClass', "distantResults")
             baseurl += '&host=%s' % (document.host,)
             baseurl += '&port=%s' % (document.port,)
         baseurl += '&filename=%s' % osp.basename(document.url)

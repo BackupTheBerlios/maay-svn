@@ -60,48 +60,43 @@ table.searchHome {
   text-align: center;
 }
 
-div.localPublicResult {
+.localPublicResults, .distantResults, .selectedLocalResults, .selectedDistantResults {
   margin-top: 5px;
   margin-bottom: 5px;
+  margin-right: 3px;
   border-left-style: solid;
-  border-left-width: 4px;
+  border-left-width: 3px;
+  padding-left: 3px;
+}
+
+.localPublicResults {
   border-left-color: #00ff00;
 }
 
-div.localPrivateResult {
-  margin-top: 5px;
-  margin-bottom: 5px;
-  border-left-style: solid;
-  border-left-width: 4px;
-  border-left-color: #00ff00;
-}
-
-div.distantResult {
-  margin-top: 5px;
-  margin-bottom: 5px;
-  border-left-style: solid;
-  border-left-width: 4px;
+.distantResults {
   border-left-color: #ff0000;
 }
 
-div.selectedLocalResult { 
-  color: blue;
+.selectedLocalResults { 
   background-color: yellow;
-  margin-top: 5px;
-  margin-bottom: 5px;
-  border-left-style: solid;
-  border-left-width: 4px;
   border-left-color: #00ff00;
  }
 
-div.selectedDistantResult { 
+.selectedDistantResults { 
   color: blue;
   background-color: yellow;
+  border-left-color: #ff0000;
+ }
+
+.allResults, .selectedAllResults { 
   margin-top: 5px;
   margin-bottom: 5px;
-  border-left-style: solid;
-  border-left-width: 4px;
-  border-left-color: #ff0000;
+  margin-right: 3px;
+ }
+
+.selectedAllResults {  
+  color: blue;
+  background-color: yellow;
  }
 
 div.selectedCriterium { 
