@@ -41,6 +41,7 @@ from maay.texttool import normalizeText, WORDS_RGX, MAX_STORED_SIZE
 
 IntegrityError = None
 
+
 class MaayAuthenticationError(Exception):
     """raised on db authentication failure"""
 
@@ -94,13 +95,11 @@ class IQuerier(Interface):
     def close():
         """closes the DB connection"""
 
-
 class AnonymousQuerier:
     """High-Level interface to Maay SQL database for anonymous
     (typically peers) users
     """
     implements(IQuerier)
-
     searchInPrivate = False
     
     def __init__(self, host='', database='', user='', password='',
@@ -340,14 +339,16 @@ class AnonymousQuerier:
         for <qid>
         """
         cursor = self._cnx.cursor()
-        subQuery = "SELECT * FROM results WHERE query_id='%s' GROUP BY document_id HAVING record_ts=MIN(record_ts)" % qid
-        localCountQuery = "SELECT COUNT(*) FROM (%s) AS T WHERE T.host='localhost'" % subQuery
-        distantCountQuery = "SELECT COUNT(*) FROM (%s) AS T WHERE T.host != 'localhost'" % subQuery
-        cursor.execute(localCountQuery)
-        localCount = cursor.fetchall()[0][0]
-        cursor.execute(distantCountQuery)
-        distantCount = cursor.fetchall()[0][0]        
-        cursor.close()
+        try:
+            subQuery = "SELECT * FROM results WHERE query_id='%s' GROUP BY document_id HAVING record_ts=MIN(record_ts)" % qid
+            localCountQuery = "SELECT COUNT(*) FROM (%s) AS T WHERE T.host='localhost'" % subQuery
+            distantCountQuery = "SELECT COUNT(*) FROM (%s) AS T WHERE T.host != 'localhost'" % subQuery
+            cursor.execute(localCountQuery)
+            localCount = cursor.fetchall()[0][0]
+            cursor.execute(distantCountQuery)
+            distantCount = cursor.fetchall()[0][0]
+        finally:
+            cursor.close()
         return localCount, distantCount
 
     def getQueryResults(self, query, onlyLocal=False, onlyDistant=False):
@@ -442,97 +443,111 @@ class MaayQuerier(AnonymousQuerier):
         `document_providers` table reference them, as well as the
         corresponding `document_scores` rows"""
         cursor = self._cnx.cursor()
-        query1 = """DELETE documents
-                    FROM documents LEFT JOIN files
-                             ON documents.db_document_id = files.db_document_id
-                    WHERE files.db_document_id IS NULL"""
-        rows = cursor.execute(query1)
-        query2 = """DELETE document_scores
-                    FROM document_scores LEFT JOIN  documents
-                       ON document_scores.db_document_id = documents.db_document_id
-                    WHERE documents.db_document_id IS NULL"""
-        rows += cursor.execute(query2)
-        cursor.close()
-        self._cnx.commit()
+        try:
+            query1 = """DELETE documents
+                        FROM documents LEFT JOIN files
+                                 ON documents.db_document_id = files.db_document_id
+                        WHERE files.db_document_id IS NULL"""
+            rows = cursor.execute(query1)
+            query2 = """DELETE document_scores
+                        FROM document_scores LEFT JOIN  documents
+                           ON document_scores.db_document_id = documents.db_document_id
+                        WHERE documents.db_document_id IS NULL"""
+            rows += cursor.execute(query2)
+            self._cnx.commit()
+        finally:
+            cursor.close()
+            self._cnx.rollback()
+            traceback.print_exc()
         print "removed %d rows related to unreferenced documents" % rows
         return rows
 
     def getDocumentCount(self):
         """get document count"""
-        cursor = self._cnx.cursor()
-        docCounts = Document.getDocumentCount(cursor)
-        cursor.close()
+        try:
+            cursor = self._cnx.cursor()
+            docCounts = Document.getDocumentCount(cursor)
+        finally:
+            cursor.close()
         return docCounts
 
     def indexDocument(self, nodeId, futureDoc):
         """Inserts or update information in table documents,
-        file_info, document_score and word"""
+        file_info, document_score and word
+        :type nodeId: node_id or None if working locally
+        """
         # XXX Decide if we can compute the content_hash and mime_type
         # ourselves or if the indexer should do it and
         # pass the values as an argument
         cursor = self._cnx.cursor()
-        # insert or update in table file_info
-        fileinfo = FileInfo.selectWhere(cursor, file_name=futureDoc.filename)
-        # insert title into text to be able to find documents according
-        # to their title (e.g: searching 'foo' should find 'foo.pdf')
-        futureDoc.text = '%s %s' % (futureDoc.title, futureDoc.text)
-        if fileinfo:
-            fileinfo = fileinfo[0]
-            fileinfo.file_time = futureDoc.lastModificationTime
-            fileinfo.state = futureDoc.state
-            fileinfo.file_state = futureDoc.file_state
-            doc = Document.selectWhere(cursor,
-                                       db_document_id=fileinfo.db_document_id)
-            if not doc or doc[0].document_id!=futureDoc.content_hash :
-                # no document was found or a document with another content
-                # in both case, we create a new Document in database
-                # (we don't want to modify the existing one, because it
-                # can be shared by several files)
-                doc = self._createDocument(cursor, futureDoc)
-                fileinfo.db_document_id = doc.db_document_id
+        try:
+            # insert or update in table file_info
+            fileinfo = FileInfo.selectWhere(cursor, file_name=futureDoc.filename)
+            # insert title into text to be able to find documents according
+            # to their title (e.g: searching 'foo' should find 'foo.pdf')
+            futureDoc.text = '%s %s' % (futureDoc.title, futureDoc.text)
+            if fileinfo:
+                fileinfo = fileinfo[0]
+                fileinfo.file_time = futureDoc.lastModificationTime
+                fileinfo.state = futureDoc.state
+                fileinfo.file_state = futureDoc.file_state
+                doc = Document.selectWhere(cursor,
+                                           db_document_id=fileinfo.db_document_id)
+                if not doc or doc[0].document_id!=futureDoc.content_hash :
+                    # no document was found or a document with another content
+                    # in both case, we create a new Document in database
+                    # (we don't want to modify the existing one, because it
+                    # can be shared by several files)
+                    doc = self._createDocument(cursor, futureDoc)
+                    fileinfo.db_document_id = doc.db_document_id
+                else:
+                    # document has not changed
+                    doc = doc[0]
+                    if doc.state != futureDoc.state:
+                        doc.state = futureDoc.state
+                        doc.commit(cursor, update=True)
+                fileinfo.commit(cursor, update=True)
             else:
-                # document has not changed
-                doc = doc[0]
-                if doc.state != futureDoc.state:
+                # file unknown
+                # try to find a Document with same hash value
+                doc = Document.selectWhere(cursor,
+                                           document_id=futureDoc.content_hash)
+                if doc:
+                    doc = doc[0]
                     doc.state = futureDoc.state
+                    doc.publication_time = max(doc.publication_time,
+                                               futureDoc.lastModificationTime)
                     doc.commit(cursor, update=True)
-                
-            fileinfo.commit(cursor, update=True)
-                
-        else:
-            # file unknown
-            # try to find a Document with same hash value
-            doc = Document.selectWhere(cursor,
-                                       document_id=futureDoc.content_hash)
-            if doc:
-                doc = doc[0]
-                doc.state = futureDoc.state
-                doc.publication_time = max(doc.publication_time,
-                                           futureDoc.lastModificationTime)
-                doc.commit(cursor, update=True)
-            else:
-                doc = self._createDocument(cursor, futureDoc)
-                doc = Document.selectWhere(cursor, document_id=futureDoc.content_hash)[0]
-
-            fileinfo = FileInfo(db_document_id=doc.db_document_id,
-                                file_name=futureDoc.filename,
-                                file_time=futureDoc.lastModificationTime,
-                                state=futureDoc.state,
-                                file_state=futureDoc.file_state)
-            fileinfo.commit(cursor, update=False)
-
-        self._updateScores(cursor, doc.db_document_id, futureDoc.text)
-        provider = DocumentProvider.selectOrInsertWhere(cursor,
-                                          db_document_id=doc.db_document_id,
-                                          node_id=nodeId)[0]
-        provider.last_providing_time = int(time.time())
-        provider.commit(cursor, update=True)
-        node = Node.selectWhere(cursor, node_id=nodeId)[0]
-        node.last_seen_time = int(time.time())
-        node.commit(cursor, update=True)
-        cursor.close()
-        self._cnx.commit()
-        
+                else:
+                    doc = self._createDocument(cursor, futureDoc)
+                    doc = Document.selectWhere(cursor, document_id=futureDoc.content_hash)[0]
+                fileinfo = FileInfo(db_document_id=doc.db_document_id,
+                                    file_name=futureDoc.filename,
+                                    file_time=futureDoc.lastModificationTime,
+                                    state=futureDoc.state,
+                                    file_state=futureDoc.file_state)
+                fileinfo.commit(cursor, update=False)
+            self._updateScores(cursor, doc.db_document_id, futureDoc.text)
+            # update last seen time only if not working locally
+            if nodeId is not None:
+                provider = DocumentProvider.selectOrInsertWhere(cursor,
+                                                                db_document_id=doc.db_document_id,
+                                                                node_id=nodeId)[0]
+                provider.last_providing_time = int(time.time())
+                provider.commit(cursor, update=True)
+                nodes = Node.selectWhere(cursor, node_id=nodeId)
+                if not nodes:
+                    self._cnx.rollback()
+                    cursor.close()
+                    raise ValueError('provider %s is not registered in our database !')
+                node = nodes[0]
+                node.last_seen_time = int(time.time())
+                node.commit(cursor, update=True)
+            cursor.close()
+            self._cnx.commit()
+        except:
+            self._cnx.rollback()
+            raise
     def _createDocument(self, cursor, futureDoc):
 
         doc = Document(document_id=futureDoc.content_hash,

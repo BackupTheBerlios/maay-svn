@@ -361,7 +361,8 @@ class SearchForm(MaayPage):
                 msg = "Indexer already running"
             else:
                 msg = "Indexer started"
-                indexer.start_as_thread(self.querier, self.maayId, _factory)
+                nodeConfig = INodeConfiguration(context)
+                indexer.start_as_thread(nodeConfig, _factory)
         indexationPage.msg = msg
         indexationPage.alertmessage = alertMsg
         return indexationPage
@@ -397,51 +398,52 @@ class SearchForm(MaayPage):
         docid = context.arg('docid')
         if not host or not port or not docid:
             return Maay404()
+        nodeConfig = INodeConfiguration(context)
         proxy = Proxy(str('http://%s:%s' % (host, port)))
         print "[webapp] trying to donwload %r from %s:%s" % (filename, host, port)
         d = proxy.callRemote('downloadFile', docid, words)
-        d.addCallback(self.gotDataBack, filename)
-        d.addErrback(self.tryOtherProviders, filename, words, host,
+        d.addCallback(self.gotDataBack, nodeConfig, filename)
+        d.addErrback(self.tryOtherProviders, nodeConfig, filename, words, host,
                      port, docid, qid)
         return d
 
-    def gotDataBack(self, rpcFriendlyData, filename):
+    def gotDataBack(self, rpcFriendlyData, nodeConfig, filename):
         fileData = rpcFriendlyData.data
         print " ... downloaded !"
         filepath = osp.join(self.download_dir, filename)
-        f=file(filepath,'wb')
+        f = file(filepath,'wb')
         f.write(fileData)
         f.close()
-        return DistantFilePage(self.querier, self.maayId, filepath)
+        return DistantFilePage(nodeConfig, filepath)
 
     def onDownloadFileError(self, error, filename):
         msg = "Error while downloading file: %s" % (filename,)
         return Maay404(msg)
 
-    def tryOtherProviders(self, error, filename, words, host, port, docId, qid):
+    def tryOtherProviders(self, error, nodeConfig, filename, words, host, port, docId, qid):
         """starts to explore the list of other providers"""
         providers = self.querier.getProvidersFor(docId, qid)
         self.providerSet = set(providers)
         self.providerSet.remove((host, int(port)))
-        return self.retryWithOtherProvider('...', words, docId, filename)
+        return self.retryWithOtherProvider('...', nodeConfig, words, docId, filename)
     
-    def retryWithOtherProvider(self, error, words, docId, filename):
+    def retryWithOtherProvider(self, error, nodeConfig, words, docId, filename):
         if self.providerSet:
             nextHost, nextPort = self.providerSet.pop()
             print "[webapp] trying to donwload %r from %s:%s" % (filename, nextHost, nextPort)
             proxy = Proxy(str('http://%s:%s' % (nextHost, nextPort)))
             d = proxy.callRemote('downloadFile', docId, words)
             d.addCallback(self.gotDataBack, filename)
-            d.addErrback(self.retryWithOtherProvider, words, docId, filename)
+            d.addErrback(self.retryWithOtherProvider, nodeConfig, words, docId, filename)
             return d
         else:
             return self.onDownloadFileError('no provider available', filename)
     
 class DistantFilePage(static.File):
-    def __init__(self, querier, nodeId, filepath):
+    def __init__(self, nodeConfig, filepath):
         static.File.__init__(self, filepath)
         self.filepath = filepath
-        indexer.indexJustOneFile(querier, nodeId, self.filepath)
+        indexer.indexJustOneFile(nodeConfig, self.filepath)
 
 class ResultsPageMixIn:
 

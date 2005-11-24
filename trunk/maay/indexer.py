@@ -40,7 +40,7 @@ from zope.interface import Interface
 
 from maay import converter
 from maay.dbentity import FutureDocument, Document, FileInfo
-from maay.querier import MaayAuthenticationError
+from maay.querier import MaayAuthenticationError, MaayQuerier
 from maay.texttool import removeControlChar
 from threading import Thread
 from twisted.python import log
@@ -102,7 +102,7 @@ class FileIndexationFailure(Exception):
     def __init__(self, thefile, cause):
         self.thefile = thefile
         self.cause = cause
-
+    
     def __str__(self):
         return "Won't index %s because %s" % (self.thefile,
                                               self.cause)
@@ -284,9 +284,8 @@ class LocalIndexer(AbstractIndexer):
     """special indexer that is meant to run locally, using
     a querier instance rather than connecting to a RPC server
     """    
-    def __init__(self, indexerConfig, querier, nodeId, observers=None):
+    def __init__(self, indexerConfig, querier, observers=None):
         self.querier = querier
-        self.nodeId = nodeId
         # baseclass's __init__ must be called *after* local initialisation
         # otherwise it could call _purgeEverything with an inconsistent state
         AbstractIndexer.__init__(self, indexerConfig, observers)
@@ -326,12 +325,15 @@ class LocalIndexer(AbstractIndexer):
             futureDoc.text = removeControlChar(futureDoc.text)
             if self.verbose:
                 print '[local] ('+safe_encode(futureDoc.title)+')'
-            self.querier.indexDocument(self.nodeId, futureDoc)
+            # first argument of indexDocument set to None means we're
+            # working locally
+            self.querier.indexDocument(None, futureDoc)
         except Exception, exc:
             if self.verbose:
                 print "[local] An error occured on the Node while indexing %s" % \
                       safe_encode(futureDoc.filename)
-                print exc
+                import traceback
+                traceback.print_exc()
                 print "[local] See Node log for details"
             else:
                 print "[local] Error indexing %s: %s" % \
@@ -345,7 +347,7 @@ class LocalIndexer(AbstractIndexer):
 if sys.platform == 'win32':
     def normalizeCase(path):
         return path.lower()
-else:    
+else:
     def normalizeCase(path):
         return path
 
@@ -411,27 +413,31 @@ def is_running():
     print '** is_running()', indexer_thread
     return indexer_thread and indexer_thread.isAlive()
 
-def runLocally(querier, nodeId, observers=None):
-    indexer = LocalIndexer(indexerConfig, querier, nodeId, observers)
+def runLocally(localQuerier, observers=None):
+    indexer = LocalIndexer(indexerConfig, localQuerier, observers)
     indexer.start()
     
-def start_as_thread(maayQuerier, nodeId, webpage):
+def start_as_thread(nodeConfig, webpage):
+    localQuerier = MaayQuerier(nodeConfig.db_host, nodeConfig.db_name,
+                               nodeConfig.user, nodeConfig.password)
     global indexer_thread
     if is_running():
         print "Indexer already running", indexer_thread
     else:
         print "launching indexer"
-        indexer_thread = Thread(target=runLocally, args=(maayQuerier, nodeId, [webpage],))
+        indexer_thread = Thread(target=runLocally, args=(localQuerier, [webpage],))
         indexer_thread.start()
 
 # index one file from webapp in a thread
 
-def indexJustOneFile(maayQuerier, nodeId, filepath):
-    thread = Thread(target=_just_one, args=(maayQuerier, nodeId, filepath))
+def indexJustOneFile(nodeConfig, filepath):
+    localQuerier = MaayQuerier(nodeConfig.db_host, nodeConfig.db_name,
+                               nodeConfig.user, nodeConfig.password)
+    thread = Thread(target=_just_one, args=(localQuerier, filepath))
     thread.start()
 
-def _just_one(querier, nodeId, filepath):
-    indexer = LocalIndexer(indexerConfig, querier, nodeId)
+def _just_one(querier, filepath):
+    indexer = LocalIndexer(indexerConfig, querier)
     print 'going to index file %s', filepath
     try:
         # log.startLogging(open('maay-indexer.log', 'w'))
