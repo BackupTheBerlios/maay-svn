@@ -259,11 +259,6 @@ class Document(DBEntity):
     getDocumentCount = classmethod(getDocumentCount)
 
 
-def sqlCriterium(foo):
-    return ("D.publication_time, "
-            "DS.relevance, "
-            "DS.popularity ")
-
 def sqlOrder(order, direction):
     if order == 'publication_time':
         prefix = 'ORDER BY D.'
@@ -309,8 +304,10 @@ class ScoredDocument(Document):
                         "D.size, "
                         "D.text, "
                         "D.url, "
-                        "D.mime_type, ")
-        query += sqlCriterium("foo") #to be fixed soon
+                        "D.mime_type, "
+                        "D.publication_time, "
+                        "DS.relevance, "
+                        "DS.popularity ")
         query += ("FROM documents D, document_scores DS "
                   "WHERE DS.db_document_id=D.db_document_id "
                   "AND DS.word IN (%s) "
@@ -388,15 +385,15 @@ class Result(Document):
         else:
             where = ''
         if query.order == 'publication_time':
-            orderClause = 'publication_time, relevance'
+            orderClause = 'publication_time %s, relevance %s' % (query.direction, query.direction)
         else:
-            orderClause = '%s, publication_time' % (query.order,)
+            orderClause = '%s %s, publication_time %s' % (query.order, query.direction, query.direction)
         aliasedAttrs = ['T.%s' % attr for attr in cls.attributes]
         # If only Mysql4.1 supported VIEWS
         subQuery = 'SELECT * FROM results WHERE query_id=%(query_id)s GROUP BY document_id HAVING record_ts=MIN(record_ts)'
-        sqlQuery = 'SELECT %s FROM (%s) AS T %s ORDER BY %s %s LIMIT %s OFFSET %s' % (
+        sqlQuery = 'SELECT %s FROM (%s) AS T %s ORDER BY %s LIMIT %s OFFSET %s' % (
             ', '.join(aliasedAttrs), subQuery, where,
-            orderClause, query.direction, limit, query.offset)
+            orderClause, limit, query.offset)
         print "QUERY =", sqlQuery
         return sqlQuery, {'query_id' : query.qid}
     _selectQuery = classmethod(_selectQuery)
