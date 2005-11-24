@@ -394,7 +394,6 @@ class Result(Document):
         sqlQuery = 'SELECT %s FROM (%s) AS T %s ORDER BY %s LIMIT %s OFFSET %s' % (
             ', '.join(aliasedAttrs), subQuery, where,
             orderClause, limit, query.offset)
-        print "QUERY =", sqlQuery
         return sqlQuery, {'query_id' : query.qid}
     _selectQuery = classmethod(_selectQuery)
 
