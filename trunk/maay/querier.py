@@ -34,6 +34,7 @@ from twisted.python import log
 from zope.interface import Interface, implements
 
 from logilab.common.db import get_dbapi_compliant_module
+
 from maay.dbentity import ScoredDocument, Document, FileInfo, \
      DBEntity, DocumentProvider, DocumentScore, Word, Node, Result
 from maay.texttool import normalizeText, WORDS_RGX, MAX_STORED_SIZE
@@ -373,14 +374,14 @@ class AnonymousQuerier:
         cursor.close()
         return providers
         
-    def pushDocuments(self, qid, documents, provider=None):
+    def pushDocuments(self, qid, documents, our_node_id, provider=None):
         """push <documents> into the temporary table built for
         <qid>
         """
         cursor = self._cnx.cursor()
         try:
             for document in documents:
-                res = Result.fromDocument(document, qid, provider)
+                res = Result.fromDocument(document, qid, our_node_id, provider)
                 res.commit(cursor, update=False)
             cursor.close()
             self._cnx.commit()

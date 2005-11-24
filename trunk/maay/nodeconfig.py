@@ -17,7 +17,14 @@
 #     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
-from maay.configuration import NodeConfiguration
+from maay.configuration import NodeConfiguration, IndexerConfiguration
 
 nodeConfig = NodeConfiguration()
 nodeConfig.load()
+indexerConfig = IndexerConfiguration()
+indexerConfig.load_from_files()
+
+NODE_PORT = nodeConfig.rpcserver_port
+NODE_ID = nodeConfig.get_node_id()
+
+QUERY_LIFE_TIME = nodeConfig.query_life_time

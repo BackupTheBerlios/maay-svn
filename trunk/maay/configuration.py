@@ -92,14 +92,6 @@ def _filter_files_with(file_list, access_criterium):
 class Configuration(BaseConfiguration):
 
     config_file = None
-    options = [
-        ('config-name',
-         {'type' : "string", 'metavar' : "<config-name>", 'short' : "C",
-         'help' : "allow to specify a config directory name",
-          'default' : "maay",
-        }),
-        ]
-
 
     def __init__(self, name=None):
         BaseConfiguration.__init__(self, options=self.options,
@@ -107,7 +99,7 @@ class Configuration(BaseConfiguration):
                                    name=name)
         
     def load(self):
-        self.load_command_line_configuration()
+        print "loading %s configuration" % self.name
         self.load_from_files()
         # then override with command-line options
         self.load_command_line_configuration()
@@ -118,11 +110,11 @@ class Configuration(BaseConfiguration):
             self.load_file_configuration(path)
 
     def get_config_dirs(self):
-        if sys.platform == "win32": # XXX: fix Win32 with self.config_name attr
+        if sys.platform == "win32":
             return [os.path.normpath(os.path.join(_get_data_dir(), '..'))]
         else:
-            return _filter_files_with([osp.join('/etc/', self.config_name),
-                                       os.path.expanduser('~/.' + self.config_name),
+            return _filter_files_with([osp.join('/etc/maay'),
+                                       os.path.expanduser('~/.maay'),
                                        '.'],
                                       os.R_OK)
 
@@ -141,7 +133,7 @@ class Configuration(BaseConfiguration):
 ################ Web server, rpc server stuff
 
 class NodeConfiguration(Configuration):
-    options = Configuration.options + [
+    options =  [
         ('db-name',
          {'type' : "string", 'metavar' : "<dbname>", 'short' : "d",
           'help' : "name of the Maay database",
@@ -269,7 +261,7 @@ def _default_download_dir():
 
     
 class IndexerConfiguration(Configuration):
-    options = Configuration.options + [
+    options = [
         ('host',
          {'type' : "string", 'metavar' : "<host>", 'short' : "H",
           'help' : "where Maay node can be found",
@@ -314,6 +306,12 @@ class IndexerConfiguration(Configuration):
           'help': 'the indexer will skip this directory',
           'default' : []
           }),
+        ('download-dir',
+         {'type': 'string',
+          'metavar': '<downloads>',
+          'help': 'downloaded files will go there and be immediately indexed',
+          'default' : _default_download_dir()
+          }),
        ('verbose',
          {'type': 'yn',
           'metavar': '<y or n>', 'short': 'v',
@@ -326,11 +324,10 @@ class IndexerConfiguration(Configuration):
           'metavar' : '<y or n>',
           'default' : False,
           }),
-        ('download-dir',
-         {'type': 'string',
-          'metavar': '<downloads>',
-          'help': 'downloaded files will go there and be immediately indexed',
-          'default' : _default_download_dir()
+        ('thumbnails-dir',
+         {'type' : "string", 'metavar' : "--thumbnailsdir",
+          'help' : "Thumbnail files repository",
+          'default' : '.maay_thumbnails'
           })
         
         ]
@@ -339,13 +336,11 @@ class IndexerConfiguration(Configuration):
 
     def __init__(self):
         Configuration.__init__(self, name="Indexer")
-        if not self.download_dir:
-            self.download_dir = _download_dir()
 
-    def load(self):
-        Configuration.load(self)
-        if not osp.exists(self.download_dir):
-            os.makedirs(self.download_dir)
+##     def load(self):
+##         Configuration.load(self)
+##         if not osp.exists(self.download_dir):
+##             os.makedirs(self.download_dir)
 
     def save(self):
         # FIXME: since there may be several configuration files, which
@@ -358,34 +353,6 @@ class IndexerConfiguration(Configuration):
         except IOError, e:
             print "Cannot open file '%s' to update configuration" % self.config_file
 
-################ Image stuff 
-
-class NoThumbnailsDir(Exception):
-    """Represents impossibility to access or create RW the
-       maay thumbnails dir repository"""
-    pass
-
-class ImageConfiguration(BaseConfiguration):
-    options = Configuration.options + [
-        ('thumbnails-dir',
-         {'type' : "string", 'metavar' : "--thumbnailsdir",
-          'help' : "Thumbnail files repository",
-          'default' : '.maay_thumbnails'},)]
-    config_file = 'image.ini'
-
-    def __init__(self):
-        BaseConfiguration.__init__(self, options=self.options,
-                                   config_file=self.config_file,
-                                   name='Image')
-
-    def load_command_line_configuration(self):
-        """We won't load command line stuff because ImageConfiguration
-           is an auxiliary config thing which will purely and simply
-           choke on the cmd-line args it doesn't know about
-           Let's just pretend for now that thumbnail-dir can't be
-           specified on command line.
-        """
-        pass
 
     def get_thumbnails_dir(self):
         """Returns the complete path to Maay thumnails directory
@@ -402,3 +369,10 @@ class ImageConfiguration(BaseConfiguration):
             return path
         else:
             raise NoThumbnailsDir("Access to %s is impossible." % path)
+
+class NoThumbnailsDir(Exception):
+    """Represents impossibility to access or create RW the
+       maay thumbnails dir repository"""
+    pass
+
+

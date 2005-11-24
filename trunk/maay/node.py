@@ -62,13 +62,10 @@ from maay.rpc import MaayRPCServer
 
 from maay import presenceclient
 from maay.webapplication import Maay404, INodeConfiguration, SearchForm
-
+from maay.localinfo import NODE_HOST
+from maay.nodeconfig import NODE_PORT, NODE_ID
 
 ## nevow app/server setup ############################################
-
-NODE_HOST = socket.gethostbyname(socket.gethostname())
-NODE_PORT = nodeConfig.rpcserver_port
-
 
 # MaayMindFactory might be helpful to access request informations
 # in portal. (not sure it's really aimed to be used this way :-)
@@ -157,7 +154,7 @@ class MaayPortal(object, portal.Portal):
             webQuerier = None
         else:
             realm.createUserSession(WEB_AVATARID, webQuerier)
-            webQuerier.registerNode(self.config.get_node_id(),
+            webQuerier.registerNode(NODE_ID,
                                     ip=NODE_HOST,
                                     port=NODE_PORT,
                                     bandwidth=nodeConfig.bandwidth)
@@ -262,7 +259,7 @@ def run():
     presenceclient.notify(nodeConfig.presence_host,
                           nodeConfig.presence_port,
                           maayPortal.webQuerier,
-                          nodeConfig.get_node_id(),
+                          NODE_ID,
                           socket.gethostbyname(socket.gethostname()),
                           nodeConfig.rpcserver_port,
                           nodeConfig.bandwidth)

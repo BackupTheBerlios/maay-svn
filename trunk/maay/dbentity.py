@@ -32,7 +32,8 @@ from maay.localinfo import NODE_LOGIN
 
 from maay.texttool import normalizeText, WORD_MIN_LEN, WORD_MAX_LEN,\
      WORDS_RGX
-from maay.p2pquerier import NODE_ID
+
+
 
 class DBEntity:
     attributes = []
@@ -361,7 +362,7 @@ class Result(Document):
     key = ('document_id', 'query_id')
     tableName = 'results'
 
-    def fromDocument(document, qid, provider=None):
+    def fromDocument(document, qid, our_node_id, provider=None):
         stateDict = document.__dict__ # document.stateDict is wrong
         for key, value in stateDict.items():
             if key not in Result.attributes or value is None:
@@ -371,7 +372,7 @@ class Result(Document):
         else:
             stateDict['host'] = 'localhost'
             stateDict['port'] = 0
-            stateDict['node_id'] = NODE_ID # local node id
+            stateDict['node_id'] = our_node_id # local node id
             stateDict['login'] = NODE_LOGIN
         stateDict['query_id'] = qid
         return Result(**stateDict)

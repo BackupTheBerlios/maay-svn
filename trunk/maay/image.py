@@ -46,8 +46,8 @@ def make_thumbnail(file_path, target_dir, size=128):
 
 
 ############## EXIF stuff
-from maay.configuration import ImageConfiguration as ImConfig
 from maay.texttool import AbstractParser
+from maay.indexerconfig import indexerConfig
 
 class ExifParser(AbstractParser):
     """A parser for Exif information found in image files"""
@@ -57,7 +57,7 @@ class ExifParser(AbstractParser):
 
     def get_thumbnails_dir(self):
         if not self.thumbnails_dir:
-            self.thumbnails_dir = ImConfig().get_thumbnails_dir()
+            self.thumbnails_dir = indexerConfig.get_thumbnails_dir()
         return self.thumbnails_dir
 
     def parseFile(self, filepath, pristineFilename, encoding=None):

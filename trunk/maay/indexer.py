@@ -26,10 +26,6 @@ TODO: analyse the God class into something understandable
 
 __revision__ = '$Id$'
 
-from maay.configuration import IndexerConfiguration
-
-indexerConfig = IndexerConfiguration()
-indexerConfig.load()
 
 import os
 import sys
@@ -48,6 +44,9 @@ from maay.querier import MaayAuthenticationError
 from maay.texttool import removeControlChar
 from threading import Thread
 from twisted.python import log
+
+from maay.indexerconfig import indexerConfig
+
 
 class IIndexerObserver(Interface):
 
@@ -441,6 +440,5 @@ def _just_one(querier, nodeId, filepath):
         print fif
 
 if __name__ == '__main__':
+    indexerConfig.load()
     run()
-
-

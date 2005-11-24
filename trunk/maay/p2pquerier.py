@@ -34,14 +34,10 @@ from logilab.common.compat import set
 from twisted.web.xmlrpc import Proxy
 from twisted.internet import reactor
 from maay.texttool import makeAbstract, removeSpace, untagText
-from maay.nodeconfig import nodeConfig
 from maay.query import Query
 from maay.localinfo import NODE_LOGIN, NODE_HOST
+from maay.nodeconfig import NODE_PORT, NODE_ID, QUERY_LIFE_TIME
 
-nodeConfig.load()
-
-NODE_PORT = nodeConfig.rpcserver_port
-NODE_ID = nodeConfig.get_node_id()
 
 QUERIER = None
 
@@ -192,7 +188,7 @@ class P2pQuerier:
         self._answerCallbacks = {}
         # now, read a config. provided value for EXPIRATION_TIME
         # and fire the garbage collector
-        P2pQuerier._EXPIRATION_TIME = max(nodeConfig.query_life_time,
+        P2pQuerier._EXPIRATION_TIME = max(QUERY_LIFE_TIME,
                                           P2pQuerier._EXPIRATION_TIME)
         reactor.callLater(self._EXPIRATION_TIME, self._markQueries)
 
@@ -300,8 +296,8 @@ class P2pQuerier:
     def relayAnswer(self, answer): 
         """record and forward answers to a query."""
         print "P2pQuerier relayAnswer : %s document(s) from %s:%s" \
-              % (len(answer.documents), answer.provider[1],
-                 answer.provider[2])
+              % (len(answer.documents), answer.provider[2],
+                 answer.provider[3])
         query = self._receivedQueries.get(answer.qid)
         if not query :
             query = self._sentQueries.get(answer.qid)
@@ -323,6 +319,8 @@ class P2pQuerier:
                 query.addMatch(document)
                 toSend.append(document)
             else:
+                #FIXME: shouldn't we add all documents regardless
+                #       of duplicates, so as to add a new provider entry ?
                 print "we already know this doc !!!@~^#{"
 
         if query.sender != NODE_ID:
@@ -432,7 +430,7 @@ def backgroundProbe(node, stamp):
         reactor.callLater(abs(CHECK_DELAY - right_now + now), checkOldest)
 
 
-socket.setdefaulttimeout(30)
+#socket.setdefaulttimeout(30)
 def nodeSleeps(node_ip, node_port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:

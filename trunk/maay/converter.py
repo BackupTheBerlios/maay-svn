@@ -157,7 +157,7 @@ try:
             return ExifParser()
 except ImportError:
     print "Python Imaging Library not installed for your version of Python.",
-    print "Thumbnail support will not work."
+    print "Thumbnail and EXIF support will not work."
     
 
 def uncompressFile(filepath, outputDir):
