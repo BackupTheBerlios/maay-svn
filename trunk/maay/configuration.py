@@ -258,13 +258,13 @@ class NodeConfiguration(Configuration):
 
 ################ Indexer stuff
 
-def _download_dir():
+def _default_download_dir():
     if sys.platform == 'win32':
+        # FIXME: if we can get the user desktop path, it would be better.
+        # (the path may depend of the language)
         theDir = r'\Documents and Settings\All Users\Desktop\Maay Documents\downloaded'
     else:
         theDir = osp.expanduser('~/maay-downloads/')
-    if not osp.exists(theDir):
-        os.makedirs(theDir)
     return theDir
 
     
@@ -330,7 +330,7 @@ class IndexerConfiguration(Configuration):
          {'type': 'string',
           'metavar': '<downloads>',
           'help': 'downloaded files will go there and be immediately indexed',
-          'default' : None
+          'default' : _default_download_dir()
           })
         
         ]
@@ -342,6 +342,10 @@ class IndexerConfiguration(Configuration):
         if not self.download_dir:
             self.download_dir = _download_dir()
 
+    def load(self):
+        Configuration.load(self)
+        if not osp.exists(self.download_dir):
+            os.makedirs(self.download_dir)
 
     def save(self):
         # FIXME: since there may be several configuration files, which
