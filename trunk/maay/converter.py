@@ -51,6 +51,7 @@ from tempfile import mkdtemp
 import gzip
 import bz2
 import sys
+import shutil
 
 from maay.texttool import TextParser, MaayHTMLParser as HTMLParser, ParsingError
 
@@ -164,20 +165,21 @@ def uncompressFile(filepath, outputDir):
     """returns a filepath for the same, uncompressed, file
        located in the provided output dir
     """
+    uncompressedFile = osp.join(outputDir, osp.basename(filepath))
     if filepath.endswith('.gz'):
         opener = gzip.open
     elif filepath.endswith('.bz2'):
         opener = bz2.BZ2File
     else:
-        opener = file
+        #XXX: we should just return filepath (and not remove it later)
+        shutil.copy(filepath, outputDir)
+        return uncompressedFile
     compressed = opener(filepath, 'rb')
-    uncompressedFile = osp.join(outputDir, osp.basename(filepath+"-in"))
     uncompressed = file(uncompressedFile, 'wb')
     uncompressed.write(compressed.read())
     compressed.close()
     uncompressed.close()
     return uncompressedFile
-    
 
 class CommandBasedConverter(BaseConverter):
     COMMAND = None
@@ -193,9 +195,8 @@ class CommandBasedConverter(BaseConverter):
         """
 
         outputDir = mkdtemp()
-        outputFile = osp.join(outputDir, osp.basename(filepath))
+        outputFile = osp.join(outputDir, osp.basename(filepath+'.'+self.OUTPUT_TYPE))
         inputFile = ''
-
         try:
             try:
                 inputFile = uncompressFile (filepath, outputDir)
