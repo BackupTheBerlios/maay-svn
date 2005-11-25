@@ -23,7 +23,7 @@ from distutils.core import setup
 import sys
 from glob import glob
 
-version = '0.2.4' # This should be imported from the maay package
+version = '0.3.0' # This should be imported from the maay package
 author = "France Telecom R&D"
 author_email = "maay-dev@lists.berlios.de"
 copyright = "Copyright (c)2004-2005 France Telecom R&D"

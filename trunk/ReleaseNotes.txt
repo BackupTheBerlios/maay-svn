@@ -1,4 +1,4 @@
-Release Notes for version 0.2.4
+Release Notes for version 0.3.0
 
 See README.txt for installation and quick start instructions. 
 

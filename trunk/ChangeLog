@@ -1,3 +1,10 @@
+Maay-0.3.0 2005-11-25
+	* Ergonomic improvements
+	* Compute and use popularity and relevance scores
+	* Download files from other peers when the first ones fail
+	* Check maay version at startup time
+	* Lots of bug fixes
+	
 Maay-0.2.2 2005-11-21
 	* Use IP adress of presence server instead of domain name
 	* Threshold on document relevance and popularity to avoid negative
@@ -7,8 +14,6 @@ Maay-0.2.2 2005-11-21
 	* improved Internet Explorer compatibility
 	* Fix a communication bug when non-standard ports are used, and thus ...
 	* Is incompatible with prior versions (won't answer to queries from old version)
-
-	
 
 Maay-0.2.1 2005-11-16
         * Fixed bug #5647 caused by bad use of os.getlogin() preventing P2P
