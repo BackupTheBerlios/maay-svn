@@ -370,7 +370,7 @@ class SearchForm(MaayPage):
     def child_download(self, context):
         """download *local* file"""
         docid = context.arg('docid')
-        words = parseWords(context.arg('words'))
+        words, _ = parseWords(context.arg('words'))
         #query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'))
         docurl = self.querier.notifyDownload(docid, words)
         if docurl:
