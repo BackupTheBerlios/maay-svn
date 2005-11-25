@@ -61,7 +61,7 @@ class IIndexerObserver(Interface):
 
 def makeDocumentId(filename):
     """return the SHA hash value from of the contents of the file"""
-    stream = file(filename, 'rb')
+    stream = file(filename, 'rbU')
     hasher = sha.sha()
     data = stream.read(4096)
     while data:        
