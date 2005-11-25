@@ -248,31 +248,30 @@ class IndexationPageFactory(athena.LivePageFactory):
         self.untouchedDocuments = 0
         self.indexedDocuments = 0
     
-
 class SearchForm(MaayPage):
     """default search form"""
     bodyFactory = loaders.xmlfile(get_path_of('searchform.html'))
     addSlash = True
     child_versionjs = static.File(get_path_of('version.js'))
-
+    
     def __init__(self, maayId, querier, p2pquerier=None):
         MaayPage.__init__(self, maayId)
         self.querier = querier
         self.p2pquerier = p2pquerier
         self.download_dir = INDEXER_CONFIG.download_dir
+        # We really want that information to be accessible trhough any client
+        setattr(self, 'child_localversion.js', 'current_version = "%s";' % VERSION)
 
     def render_custom_htmlheader(self, context):
         return [
             tags.script(type='text/javascript', src='http://maay.netofpeers.net/version.js'),
-            tags.script(type='text/javascript')[
-                tags.raw('current_version = "%s";' % VERSION),
-                ],
+            tags.script(type='text/javascript', src=url.here.child('localversion.js')),
             tags.script(type='text/javascript', src=url.here.child('versionjs')),
             ]
 
     def render_onload(self, context):
         return 'checkNewRelease();'
-    
+
     # TODO: since getDocumentCount might be quite costly to compute for the
     # DBMS, cache the value and update it every 10 mn
     def render_shortstat(self, context, data):
@@ -432,7 +431,8 @@ class SearchForm(MaayPage):
             return d
         else:
             return self.onDownloadFileError('no provider available', filename)
-    
+
+
 class DistantFilePage(static.File):
     def __init__(self, nodeConfig, filepath):
         static.File.__init__(self, filepath)
@@ -584,11 +584,15 @@ class ResultsPageMixIn:
             baseurl = '/download?docid=%s' % (document.document_id,)
             # TODO: make a difference between private and public results
             context.fillSlots('resultClass', "localPublicResults")
+            context.fillSlots('providersCount', '')
         else:
             baseurl = '/distantfile?docid=%s' % (document.document_id,)
             context.fillSlots('resultClass', "distantResults")
             baseurl += '&host=%s' % (document.host,)
             baseurl += '&port=%s' % (document.port,)
+            context.fillSlots('providersCount', 'Provided by %s node(s)' %
+                              (len(self.querier.getProvidersFor(document.document_id,
+                                                                self.qid))))
         baseurl += '&filename=%s' % osp.basename(document.url)
         baseurl += '&words=%s' % '+'.join(self.query.words)
         baseurl += '&qid=%s' % (self.qid,)

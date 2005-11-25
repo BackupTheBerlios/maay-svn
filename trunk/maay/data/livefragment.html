@@ -35,6 +35,7 @@
 	    <td>
 	      <a>
 		<nevow:attr name="href"><nevow:slot name="url" /></nevow:attr>
+		<nevow:attr name="title"><nevow:slot name="providersCount" /></nevow:attr>
 		<nevow:slot name="doctitle">DOC TITLE</nevow:slot>
 	      </a>
 	    </td>
@@ -42,7 +43,7 @@
 	  </table>
 	  <div class="resultDesc"><nevow:slot name="abstract" /></div>
 	  <span class="resultUrl"><span nevow:render="peer" />
-                <nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /> - (relevance : <nevow:slot name="relevance" />) - (popularity : <nevow:slot name="popularity" />)</span>
+         <nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /> - (relevance : <nevow:slot name="relevance" />) - (popularity : <nevow:slot name="popularity" />)</span>
 	</div>
       </td>
     </tr>
