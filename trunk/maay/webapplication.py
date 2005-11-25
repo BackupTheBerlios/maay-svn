@@ -285,6 +285,8 @@ class SearchForm(MaayPage):
         # XXX: logout message should be forwarded to presence server
         return None
 
+    def child_peers(self, context):
+        return PeersList(self.maayId, self.querier)
 
     def child_indexation(self, context, _factory=IndexationPageFactory(IndexationPage)):
         alertMsg = ""
