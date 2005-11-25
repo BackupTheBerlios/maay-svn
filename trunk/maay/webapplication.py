@@ -371,7 +371,6 @@ class SearchForm(MaayPage):
         """download *local* file"""
         docid = context.arg('docid')
         words, _ = parseWords(context.arg('words'))
-        #query = Query.fromRawQuery(unicode(context.arg('words'), 'utf-8'))
         docurl = self.querier.notifyDownload(docid, words)
         if docurl:
             if osp.isfile(docurl):
