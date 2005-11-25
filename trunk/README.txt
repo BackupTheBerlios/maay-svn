@@ -42,7 +42,7 @@ How do I start using Maay?
 ==========================
 
 First, edit the configuration files. On Windows, they are in
-C:\Program Files\Maay\webapp.ini and C:\Program
+C:\Program Files\Maay\node.ini and C:\Program
 Files\Maay\indexer.ini. The Windows installer should have set the
 different configuration values.  On Unix systems, they are in
 /etc/maay, and you can copy them to ~/.maay/ if you want to have some
