@@ -125,7 +125,8 @@ class AbstractIndexer:
     def getFileIterator(self, isPrivate=True):
         if isPrivate:
             indexed = self.indexerConfig.private_dir
-            skipped = self.indexerConfig.skip_dir
+            # Skip public dirs in private indexation
+            skipped = self.indexerConfig.skip_dir + self.indexerConfig.public_dir 
             print "private indexation of", indexed, "omitting", skipped
         else:
             indexed = self.indexerConfig.public_dir[:]
@@ -182,7 +183,7 @@ class AbstractIndexer:
             raise
         except Exception, exc:
             raise FileIndexationFailure(safe_encode(filepath),
-                                        "an exception %s was raised" % exc)                                        
+                                        "an exception %s was raised" % exc)
     def runIndexer(self, isPrivate=True):
         existingFiles = set()
         state = docState(isPrivate)
@@ -266,7 +267,6 @@ class Indexer(AbstractIndexer):
             if self.verbose:
                 print '('+safe_encode(futureDoc.title)+')'
             self.serverProxy.indexDocument(self.cnxId, futureDoc)
-
         except (Fault, ProtocolError), exc:
             if self.verbose:
                 print "An error occured on the Node while indexing %s" % \
@@ -276,8 +276,9 @@ class Indexer(AbstractIndexer):
             else:
                 print "Error indexing %s: %s" % \
                       (safe_encode(futureDoc.filename), exc)
-        for obs in self.observers:
-            obs.newDocumentIndexed(futureDoc.filename, futureDoc.state)
+        else:
+            for obs in self.observers:
+                obs.newDocumentIndexed(futureDoc.filename, futureDoc.state)
 
 class LocalIndexer(AbstractIndexer):
     """special indexer that is meant to run locally, using
@@ -337,9 +338,10 @@ class LocalIndexer(AbstractIndexer):
             else:
                 print "[local] Error indexing %s: %s" % \
                       (safe_encode(futureDoc.filename), exc)
-        for obs in self.observers:
-            obs.newDocumentIndexed(futureDoc.filename, futureDoc.state)
-    
+        else:
+            for obs in self.observers:
+                obs.newDocumentIndexed(futureDoc.filename, futureDoc.state)
+
 
 ######### FileIterator
 
