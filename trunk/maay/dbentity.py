@@ -356,21 +356,15 @@ class Result(Document):
                   'relevance', 'popularity', 'url',
                   'host', 'port', 'login', 'record_ts')
     extended_attrs = attributes
-    key = ('document_id', 'query_id')
+    key = ('document_id', 'document_id', 'query_id')
     tableName = 'results'
 
-    def fromDocument(document, qid, our_node_id, provider=None):
+    def fromDocument(document, qid, provider):
         stateDict = document.__dict__ # document.stateDict is wrong
         for key, value in stateDict.items():
             if key not in Result.attributes or value is None:
                 del stateDict[key]
-        if provider:
-            stateDict['login'], stateDict['node_id'], stateDict['host'], stateDict['port'] = provider
-        else:
-            stateDict['host'] = 'localhost'
-            stateDict['port'] = 0
-            stateDict['node_id'] = our_node_id # local node id
-            stateDict['login'] = NODE_LOGIN
+        stateDict['login'], stateDict['node_id'], stateDict['host'], stateDict['port'] = provider
         stateDict['query_id'] = qid
         return Result(**stateDict)
     fromDocument = staticmethod(fromDocument)

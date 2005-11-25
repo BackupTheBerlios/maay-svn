@@ -248,8 +248,6 @@ class AnonymousQuerier:
 
     def _updateDownloadStatistics(self, document, words):
         cursor = self._cnx.cursor()
-        # what's this max(0, doc.count) below ??? it should be set initially
-        # at zero anyway ...
         document.download_count = max(0, document.download_count) + 1
         document.commit(cursor, update=True)
         db_document_id = document.db_document_id
@@ -375,14 +373,14 @@ class AnonymousQuerier:
         cursor.close()
         return providers
         
-    def pushDocuments(self, qid, documents, our_node_id, provider=None):
+    def pushDocuments(self, qid, documents, provider):
         """push <documents> into the temporary table built for
         <qid>
         """
         cursor = self._cnx.cursor()
         try:
             for document in documents:
-                res = Result.fromDocument(document, qid, our_node_id, provider)
+                res = Result.fromDocument(document, qid, provider)
                 res.commit(cursor, update=False)
             cursor.close()
             self._cnx.commit()

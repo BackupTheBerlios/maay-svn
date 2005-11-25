@@ -312,15 +312,15 @@ class P2pQuerier:
                     document['url'] = os.path.basename(document['url'])
             # TODO: record answer in database if local is False
             # auc : to have them in Document with state == KNOWN
-            if not query.isKnown(document):
-                abstract = makeAbstract(document['text'], query.getWords())
-                document['text'] = untagText(removeSpace(abstract))
-                query.addMatch(document)
-                toSend.append(document)
-            else:
-                #FIXME: shouldn't we add all documents regardless
-                #       of duplicates, so as to add a new provider entry ?
-                print "we already know this doc !!!@~^#{"
+            #if not query.isKnown(document):
+            abstract = makeAbstract(document['text'], query.getWords())
+            document['text'] = untagText(removeSpace(abstract))
+            query.addMatch(document)
+            toSend.append(document)
+            ## else:
+##                 #FIXME: shouldn't we add all documents regardless
+##                 #       of duplicates, so as to add a new provider entry ?
+##                 print "we already know this doc !!!@~^#{"
 
         if query.sender != NODE_CONFIG.get_node_id():
             self.querier.registerNodeActivity(answer.provider[1])

@@ -46,6 +46,7 @@ from maay.query import Query, parseWords
 from maay.p2pquerier import P2pQuerier, P2pQuery
 from maay.dbentity import ScoredDocument, Document
 import maay.indexer as indexer
+from maay.localinfo import NODE_LOGIN
 
 def _is_valid_directory(directory):
     try:
@@ -403,7 +404,11 @@ class SearchForm(MaayPage):
         return d
 
     def gotDataBack(self, rpcFriendlyData, nodeConfig, filename):
-        fileData = rpcFriendlyData.data
+        if rpcFriendlyData:
+            fileData = rpcFriendlyData.data
+        else:
+            # this will trigger the errback in child_distantfile
+            raise Exception("File cannot be downloaded from this host")
         print " ... downloaded !"
         filepath = osp.join(self.download_dir, filename)
         f = file(filepath,'wb')
@@ -428,7 +433,7 @@ class SearchForm(MaayPage):
             print "[webapp] trying to donwload %r from %s:%s" % (filename, nextHost, nextPort)
             proxy = Proxy(str('http://%s:%s' % (nextHost, nextPort)))
             d = proxy.callRemote('downloadFile', docId, words)
-            d.addCallback(self.gotDataBack, filename)
+            d.addCallback(self.gotDataBack, nodeConfig, filename)
             d.addErrback(self.retryWithOtherProvider, nodeConfig, words, docId, filename)
             return d
         else:
@@ -498,13 +503,13 @@ class ResultsPageMixIn:
         offset = self.query.offset
         if (offset + 15) < resultsCount:
             return tags.xml('<a href="javascript: browseResults(%s);">Next</a>' % (offset + 15))
-        return ''
+        return tags.xml('<span class="selectedCriterium">Next</span>')
         
     
     def render_previous(self, context, data):
         """computes 'Previous' link"""
         if self.query.offset <= 0:
-            return ''
+            return tags.xml('<span class="selectedCriterium">Previous</span>')
         offset = self.query.offset - 15
         return tags.xml('<a href="javascript: browseResults(%s);">Previous</a>' % (offset))
     
@@ -637,7 +642,8 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
             self.p2pQuery = p2pQuery
             # purge old results
             self.querier.purgeOldResults()
-            self.querier.pushDocuments(self.qid, results, NODE_CONFIG.get_node_id(), provider=None)
+            provider = (NODE_LOGIN, NODE_CONFIG.get_node_id(), 'localhost', 0)
+            self.querier.pushDocuments(self.qid, results, provider)
             self.results = self.querier.getQueryResults(self.query)
             
     # XXX (refactoring): provide a common base class for LivePages
@@ -650,7 +656,7 @@ class ResultsPage(athena.LivePage, ResultsPageMixIn):
         
     def onNewResults(self, provider, results):
         results = [ScoredDocument(**params) for params in results]
-        self.querier.pushDocuments(self.qid, results, NODE_CONFIG.get_node_id(), provider)
+        self.querier.pushDocuments(self.qid, results, provider)
         results = self.querier.getQueryResults(self.query,
                                                onlyLocal=self.onlyLocal,
                                                onlyDistant=self.onlyDistant)

@@ -197,6 +197,6 @@ class MaayRPCServer(XMLRPC):
         except Exception, exc:
             import traceback
             traceback.print_exc()
-            return "Could not get %r, cause %s" % (doc_id, exc)
+            return ''
         return data
     
