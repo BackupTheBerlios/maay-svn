@@ -306,8 +306,8 @@ class ScoredDocument(Document):
                         "D.url, "
                         "D.mime_type, "
                         "D.publication_time, "
-                        "DS.relevance, "
-                        "DS.popularity ")
+                        "sum(DS.relevance), "
+                        "sum(DS.popularity)")
         query += ("FROM documents D, document_scores DS "
                   "WHERE DS.db_document_id=D.db_document_id "
                   "AND DS.word IN (%s) "
