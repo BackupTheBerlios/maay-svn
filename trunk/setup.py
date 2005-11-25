@@ -57,6 +57,10 @@ updateConfig = Target(description = "Configuration update program",
 			    script = 'maay/win32/updateconfig.py',
 			    dest_base = "updateconfig")
 
+removeServices = Target(description = "Services (maay + mysql) uninstaller",
+			    script = 'maay/win32/removeservices.py',
+			    dest_base = "removeservices")
+
 maay_service = Target(description = "The Maay service",
                       modules = ["maayservice"],
                       dest_base = "Maay")
@@ -68,7 +72,7 @@ if sys.platform == 'win32':
             
         
 	setup(console = [maay_node, maay_indexer,
-                         createdb, updateConfig],
+                         createdb, updateConfig, removeServices],
               service = [maay_service],
 		name = name,
 		version = version,
