@@ -3,26 +3,29 @@
 
 <div id="resultsDiv" xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
   <div class="message" nevow:render="title">Results <b><nevow:slot name="start_result" /></b> - <b><nevow:slot name="end_result" /></b> of <b><nevow:slot name="count" /></b> for <b><nevow:slot name="words" /></b>.</div>
-    <table>
+    <table class="resultOption" align="right">
       <tr>
-        <td><b>Filter :</b></td>
-        <td><div nevow:render="localResultsDiv"/>(<span nevow:render="localcount" />)</td>
-        <td> - </td>
-        <td><div nevow:render="distantResultsDiv" />(<span nevow:render="distantcount" />)</td>
-        <td>-</td>
-        <td><div nevow:render="allResultsDiv" />(<span nevow:render="totalcount" />)</td>
-        <td> - <b> Sorted by: </b></td>
-        <td><div nevow:render="relevanceDiv"/></td>
-        <td> - </td>
-        <td><div nevow:render="popularityDiv"/></td>
-        <td> - </td>
-        <td><div nevow:render="publicationDiv"/></td>
+        <td>
+          <b>Filter :</b>
+          <div nevow:render="localResultsDiv"/>(<span nevow:render="localcount" />) - 
+          <div nevow:render="distantResultsDiv" />(<span nevow:render="distantcount" />) -
+          <div nevow:render="allResultsDiv" />(<span nevow:render="totalcount" />)
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <b>Sorted by: </b>
+          <div nevow:render="relevanceDiv" /> -
+          <div nevow:render="popularityDiv" /> -
+          <div nevow:render="publicationDiv" />
+        </td>
       </tr>
     </table>
+    <br />
   <center>
   <nevow:invisible nevow:macro="prevnext" />
   </center>
-  <table class="results" nevow:render="sequence" nevow:data="results">
+  <table class="results" nevow:render="sequence" nevow:data="results" width="100%">
     <tr nevow:pattern="item" nevow:render="row">
       <td>
 	<div>

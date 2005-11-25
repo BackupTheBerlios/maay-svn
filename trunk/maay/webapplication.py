@@ -514,27 +514,27 @@ class ResultsPageMixIn:
 
     def render_relevanceDiv(self, context, data):
         if self.query.order == 'relevance':
-            return tags.xml('<div class="selectedCriterium">'
-                            'relevance</div>')
+            return tags.xml('<span class="selectedCriterium">'
+                            'relevance</span>')
         else:
-            return tags.xml("""<div class="unselectedCriterium"><a href="javascript: sortBy('relevance');">"""
-                            'relevance</div>')
+            return tags.xml("""<span class="unselectedCriterium"><a href="javascript: sortBy('relevance');">"""
+                            'relevance</a></span>')
 
     def render_popularityDiv(self, context, data):
         if self.query.order == 'popularity':
-            return tags.xml('<div class="selectedCriterium">'
-                            'popularity</div>')
+            return tags.xml('<span class="selectedCriterium">'
+                            'popularity</span>')
         else:
-            return tags.xml("""<div class="unselectedCriterium"><a href="javascript: sortBy('popularity');">"""
-                            'popularity</div>')
+            return tags.xml("""<span class="unselectedCriterium"><a href="javascript: sortBy('popularity');">"""
+                            'popularity</a></span>')
 
     def render_publicationDiv(self, context, data):
         if self.query.order == 'publication_time':
-            return tags.xml('<div class="selectedCriterium">'
-                            'publication time</div>')
+            return tags.xml('<span class="selectedCriterium">'
+                            'publication time</span>')
         else:
-            return tags.xml("""<div class="unselectedCriterium"><a href="javascript: sortBy('publication_time');">"""
-                            'publication time</div>')
+            return tags.xml("""<span class="unselectedCriterium"><a href="javascript: sortBy('publication_time');">"""
+                            'publication time</a></span>')
 
     def render_localResultsDiv(self, context, data):
         if self.onlyLocal:

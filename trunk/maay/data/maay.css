@@ -39,6 +39,10 @@ div.newReleaseMessage {
   text-align: center;
 }
 
+table.resultOption {
+  font-size: 80%;
+}
+
 div.homemessage {
   font-size: 120%;
   color: orange;
@@ -77,44 +81,48 @@ table.searchHome {
   border-left-color: #ff0000;
 }
 
-.selectedLocalResults { 
-  background-color: yellow;
-  border-left-color: #00ff00;
- }
-
-.selectedDistantResults { 
-  color: blue;
-  background-color: yellow;
-  border-left-color: #ff0000;
- }
-
 .allResults, .selectedAllResults { 
   margin-top: 5px;
   margin-bottom: 5px;
   margin-right: 3px;
  }
 
+.selectedLocalResults { 
+  background-color: white;
+  font-weight: bold;
+  text-color: black;
+  border-left-color: #00ff00;
+ }
+
+.selectedDistantResults { 
+  font-weight: bold;
+  background-color: white;
+  text-color: black;
+  border-left-color: #ff0000;
+ }
+
 .selectedAllResults {  
-  color: blue;
-  background-color: yellow;
+  font-weight: bold;
+  text-color: black;
+  background-color: white;
  }
 
-div.selectedCriterium { 
-  color: blue;
-  background-color: yellow;
+.selectedCriterium { 
+  color: black;
+  font-weight: bold;
+  background-color: white;
  }
 
-div.unselectedCriterium { 
+.unselectedCriterium { 
   color: black; 
   background-color: white;
   text-decoration: underline;
  }
 
-
 div.message {
   text-align: right;
-  background: #e5ecf9;
-  border-top: 1px solid blue;
+  background: #ffd4b2;
+  border-top: 1px solid #fb9a4c;
 }
 
 div.resultDesc {
