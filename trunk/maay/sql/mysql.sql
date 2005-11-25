@@ -156,8 +156,8 @@ CREATE TABLE `results` (
   `size` int(11) default NULL,
   `text` text,
   `publication_time` int(14) default NULL,
-  `relevance` int(14) default NULL, -- sum of relevances
-  `popularity` int(14) default NULL, -- sum of popularities
+  `relevance` float NOT NULL default '0', -- sum of relevances
+  `popularity` float NOT NULL default '0', -- sum of relevances
   `url` varchar(255) NOT NULL default '',
   `host` varchar(15),
   `port` int(11), -- check this

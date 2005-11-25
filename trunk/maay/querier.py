@@ -267,14 +267,14 @@ class AnonymousQuerier:
             winfo.commit(cursor, update=True)
 
         for word,score in scores.iteritems():
-            score.download_count = max(0, score.download_count) + 1 / len(words)
+            score.download_count = max(0, score.download_count) + 1.0 / len(words)
             winfo_downloads = wordInfo[word].download_count
             
-            score.popularity = score.download_count / winfo_downloads
+            score.popularity = float(score.download_count) / winfo_downloads
             score.popularity -= hoeffding_deviation(winfo_downloads)
             score.popularity = max(1e-6, score.popularity)
             
-            score.relevance = score.download_count / document.download_count
+            score.relevance = float(score.download_count) / document.download_count
             score.relevance -= hoeffding_deviation(document.download_count)
             score.relevance = max(1e-6, score.relevance)
             
