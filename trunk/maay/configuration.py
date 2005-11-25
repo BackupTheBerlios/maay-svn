@@ -343,11 +343,11 @@ class IndexerConfiguration(Configuration):
 ##             os.makedirs(self.download_dir)
 
     def save(self):
-        # FIXME: since there may be several configuration files, which
-        # one do we choose. By default, we take the one in the current
-        # directory
+        # Save in the directory that will be loaded last
+        saveDirectory = self.get_writable_config_dirs()[-1]
+        filepath = os.path.join(saveDirectory, self.config_file)
         try:
-            fd = file(self.config_file, 'wb')
+            fd = file(filepath, 'wb')
             self.generate_config(stream=fd)
             fd.close()
         except IOError, e:
