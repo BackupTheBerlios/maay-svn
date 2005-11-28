@@ -109,15 +109,15 @@ class Win32MaayTaskbar:
             win32gui.TrackPopupMenu(menu, win32con.TPM_LEFTALIGN, pos[0], pos[1], 0, self.hwnd, None)
             win32gui.PostMessage(self.hwnd, win32con.WM_NULL, 0, 0)
         elif lparam==win32con.WM_LBUTTONDBLCLK:
-            webbrowser.open("http://127.0.0.1:%s/" % self.node.nodeConfig.webserver_port, autoraise=1)
+            webbrowser.open("http://127.0.0.1:%s/" % self.node.NODE_CONFIG.webserver_port, autoraise=1)
         return 1
 
     def OnCommand(self, hwnd, msg, wparam, lparam):
         id = win32api.LOWORD(wparam)
         if id == Win32MaayTaskbar.SEARCH_MENU_ID:
-            webbrowser.open("http://127.0.0.1:%s/" % self.node.nodeConfig.webserver_port, autoraise=1)
+            webbrowser.open("http://127.0.0.1:%s/" % self.node.NODE_CONFIG.webserver_port, autoraise=1)
         elif id == Win32MaayTaskbar.INDEXATION_MENU_ID:
-            webbrowser.open("http://127.0.0.1:%s/indexation" % self.node.nodeConfig.webserver_port, autoraise=1)
+            webbrowser.open("http://127.0.0.1:%s/indexation" % self.node.NODE_CONFIG.webserver_port, autoraise=1)
         elif id == Win32MaayTaskbar.HOMEPAGE_MENU_ID:
             webbrowser.open("http://maay.netofpeers.net", autoraise=1)
 
