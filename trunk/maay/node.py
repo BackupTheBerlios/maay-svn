@@ -38,7 +38,7 @@ from twisted.cred import portal, error
 from twisted.cred.checkers import AllowAnonymousAccess, \
      ICredentialsChecker
 from twisted.cred.credentials import IAnonymous, IUsernamePassword
-from twisted.internet import reactor, defer
+from twisted.internet import reactor, defer, task
 from twisted.web import server
 from twisted.python import failure
 from nevow import inevow, appserver, guard
@@ -273,7 +273,19 @@ def run():
                           NODE_HOST,
                           NODE_PORT,
                           NODE_CONFIG.bandwidth)
+
+    # update peer list from presence server every 30 mn
+    notifyTask = task.LoopingCall(presenceclient.notify,
+                                  NODE_CONFIG.presence_host,
+                                  NODE_CONFIG.presence_port,
+                                  maayPortal.webQuerier,
+                                  NODE_ID,
+                                  NODE_HOST,
+                                  NODE_PORT,
+                                  NODE_CONFIG.bandwidth)
     
+    notifyTask.start(1800)
+
     rpcserver = server.Site(MaayRPCServer(maayPortal))
     reactor.listenTCP(NODE_CONFIG.webserver_port, website)
     reactor.listenTCP(NODE_CONFIG.rpcserver_port, rpcserver)
