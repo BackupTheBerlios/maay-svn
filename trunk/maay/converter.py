@@ -52,6 +52,7 @@ import gzip
 import bz2
 import sys
 import shutil
+import traceback
 
 from maay.texttool import TextParser, MaayHTMLParser as HTMLParser, ParsingError
 
@@ -70,26 +71,14 @@ types_map.update ({
     '.patch': 'text/plain'
     })
 
-def win32_launcher(commandline):
-    startupInfo = win32process.STARTUPINFO()
-    startupInfo.dwFlags = win32process.DETACHED_PROCESS | win32process.STARTF_USESHOWWINDOW
-    startupInfo.wShowWindow = win32con.SW_HIDE
-    hProcess, hThread, dwProcessId, dwThreadId = \
-              win32process.CreateProcess(None, commandline, None,
-                                         None, 0, 0, None, None,
-                                         startupInfo)
-    while (win32process.GetExitCodeProcess(hProcess) == win32con.STILL_ACTIVE):
-        win32api.Sleep(2)
-    # FIXME: try to get the errcode
-    return 0
-
-# Not use os.system for win32 system because it displays msdos command to launch
-# it
-if sys.platform == 'win32':
-    import win32api, win32con, win32process
-    launcher = win32_launcher
-else:
-    launcher = os.system
+try:
+    import subprocess
+    def launcher(cmd):
+        return subprocess.call(cmd, shell=True)
+except ImportError:
+    print "subprocess not available, fallback on os.system()"
+    def launcher(cmd):
+        return os.system(cmd)
 
 class IndexationFailure(Exception):
     """raised when an indexation has failed"""
@@ -215,7 +204,8 @@ class CommandBasedConverter(BaseConverter):
             try:
                 return parser.parseFile(outputFile, osp.basename(filepath),
                                     self.OUTPUT_ENCODING)
-            except Exception:
+            except Exception, exc:
+                traceback.print_exc()
                 raise IndexationFailure('Unable to index %r' % filepath)
                 
         finally:
