@@ -213,10 +213,6 @@ class MaayHTMLParser(AbstractParser, HTMLParser):
         except HTMLParseError, exc:
             print "MaayHTMLParser parseString : Error parsing document: %s" % exc
         result = u'\n'.join(self.textbuf)
-        #XXX: wacky hack to get a correct title when we just processed
-        #     a file from PDFTOHTML
-        if self.title[-7:len(self.title)] == '.pdf-in':
-            self.title = u''
         return self.title, result, self.links, 0
 
         

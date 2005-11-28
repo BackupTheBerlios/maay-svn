@@ -230,6 +230,13 @@ class PDFConverter(CommandBasedConverter, HTMLConverter):
     MIME_TYPES = ('application/pdf',)
     OUTPUT_ENCODING = 'UTF-8'
 
+    def extractWordsFromFile(self, filepath):
+        """Modify the title that we get from MaayHTMLParser
+        """
+        title, result, links, offset  = CommandBasedConverter.extractWordsFromFile(self, filepath)
+        return osp.basename(title)+'.pdf', result, links, offset
+        
+
 class PSConverter(CommandBasedConverter, RawTextConverter):
     COMMAND = 'ps2ascii "%(input)s" "%(output)s"'
     MIME_TYPES = ('application/postscript',)
