@@ -1,0 +1,17 @@
+Release Notes for version 0.3.1
+
+See README.txt for installation and quick start instructions. 
+
+This release is beta-level software, which contains several bug fixes
+over 0.3.0.
+
+If you encounter any problem with the web interface (like 
+never ending requests, pages not updated), please notify us and
+describe the problem. In this case, don't forget to mention which
+browser (name and version) and which platform you're using.
+
+The windows installer will install and set up all the required
+dependencies (including mysql and twisted). It uses Inno Setup and
+Py2exe.
+
+

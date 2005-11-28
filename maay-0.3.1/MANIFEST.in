@@ -1,0 +1,10 @@
+# revision: $Id$
+recursive-include maay/test/ *.py *.txt *.txt.bz2 *.txt.gz *.xml *.html *.ini
+recursive-include maay/data/ *.html *.css *.gif *.png *.jpg *.ico *.js
+recursive-include maay/sql *.sql
+include maay/bin/maay-node
+include maay/bin/maay-indexer
+include ReleaseNotes
+include ChangeLog
+include COPYING
+recursive-include  doc/ *.html *.css

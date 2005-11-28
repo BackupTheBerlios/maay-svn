@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.3.9: http://docutils.sourceforge.net/" />
+<title>Maay development guidelines</title>
+<link rel="stylesheet" href="default.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="maay-development-guidelines">
+<h1 class="title">Maay development guidelines</h1>
+<!-- revision: $Id$ -->
+<div class="section" id="scope-of-this-document">
+<h1><a name="scope-of-this-document">Scope of this document</a></h1>
+<p>This document is a collection of tips to help Maay contributors. It
+will be expanded as needs arise.</p>
+</div>
+<div class="section" id="generating-a-windows-installer">
+<h1><a name="generating-a-windows-installer">Generating a Windows installer</a></h1>
+<div class="section" id="setting-up-the-windows-machine">
+<h2><a name="setting-up-the-windows-machine">Setting up the Windows machine</a></h2>
+<p>Download and install <a class="reference" href="http://www.python.org/2.4/">Python 2.4</a> and update your PATH environment variable
+so that c:python24 belongs to the path. Do it right away this will 
+save precious time and frustration.</p>
+<p>Install <a class="reference" href="http://www.jrsoftware.org/isdl.ph">Inno Setup</a>, <a class="reference" href="http://sourceforge.net/projects/py2exe/">py2exe</a>, <a class="reference" href="http://starship.python.net/crew/mhammond/win32/Downloads.html">pywin32</a> which are used to produce
+the installer. You will probably want to install a Subversion client
+such as <a class="reference" href="http://tortoisesvn.tigris.org/download.html">Tortoise SVN</a>, as well as <a class="reference" href="http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html">putty</a> to benefit from the
+<tt class="docutils literal"><span class="pre">pageant</span></tt> ssh agent and avoid typing your berlios password again and
+again.</p>
+<p>Checkout the Maay sources from Berlios.</p>
+<p>You need to install the dependencies of Maay too. Download and install
+the following python modules (take care when downloading a windows
+installer, it has to be built for Python 2.4):</p>
+<blockquote>
+<ul class="simple">
+<li><a class="reference" href="http://www.egenix.com/files/python/eGenix-mx-Extensions.html#Download-mxBASE">egenix-mx-base</a></li>
+<li><a class="reference" href="http://sourceforge.net/project/showfiles.php?group_id=22307&amp;release_id=102893">mysql-python</a></li>
+<li><a class="reference" href="http://twistedmatrix.com/projects/core/">twisted-2.0.1</a></li>
+<li><a class="reference" href="http://divmod.org/projects/nevow">nevow-0.6</a></li>
+<li><a class="reference" href="http://www.pythonware.com/products/pil/">PIL</a></li>
+<li><a class="reference" href="http://www.logilab.org/projects/common">logilab-common-0.12.1</a></li>
+</ul>
+</blockquote>
+<p>If there is no windows installer available for the package, it most
+certainly means that it is a pure Python library. Unpack the source
+archive in a temporary directory and use a command prompt window to
+run <tt class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">bdist_wininst</span></tt> in that directory. This will
+generate a Windows installer in the <tt class="docutils literal"><span class="pre">dist</span></tt> subdirectory, which you
+can run to install the library.</p>
+<p>Download the <cite>mysql-4.1-noinstall</cite> prebuilt zip file, and unzip it in
+<tt class="docutils literal"><span class="pre">trunk\thirdparty</span></tt> (where <tt class="docutils literal"><span class="pre">trunk</span></tt> is the Subversion checkout
+directory). Rename <tt class="docutils literal"><span class="pre">trunk\thirdparty\mysql-4.1</span></tt> to
+<tt class="docutils literal"><span class="pre">trunk\thirdparty`mysql</span></tt>.</p>
+<p>Download and unpack <a class="reference" href="http://www.informatik.uni-frankfurt.de/~markus/antiword/">antiword</a>, <a class="reference" href="http://gnuwin32.sourceforge.net/packages/unrtf.htm">unrtf</a> and <cite>pdftohtml</cite> in
+<tt class="docutils literal"><span class="pre">trunk\thirdparty</span></tt>. I think this is all and correct. Fortunately,
+all of this only has to be done once.</p>
+</div>
+<div class="section" id="generating-the-installer">
+<h2><a name="generating-the-installer">Generating the installer</a></h2>
+<blockquote>
+<ul class="simple">
+<li>In a shell window, navigate to the trunk directory.</li>
+<li>Run <tt class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">py2exe</span> <span class="pre">&gt;</span> <span class="pre">py2exe.log</span></tt></li>
+<li>Examine <tt class="docutils literal"><span class="pre">py2exe.log</span></tt> for possible errors or missing modules</li>
+<li>Launch Inno setup by double clickink on <tt class="docutils literal"><span class="pre">maay.iss</span></tt></li>
+<li>Select the right option in the menu to generate the installer</li>
+</ul>
+</blockquote>
+<p>It is probably possible to right click on <tt class="docutils literal"><span class="pre">maay.iss</span></tt> and to compile
+directly from Windows Explorer. I prefer compiling from the Inno Setup
+GUI because it is possible to run the installer and uninstaller from
+the application and get a log displayed.</p>
+</div>
+<div class="section" id="what-if-it-does-not-work">
+<h2><a name="what-if-it-does-not-work">What if it does not work?</a></h2>
+<p>The author admits that he may have got one of the preparation step
+wrong. Please send a mail on the <tt class="docutils literal"><span class="pre">maay-dev</span></tt> mailing list and we will
+try to help.</p>
+</div>
+</div>
+<div class="section" id="generating-a-source-distribution">
+<h1><a name="generating-a-source-distribution">Generating a source distribution</a></h1>
+<p>Go the trunk directory and run <tt class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">sdist</span></tt></p>
+</div>
+</div>
+</body>
+</html>

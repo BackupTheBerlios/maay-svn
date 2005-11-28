@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.3.9: http://docutils.sourceforge.net/" />
+<title>Maay documentation</title>
+<link rel="stylesheet" href="default.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="maay-documentation">
+<h1 class="title">Maay documentation</h1>
+<!-- revision: $Id$ -->
+<div class="section" id="warning">
+<h1><a name="warning">Warning</a></h1>
+<p>This is beta quality software. Before launching anything be sure to read 
+this document and the release notes for the program. On Windows systems, 
+the release notes are available through the start menu shortcut of Maay.</p>
+</div>
+<div class="section" id="what-is-maay">
+<h1><a name="what-is-maay">What is Maay?</a></h1>
+<p>Maay is a P2P indexation and search engine. You can use it to index
+files on your computer, and export them to other members of the Maay
+P2P network. You can also issue searches which will look for documents
+on your computer as well as on other nodes of the P2P network.</p>
+</div>
+<div class="section" id="what-is-in-the-current-implementation">
+<h1><a name="what-is-in-the-current-implementation">What is in the current implementation?</a></h1>
+<p>The current Maay implementation features:</p>
+<blockquote>
+<ul class="simple">
+<li>the maay node, which acts as an XMLRPC and HTTP server. The XMLRPC
+interface is used to process indexation requests and distributed
+queries. The HTTP interface is available through a web browser to
+issue local and distributed queries, as well as indexation
+requests.</li>
+<li>an indexer, which can handle the following document formats: raw
+text, HTML, Microsoft Word, Rich Text Format, Portable Document
+Format.</li>
+<li>a presence server, which can handle presence information from maay
+nodes, in order to seed the node database.</li>
+</ul>
+</blockquote>
+</div>
+<div class="section" id="how-do-i-start-using-maay">
+<h1><a name="how-do-i-start-using-maay">How do I start using Maay?</a></h1>
+<p>First, edit the configuration files. On Windows, they are in
+C:Program FilesMaaywebapp.ini and C:Program
+FilesMaayindexer.ini. The Windows installer should have set the
+different configuration values.  On Unix systems, they are in
+/etc/maay, and you can copy them to ~/.maay/ if you want to have some
+personnalized settings. Pay attention to the index-dir and skip-dir
+settings in indexer.ini.</p>
+<p>Then, start the Maay service. On Windows, this is done automatically
+when your machine boots. On unix systems, use /usr/bin/maay-server</p>
+<p>You can now visit <a class="reference" href="http://localhost:7777/">http://localhost:7777/</a> which will display the Maay
+search page. Issuing a search will probably not yield any result since
+you have not indexed any files yet.</p>
+<p>Launch the indexer: visit <a class="reference" href="http://localhost:7777/indexation">http://localhost:7777/indexation</a>, check that
+the directories are correct and click on the &quot;index now&quot; button. On
+Windows, the indexation can also be launched manually through the
+start menu again by choosing &quot;Maay Indexer&quot;. On Unix systems, the
+manual indexation is done by running /usr/bin/maay-indexer.</p>
+<p>The indexer will look for files on your hard disks and index them by
+sending indexation requests to the server. Once the indexation is
+done, queries issued through the web interface should give results.</p>
+</div>
+<div class="section" id="where-can-i-get-help">
+<h1><a name="where-can-i-get-help">Where can I get help?</a></h1>
+<p>For now the best place to ask for help is on the development mailing
+list of Maay. You can subscribe from
+<a class="reference" href="http://lists.berlios.de/mailman/listinfo/maay-dev">http://lists.berlios.de/mailman/listinfo/maay-dev</a></p>
+<p>You may also use the bug tracker on the Berlios project page at 
+<a class="reference" href="http://developer.berlios.de/projects/maay/">http://developer.berlios.de/projects/maay/</a></p>
+<p>When reporting a bug or asking for help, don't forget to provide the
+following pieces of information:</p>
+<blockquote>
+<ul class="simple">
+<li>operating system</li>
+<li>version of maay</li>
+<li>on unix: version of python</li>
+<li>steps to reproduce the bug</li>
+</ul>
+</blockquote>
+<p>Be as precise as possible. Just saying &quot;the indexer does not work&quot;
+won't give us any clue to help you.</p>
+<blockquote>
+Alexandre Fayolle &lt;<a class="reference" href="mailto:alexandre.fayolle&#64;logilab.fr">alexandre.fayolle&#64;logilab.fr</a>&gt;, Fri, 18 Nov 2005 15:00:58 +0100</blockquote>
+</div>
+</div>
+</body>
+</html>

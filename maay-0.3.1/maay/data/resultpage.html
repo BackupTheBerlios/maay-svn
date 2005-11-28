@@ -1,0 +1,34 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<nevow:invisible xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+  <!-- <a nevow:render="loginurl"><nevow:attr name="href"><nevow:slot name="loginurl" /></nevow:attr><nevow:slot name="actionlabel" /></a> -->
+  <div class="reSearch">
+    <form action="search" accept-charset="utf-8">
+      <table>
+        <tr>
+          <td><a href="/"><img src="images/smallmaay.png" /></a></td>
+          <td><input type="text" name="words" nevow:render="searchfield"><nevow:attr name="value" ><nevow:slot name="words" /></nevow:attr></input></td>
+          <td><input type="submit" class="searchButton" value="search" /></td>
+	</tr>
+      </table>
+    </form>      
+  </div>
+  <div class="message" nevow:render="title">Results <nevow:slot name="start_result" /> - <nevow:slot name="end_result" /> for <b><nevow:slot name="words" /></b>.</div>
+  <table class="results" nevow:render="sequence" nevow:data="results">
+    <tr nevow:pattern="item" nevow:render="row">
+      <td>
+	<div class="resultItem">
+	  <table><tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type" /></nevow:attr></div></td><td><a class="docTitle"><nevow:attr name="href">/download?docid=<nevow:slot name="docid" />&amp;words=<nevow:slot name="words" /></nevow:attr><nevow:slot name="doctitle">DOC TITLE</nevow:slot></a></td></tr></table>
+	  <div class="resultDesc"><nevow:slot name="abstract" /></div>
+	  <span class="resultUrl"><nevow:attr name="href"><nevow:slot name="docurl" /></nevow:attr><nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /></span>
+	</div>
+      </td>
+    </tr>
+  </table>
+  <br />
+  <center>
+  <div class="prevnext"><a><nevow:attr name="href"
+  nevow:render="prevset_url"/>Previous</a> - <a><nevow:attr
+  name="href" nevow:render="nextset_url"/>Next</a></div>
+  </center>
+</nevow:invisible>

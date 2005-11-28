@@ -1,0 +1,8 @@
+Conversation with devel@conference.jabber.logilab.org at 2005-08-25 08:32:29 on alf@jabber.logilab.org/Gaim (jabber)
+(17:25:23) alf: j'ai une piste
+(17:25:44) alf: si j'édite le mail (le second), dans les entêtes j'ai:
+(17:25:46) alf: Content-Type: text/plain; charset="utf-8" Content-Transfer-Encoding: base64 
+(17:26:01) adim: hmm ...
+(17:26:04) alf: et le corpts du message, c'est du base64
+(17:26:04) adim: vous utilisez mutt ?
+(17:26:07) alf: yop
