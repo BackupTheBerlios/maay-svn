@@ -1,11 +1,9 @@
-Release Notes for version 0.3.0
+Release Notes for version 0.3.1
 
 See README.txt for installation and quick start instructions. 
 
 This release is beta-level software, which contains several bug fixes
-and improvements over 0.2.2. The 0.2.3 version was not released
-officially, and only contains a few bugfixes concerning the 
-windows services management.
+over 0.3.0.
 
 If you encounter any problem with the web interface (like 
 never ending requests, pages not updated), please notify us and
