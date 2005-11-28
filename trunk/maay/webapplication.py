@@ -216,7 +216,7 @@ class IndexationPageFactory(athena.LivePageFactory):
         self.indexedDocuments += 1
         if state == Document.PRIVATE_STATE:
             self.privateDocuments += 1
-        else:
+        elif state == Document.PUBLISHED_STATE:
             self.publicDocuments += 1
         # refresh pages for each group of 10 indexed files
         if (self.indexedDocuments % 10) == 0:
@@ -228,8 +228,12 @@ class IndexationPageFactory(athena.LivePageFactory):
                 # webpage.updatePrivateDocumentCount(self.privateDocuments)
                 # webpage.updatePublicDocumentCount(self.publicDocuments)
         
-    def documentUntouched(self, filename):
+    def documentUntouched(self, filename, state):
         self.untouchedDocuments += 1
+        if state == Document.PRIVATE_STATE:
+            self.privateDocuments += 1
+        elif state == Document.PUBLISHED_STATE:
+            self.publicDocuments += 1
         if (self.untouchedDocuments % 10) == 0:
             for webpage in self.clients.itervalues():
                 webpage.countersUpdated(self.untouchedDocuments,
@@ -248,6 +252,8 @@ class IndexationPageFactory(athena.LivePageFactory):
         # reset counters after indexation is finished
         self.untouchedDocuments = 0
         self.indexedDocuments = 0
+        self.privateDocuments = 0
+        self.publicDocuments = 0
     
 class SearchForm(MaayPage):
     """default search form"""

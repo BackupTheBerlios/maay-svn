@@ -52,7 +52,7 @@ class IIndexerObserver(Interface):
     def newDocumentIndexed(filename, state):
         """called by indexer when a document was just indexed"""
 
-    def documentUntouched(filename):
+    def documentUntouched(filename, state):
         """called when a document was left untouched"""
 
     def indexationCompleted():
@@ -162,7 +162,7 @@ class AbstractIndexer:
             lastIdxTime, lastIdxState = self.getLastIndexationTimeAndState(filepath)
             if lastIdxState == state and lastIdxTime >= lastModificationTime:
                 for obs in self.observers:
-                    obs.documentUntouched(filepath)
+                    obs.documentUntouched(filepath, state)
                 print "%s didn't change since last indexation" % (safe_encode(filepath),)
                 return
             try:
