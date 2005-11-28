@@ -153,6 +153,7 @@ class AbstractIndexer:
             obs.indexationCompleted()
 
     def indexFile(self, filepath, isPrivate=True):
+        docId = None
         try:
             if not self.isIndexable(filepath):
                 return
@@ -184,6 +185,8 @@ class AbstractIndexer:
         except Exception, exc:
             raise FileIndexationFailure(safe_encode(filepath),
                                         "an exception %s was raised" % exc)
+        return docId
+
     def runIndexer(self, isPrivate=True):
         existingFiles = set()
         state = docState(isPrivate)
@@ -431,18 +434,20 @@ def start_as_thread(nodeConfig, webpage):
 
 # index one file from webapp in a thread
 
-def indexJustOneFile(nodeConfig, filepath):
+def indexJustOneFile(nodeConfig, filepath, words = None):
     localQuerier = MaayQuerier(nodeConfig.db_host, nodeConfig.db_name,
                                nodeConfig.user, nodeConfig.password)
-    thread = Thread(target=_just_one, args=(localQuerier, filepath))
+    thread = Thread(target=_just_one, args=(localQuerier, filepath, words))
     thread.start()
 
-def _just_one(querier, filepath):
+def _just_one(querier, filepath, words):
     indexer = LocalIndexer(INDEXER_CONFIG, querier)
-    print 'going to index file %s', filepath
+    print 'going to index file %s' % filepath
     try:
         # log.startLogging(open('maay-indexer.log', 'w'))
-        indexer.indexFile(filepath, isPrivate=False)
+        docId = indexer.indexFile(filepath, isPrivate=False)
+        if words:
+            querier.notifyDownload(docId, words)
     except FileIndexationFailure, fif:
         print fif
 

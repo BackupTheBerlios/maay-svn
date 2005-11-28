@@ -404,12 +404,12 @@ class SearchForm(MaayPage):
         proxy = Proxy(str('http://%s:%s' % (host, port)))
         print "[webapp] trying to donwload %r from %s:%s" % (filename, host, port)
         d = proxy.callRemote('downloadFile', docid, words)
-        d.addCallback(self.gotDataBack, nodeConfig, filename)
+        d.addCallback(self.gotDataBack, nodeConfig, filename, words)
         d.addErrback(self.tryOtherProviders, nodeConfig, filename, words, host,
                      port, docid, qid)
         return d
 
-    def gotDataBack(self, rpcFriendlyData, nodeConfig, filename):
+    def gotDataBack(self, rpcFriendlyData, nodeConfig, filename, words):
         if rpcFriendlyData:
             fileData = rpcFriendlyData.data
         else:
@@ -420,7 +420,7 @@ class SearchForm(MaayPage):
         f = file(filepath,'wb')
         f.write(fileData)
         f.close()
-        return DistantFilePage(nodeConfig, filepath)
+        return DistantFilePage(nodeConfig, filepath, words)
 
     def onDownloadFileError(self, error, filename):
         msg = "Error while downloading file: %s" % (filename,)
@@ -439,7 +439,7 @@ class SearchForm(MaayPage):
             print "[webapp] trying to donwload %r from %s:%s" % (filename, nextHost, nextPort)
             proxy = Proxy(str('http://%s:%s' % (nextHost, nextPort)))
             d = proxy.callRemote('downloadFile', docId, words)
-            d.addCallback(self.gotDataBack, nodeConfig, filename)
+            d.addCallback(self.gotDataBack, nodeConfig, filename, words)
             d.addErrback(self.retryWithOtherProvider, nodeConfig, words, docId, filename)
             return d
         else:
@@ -447,10 +447,10 @@ class SearchForm(MaayPage):
 
 
 class DistantFilePage(static.File):
-    def __init__(self, nodeConfig, filepath):
+    def __init__(self, nodeConfig, filepath, words):
         static.File.__init__(self, filepath)
         self.filepath = filepath
-        indexer.indexJustOneFile(nodeConfig, self.filepath)
+        docId = indexer.indexJustOneFile(nodeConfig, self.filepath, words)
 
 class ResultsPageMixIn:
 
