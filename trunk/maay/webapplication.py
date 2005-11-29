@@ -80,6 +80,9 @@ class MaayPage(rend.Page):
     def render_custom_htmlheader(self, context):
         return ''
 
+    def render_custom_htmlfooter(self, context):
+        return ''
+
     def render_onload(self, context):
         return ''
     

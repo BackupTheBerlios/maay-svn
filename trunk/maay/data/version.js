@@ -22,7 +22,7 @@ function checkNewRelease()
 	    }
 	}
     }
-    newReleaseMessage = document.getElementById("newReleaseMessage");
-    newReleaseMessage.innerHTML = 'Your version of MAAY is outdated. <a href="http://maay.netofpeers.net/wiki/index.php/Download"> Download the version ' + version + ' of MAAY !</a>'
+    divNewReleaseMessage = document.getElementById("newReleaseMessage");
+    divNewReleaseMessage.innerHTML = 'Your version of MAAY is outdated. <a href="http://maay.netofpeers.net/wiki/index.php/Download"> Download the version ' + version + ' of MAAY !</a>'
     return 1;
 }
