@@ -271,9 +271,13 @@ class SearchForm(MaayPage):
 
     def render_custom_htmlheader(self, context):
         return [
-            tags.script(type='text/javascript', src='http://maay.netofpeers.net/version.js'),
             tags.script(type='text/javascript', src=url.here.child('localversion.js')),
             tags.script(type='text/javascript', src=url.here.child('versionjs')),
+            ]
+
+    def render_custom_htmlfooter(self, context):
+        return [
+            tags.script(type='text/javascript', src='http://maay.netofpeers.net/version.js'),
             ]
 
     def render_onload(self, context):
