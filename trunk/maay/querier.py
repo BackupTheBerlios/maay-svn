@@ -248,7 +248,7 @@ class AnonymousQuerier:
 
     def _updateDownloadStatistics(self, document, words):
         cursor = self._cnx.cursor()
-        document.download_count = max(0, document.download_count) + 1
+        document.download_count = max(0.0, document.download_count) + 1
         document.commit(cursor, update=True)
         db_document_id = document.db_document_id
         scores = {}
@@ -261,11 +261,11 @@ class AnonymousQuerier:
                                                       word=word)[0]
 
         for winfo in wordInfo.itervalues():
-            winfo.download_count += 1 / len(words)
+            winfo.download_count += 1.0 / len(words)
             winfo.commit(cursor, update=True)
 
         for word,score in scores.iteritems():
-            score.download_count = max(0, score.download_count) + 1.0 / len(words)
+            score.download_count = max(0.0, score.download_count) + 1.0 / len(words)
             winfo_downloads = wordInfo[word].download_count
             
             score.popularity = float(score.download_count) / winfo_downloads
