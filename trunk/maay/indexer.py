@@ -194,7 +194,9 @@ class AbstractIndexer:
             existingFiles.add(filename)
             try:
                 self.indexFile(filename, isPrivate)
-            except FileIndexationFailure, fif: # should be catch-all
+# FIXME: a UnicodeError may be raised and is not catched.
+#            except FileIndexationFailure, fif: # should be catch-all
+            except Exception, fif
                 print fif
                 continue
         return existingFiles
