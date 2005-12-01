@@ -6,7 +6,7 @@
 
 [Setup]
 AppName=Maay
-AppVerName=Maay-0.3.1
+AppVerName=Maay-0.3.2
 DefaultDirName={pf}\Maay
 DefaultGroupName=Maay
 UninstallDisplayIcon={app}\maay_node.exe

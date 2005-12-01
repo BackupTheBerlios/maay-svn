@@ -1,6 +1,8 @@
+Maay-0.3.2 2005-12-01
+	* ensure proper indexing/download of document regardless of the filename encoding and origin
+
 Maay-0.3.1 2005-11-28
 	* win32 bug fixes (systray, indexing)
-
 	
 Maay-0.3.0 2005-11-25
 	* Ergonomic improvements
