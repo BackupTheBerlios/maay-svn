@@ -266,13 +266,13 @@ def run():
                                                      mindFactory=MaayMindFactory))
     website.remember(Maay404(), inevow.ICanHandleNotFound)
     website.remember(NODE_CONFIG, INodeConfiguration)
-    presenceclient.notify(NODE_CONFIG.presence_host,
-                          NODE_CONFIG.presence_port,
-                          maayPortal.webQuerier,
-                          NODE_ID,
-                          NODE_HOST,
-                          NODE_PORT,
-                          NODE_CONFIG.bandwidth)
+##     presenceclient.notify(NODE_CONFIG.presence_host,
+##                           NODE_CONFIG.presence_port,
+##                           maayPortal.webQuerier,
+##                           NODE_ID,
+##                           NODE_HOST,
+##                           NODE_PORT,
+##                           NODE_CONFIG.bandwidth)
 
     # update peer list from presence server every 30 mn
     notifyTask = task.LoopingCall(presenceclient.notify,
