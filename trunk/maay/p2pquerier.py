@@ -27,6 +27,7 @@ import platform
 import time
 import os
 import socket
+import base64
 from threading import Thread
 
 from logilab.common.compat import set
@@ -308,19 +309,16 @@ class P2pQuerier:
         for document in answer.documents:
             if not isinstance(document, dict):
                 document = document.__dict__
-                if 'url' in document:
-                    document['url'] = os.path.basename(document['url'])
+            # only node-local docs will exhibit their full pathname
+            if 'url' in document:
+                doc_url = base64.decodestring(document['url'])
+                document['url'] = base64.encodestring(os.path.basename(doc_url))
             # TODO: record answer in database if local is False
             # auc : to have them in Document with state == KNOWN
-            #if not query.isKnown(document):
             abstract = makeAbstract(document['text'], query.getWords())
             document['text'] = untagText(removeSpace(abstract))
             query.addMatch(document)
             toSend.append(document)
-            ## else:
-##                 #FIXME: shouldn't we add all documents regardless
-##                 #       of duplicates, so as to add a new provider entry ?
-##                 print "we already know this doc !!!@~^#{"
 
         if query.sender != NODE_CONFIG.get_node_id():
             self.querier.registerNodeActivity(answer.provider[1])
