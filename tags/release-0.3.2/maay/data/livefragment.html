@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<div id="resultsDiv" xmlns="http://www.w3.org/1999/xhtml" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+  <div class="message" nevow:render="title">Results <b><nevow:slot name="start_result" /></b> - <b><nevow:slot name="end_result" /></b> of <b><nevow:slot name="count" /></b> for <b><nevow:slot name="words" /></b>.</div>
+    <table class="resultOption" align="right">
+      <tr>
+        <td>
+          <b>Filter:</b>
+          <div nevow:render="localResultsDiv"/>(<span nevow:render="localcount" />) - 
+          <div nevow:render="distantResultsDiv" />(<span nevow:render="distantcount" />) -
+          <div nevow:render="allResultsDiv" />(<span nevow:render="totalcount" />)
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <b>Sorted by: </b>
+          <div nevow:render="relevanceDiv" /> -
+          <div nevow:render="popularityDiv" /> -
+          <div nevow:render="publicationDiv" />
+        </td>
+      </tr>
+    </table>
+    <br />
+  <nevow:invisible nevow:macro="prevnext" />
+  <table class="results" nevow:render="sequence" nevow:data="results" width="100%">
+    <tr nevow:pattern="item" nevow:render="row">
+      <td>
+	<div>
+	  <nevow:attr name="class"><nevow:slot name="resultClass" /></nevow:attr>
+	  <table>
+	    <tr><td><div><nevow:attr name="class"><nevow:slot name="mime_type"/></nevow:attr></div></td>
+	    <td>
+	      <a>
+		<nevow:attr name="href"><nevow:slot name="url" /></nevow:attr>
+		<nevow:attr name="title"><nevow:slot name="providersCount" /></nevow:attr>
+		<nevow:slot name="doctitle">DOC TITLE</nevow:slot>
+	      </a>
+	    </td>
+	    </tr>
+	  </table>
+	  <div class="resultDesc"><nevow:slot name="abstract" /></div>
+	  <span class="resultUrl"><span nevow:render="peer" />
+         <nevow:slot name="docurl" /> - <nevow:slot name="readable_size" /> - <nevow:slot name="publication_date" /> - (relevance : <nevow:slot name="relevance" />) - (popularity : <nevow:slot name="popularity" />)</span>
+	</div>
+      </td>
+    </tr>
+  </table>
+  <nevow:invisible nevow:macro="prevnext" />
+</div>

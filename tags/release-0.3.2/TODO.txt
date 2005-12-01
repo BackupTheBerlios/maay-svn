@@ -1,0 +1,81 @@
+==============
+Maay TODO List
+==============
+
+converter.py:
+-------------
+
+TODO: add support for xls, ppt,  openoffice, mp3, ogg
+
+XXX: need to handle file encodings
+
+
+dbentity.py:   
+------------
+
+FIXME : UNKNOWN_STATE gets stored in the
+          database as a char in table Document or
+          as a tinyint(4) in table files. Check
+
+XXX mimetype handling is a HACK. It needs to be integrated
+     nicely in order to handle any kind of restrictions easily
+
+XXX: LIMIT clause should be optional
+
+indexer.py:
+-----------
+
+TODO: analyse the God class into something understandable
+
+TODO: manage periodical runs
+
+TODO: memorize state of indexed document to avoid db lookup at each run
+
+TODO: do an initial db query to initialize the indexation state (?)
+
+querier.py:                
+-----------
+FIXME: find a better way to perform this operation
+       the autodetection of the charset guesses latin-1 and
+       this obviously does not work with unicode
+
+FIXME: update node_interests too
+
+XXX Decide if we can compute the content_hash and mime_type ourselves
+    or if the indexer should do it and pass the values as an argument
+
+TODO: order results using document_scores information
+
+registration.py:
+----------------
+
+TODO: auto logout after a given time to save memory
+
+rpc.py:    
+-------
+
+FIXME: need a better implementation
+
+XXX : could we return twisted.python.failure.Failure instance here ?
+
+XXX: need to differenciate bad cnxId and no last mod time
+
+server.py:        
+----------
+
+XXX: logout message should be forwarded to registration server
+
+XXX make sure that the requested document is really in the database
+
+XXX don't forget to update the download statistics of the document
+
+XXX abstract attribute should be a unicode string
+
+texttool.py:
+------------
+
+XXX FIXME: this function probably already exists somewhere ...
+
+TODO: port original code from htmltotext
+
+XXX: this is a quick and dirty implementation

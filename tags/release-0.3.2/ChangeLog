@@ -1,0 +1,57 @@
+Maay-0.3.2 2005-12-01
+	* ensure proper indexing/download of document regardless of the filename encoding and origin
+
+Maay-0.3.1 2005-11-28
+	* win32 bug fixes (systray, indexing)
+	
+Maay-0.3.0 2005-11-25
+	* Ergonomic improvements
+	* Compute and use popularity and relevance scores
+	* Download files from other peers when the first ones fail
+	* Check maay version at startup time
+	* Lots of bug fixes
+	
+Maay-0.2.2 2005-11-21
+	* Use IP adress of presence server instead of domain name
+	* Threshold on document relevance and popularity to avoid negative
+	  values
+	* Fixed ranking bug to display more recent documents first
+	* return a maximum of 50 results per peer
+	* improved Internet Explorer compatibility
+	* Fix a communication bug when non-standard ports are used, and thus ...
+	* Is incompatible with prior versions (won't answer to queries from old version)
+
+Maay-0.2.1 2005-11-16
+        * Fixed bug #5647 caused by bad use of os.getlogin() preventing P2P
+	  queries from being processed on Windows
+        * Fixed off by one error in document abstract generation (#5648)
+        * Fixed auto indexation of downloaded documents
+        * Fixed some display inconsistencies in web interface
+        * Added missing directories in indexation web page
+        * Logging now happens in maay-node.log
+
+Maay-0.2.0 2005-11-15
+        * Added P2P queries
+        * Added presence server
+        * Can launch indexation through web interface
+        * Maay node runs as a windows service
+        * Many bugfixes and improvements
+
+Maay-snapshot20051007 2005-10-07
+        * Fixed a problem with db creation on windows
+        * Fixed word converter PATH issue
+        * Installer now offers to launche maay-server after installation
+
+Maay-snapshot20051006 2005-10-06
+	* Some bug fixes on Windows
+	* Anonymous login supported
+	* Nicer web interface (several pages of 15 results)
+	* Node management in the indexer
+	* Fixed some communication issues between indexer and server
+	
+Maay-0.1.0 2005-10-03
+	* First release of the new code base
+
+	
+
+	

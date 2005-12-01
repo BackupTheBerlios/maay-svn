@@ -1,0 +1,79 @@
+=========================================
+Compte rendu de la réunion du 9 Nov. 2005
+=========================================
+
+Participants
+~~~~~~~~~~~~
+
+Joaquin Keller (FTRD)
+Frédéric Dang Ngoc (FTRD)
+Alexandre Fayolle (Logilab)
+
+But de la réunion
+~~~~~~~~~~~~~~~~~
+
+Point sur les développements depuis la précédente réunion.
+
+Échéances
+~~~~~~~~~~
+
+Démonstration publique le 30 Nov. 
+
+On a besoin d'une version distribuable le 15 Nov.
+
+Points abordés
+~~~~~~~~~~~~~~
+
+Installeurs
+-----------
+
+Dang Ngoc a rencontré des problèmes pour la génération de l'installeur
+windows (cf. messages sur la liste maay-dev). Fayolle regarde ce qui
+se passe. 
+
+Requêtes distribuées
+--------------------
+
+Les requêtes distribuées fonctionnent, mais la mise à jour de
+l'affichage dans le navigateur ne se fait pas encore. Logilab
+travaille sur la question, et devrait avoir résolu le problème d'ici
+le 14 Nov. 
+
+Ranking des résultats
+---------------------
+
+Dang Ngoc regarde pour le 14 Nov. s'il est possible d'obtenir un
+ranking plus élaboré que la date d'indexation. 
+
+Terminologie : Serveur de présence
+----------------------------------
+
+Le serveur de présence fonctionne. Dang Ngoc se charge de modifier les
+noms des options de configuration pour refléter ce changement. 
+
+Terminologie: Noeud
+-------------------
+
+Logilab se chargera de faire les modifications de "server" en "node"
+dans le code, après les modifications nécessaires pour l'affichage des
+résultats P2P.
+
+Lancement de l'indexation depuis l'interface Web
+------------------------------------------------
+
+Le code de Dang Ngoc lance l'indexeur dans un thread plutôt que dans
+un processus. Les modifications seront effectuées ultérieurement si
+nécessaire. 
+
+Conclusion de la réunion
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Il faut pour lundi 14 Nov. une version installable de Maay permettant
+de faire des recherches distribuées. 
+
+La prochaine réunion aura lieu par téléphone le 14 Nov. à 14h30.
+
+ -- Alexandre Fayolle <alexandre.fayolle@logilab.fr>  Wed,  9 Nov 2005 15:16:04 +0100
+
+
+

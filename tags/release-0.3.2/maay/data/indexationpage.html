@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xmlns:nevow="http://nevow.com/ns/nevow/0.1">
+  <head>
+    <title>Indexation Page</title>
+    <link rel="stylesheet" type="text/css" href="maaycss"/>
+    <link rel="shortcut icon" href="images/maay.ico" />
+    <nevow:invisible nevow:render="liveglue" />
+
+    <script type='text/javascript' language='javascript'>
+
+abortNeeded = true;
+function live() {
+  server.callRemote('live');
+}
+
+function updatePrivateDocumentCount(count) {
+  elt = document.getElementById('privateDocumentCount');
+  elt.innerHTML = count;
+}
+
+function updatePublicDocumentCount(count) {
+  elt = document.getElementById('publicDocumentCount');
+  elt.innerHTML = count;
+}
+
+function updateStatus(msg, priv, pub) {
+  elt = document.getElementById('statusMessage');
+  elt.innerHTML = msg;
+  updatePrivateDocumentCount(priv);
+  updatePublicDocumentCount(pub);
+}
+
+
+    </script>
+  </head>
+  <body onload="live();">
+
+<form action="/indexation" method="post">
+<table>
+  <tr>
+    <td><a href="/"><img border="0" src="images/smallmaay.png" /></a></td>
+    <td valign="bottom"><h1>Folders</h1></td>
+  </tr>
+</table>
+  <br />
+  <div class="message"><b>Status: </b><span id="statusMessage"><span nevow:render="message" /></span></div>
+  <br />
+  <h2>Search these private folders</h2>
+   <div class="documentCount"><span id="privateDocumentCount"><span nevow:render="privateDocumentCount" /></span> private documents.</div>
+   <div nevow:render="sequence" nevow:data="privatefolders">
+      <div class="indexedFolderName" nevow:pattern="item" nevow:render="directory"><a><nevow:attr name="href">/indexation?removePrivateFolder=<nevow:slot name="name" /></nevow:attr>X</a> - <nevow:slot name="name" /></div>
+   </div>
+   <br />
+    <input type="text" name="addPrivateFolder" size="50" />
+    <input type="submit" value="Add" />
+  <h2>Search/Publish these public folders</h2>
+   <div class="documentCount"><span id="publicDocumentCount"><span nevow:render="publicDocumentCount" /></span> public documents.</div>
+    <div nevow:render="sequence" nevow:data="publicfolders">
+      <div class="indexedFolderName" nevow:pattern="item" nevow:render="directory"><a><nevow:attr name="href">/indexation?removePublicFolder=<nevow:slot name="name" /></nevow:attr>X</a> - <nevow:slot name="name" /></div>
+    </div>
+    <br />
+    <input type="text" name="addPublicFolder" size="50" />
+    <input type="submit" value="Add" />
+  <h2>Don't search these folders</h2>
+    <div nevow:render="sequence" nevow:data="skippedfolders">
+      <div class="skippedFolderName" nevow:pattern="item" nevow:render="directory"><a><nevow:attr name="href">/indexation?removeSkippedFolder=<nevow:slot name="name" /></nevow:attr>X</a> - <nevow:slot name="name" /></div>
+    </div>
+    <br />
+    <input type="text" name="addSkippedFolder" size="50" />
+    <input type="submit" value="Add" />
+ 
+  </form>
+  <form action="/indexation" method="PUT">
+    <input type="hidden" name="start" value="1" />
+    <input type="submit" value="Index now" /> 
+  </form>
+  <script language="javascript" nevow:render="alert">
+    msg = '<nevow:slot name="message" />'
+    if (msg)
+        alert(msg)
+  </script>
+  <nevow:invisible nevow:macro="footer" />
+</body>
+</html>

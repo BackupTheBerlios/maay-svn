@@ -1,0 +1,93 @@
+==========================================
+Compte rendu de la réunion du 14 Nov. 2005
+==========================================
+
+Participants
+~~~~~~~~~~~~
+
+Joaquin Keller (FTRD)
+Frédéric Dang Ngoc (FTRD)
+Alexandre Fayolle (Logilab)
+
+But de la réunion
+~~~~~~~~~~~~~~~~~
+
+Point sur les développements depuis la précédente réunion.
+
+Échéances
+~~~~~~~~~~
+
+Démonstration publique le 30 Nov. 
+
+On a besoin d'une version distribuable le 15 Nov.
+
+Points abordés
+~~~~~~~~~~~~~~
+
+État des développements
+-----------------------
+
+La recherche distante et le téléchargement distant sont fonctionnels
+sous Linux. Des tests sont en cours sous Windows pour vérifier que le
+logiciel est utilisable avec Internet Explorer.
+
+L'installation sous Windows d'un service pour le noeud Maay est en
+cours de développement.
+
+Information des utilisateurs
+----------------------------
+
+Il faut faire apparaître clairement sur la page d'indexation
+(http://localhost:7777/indexation) quels sont les répertoires qui
+seront traités par l'indexeur. 
+
+Gestion des fichiers téléchargés
+--------------------------------
+
+Lorsqu'un fichier est téléchargé depuis un serveur distant, il faut
+qu'il soit placé dans un répertoire qui sera traité par l'indexeur
+publique lors du prochain passage. 
+
+Si ça ne coûte pas trop en temps de développement, il faut
+immédiatement indexer le nouveau document. 
+
+Configuration par défaut
+------------------------
+
+Au moment de l'installation sous Windows, l'installeur doit déterminer
+si la machine fait partie de l'intranet de FT R&D, et si oui,
+configurer l'adresse IP du serveur de présence en conséquence.
+
+Filtrage des réponses locales/distantes
+---------------------------------------
+
+Si ça ne coûte pas trop en temps de développement, il faut ajouter sur
+la page des résultats un moyen de n'afficher que les documents locaux,
+ou que les documents distants, ou tous les documents. Si c'est trop
+long à développer, ce sera pour plus tard. 
+
+Installation sur machine partagée
+---------------------------------
+
+Fayolle signale que l'installeur Windows configure Maay pour
+l'utilisateur courant, ce qui peut poser problème pour une machine
+partagée, ou si l'utilisateur courant ne dispose pas de privilèges
+administratifs suffisants. Keller dit que ce n'est pas un problème
+pour le moment.
+
+
+
+Conclusion de la réunion
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Logilab fournira pour le 15 Nov. une livraison en status beta de
+l'application avec un installeur Windows. Cette livraison sera
+déployée dans un cercle restreint chez FT pour obtenir des retours
+rapides sur l'utilisabilité de l'application. 
+
+
+ -- Alexandre Fayolle <alexandre.fayolle@logilab.fr>  Mon, 14 Nov 2005 15:18:57 +0100
+
+
+
+

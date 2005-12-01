@@ -1,0 +1,254 @@
+body,td,div,.p,a{font-family:arial,sans-serif }
+
+h1 { font-family: arial,helvetica; font-size: 14pt; color: #000000; font-weight:bold }
+h2 {  font-family: Arial, Helvetica, sans-serif; font-size: 12pt; font-style:italic ; font-weight: bold ; color: #444444}
+h3 {  font-family: Arial, Helvetica, sans-serif; font-size: 10pt; font-weight: bold; color: #888888}
+/** header ********/
+div.headlinks {
+  text-align: right;
+}
+
+a.headlink {
+  /* display: block; */
+  font-size: 70%;
+  color: #444444;
+  text-align: right;
+}
+
+img {
+  border:0px
+}
+
+/** footer ********/
+a.footlink {
+  /* display: block; */
+  font-size: 70%;
+  color: #444444;
+}
+
+/** login page ********/
+table.loginTable {
+  width: 100%;
+}
+
+/** search page *******/
+
+div.newReleaseMessage {
+  width: 100%;
+  color: red;
+  text-align: center;
+}
+
+table.resultOption {
+  font-size: 80%;
+}
+
+div.homemessage {
+  font-size: 120%;
+  color: orange;
+}
+
+div.shortDocStat {
+  font-size: 80%;
+}
+
+
+input.searchButton {
+  background: #FFF0FF;
+  border: 1px outset #ff2222;
+  margin: 5px 10px 5px 0px;
+}
+
+table.searchHome {
+  width: 100%;
+  text-align: center;
+}
+
+.localPublicResults, .distantResults, .selectedLocalResults, .selectedDistantResults {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  margin-right: 3px;
+  border-left-style: solid;
+  border-left-width: 3px;
+  padding-left: 3px;
+}
+
+.localPublicResults {
+  border-left-color: #00ff00;
+}
+
+.distantResults {
+  border-left-color: #ff0000;
+}
+
+.allResults, .selectedAllResults { 
+  margin-top: 5px;
+  margin-bottom: 5px;
+  margin-right: 3px;
+ }
+
+.selectedLocalResults { 
+  background-color: white;
+  font-weight: bold;
+  text-color: black;
+  border-left-color: #00ff00;
+ }
+
+.selectedDistantResults { 
+  font-weight: bold;
+  background-color: white;
+  text-color: black;
+  border-left-color: #ff0000;
+ }
+
+.selectedAllResults {  
+  font-weight: bold;
+  text-color: black;
+  background-color: white;
+ }
+
+.selectedCriterium { 
+  color: black;
+  font-weight: bold;
+  background-color: white;
+ }
+
+.unselectedCriterium { 
+  color: black; 
+  background-color: white;
+  text-decoration: underline;
+ }
+
+div.message {
+  text-align: right;
+  background: #ffd4b2;
+  border-top: 1px solid #fb9a4c;
+}
+
+div.resultDesc {
+  /* display: block; */
+  font-size: 90%;
+  font-family: "New Century Schoolbook", serif;
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 80%;
+}
+
+a.docTitle {
+  display: block;
+}
+
+a.distantDocTitle {
+  /* display: block; */
+  background-color: yellow;
+}
+
+span.resultUrl {
+  font-size: 80%;
+  font-family: "New Century Schoolbook", serif;
+  color: green;
+  text-decoration: none;
+}
+
+div.prevnext {
+  width: 100%;
+  font-size: 80%;
+}
+
+div.prevnext a {
+  font-size: 110%;
+  font-weight: bold;
+  color: blue;
+}
+
+table.peersTable {
+  margin-top: 20px;
+  width: 100%;
+  border: 1px solid black;
+}
+
+table.peersTable th {
+  border-bottom: 1px dotted grey;
+  text-align: left;
+  margin: 0px;
+}
+
+table.peersTable td.nodeId {
+  background: lightgrey;
+}
+
+image{
+  border: 0px;
+}
+
+div.sort {
+  font-size: 60%;
+  text-align: right;
+}
+
+
+/** indexation page *******/
+div.documentCount {
+  font-size: 80%;
+}
+
+div.indexedFolderName {
+  font-size: 80%;
+  color: #448844; 
+  margin-left: 10px;
+}
+
+div.skippedFolderName {
+  font-size: 80%;
+  color: #884444; 
+  margin-left: 10px;
+}
+
+
+
+/** icon *******/
+div.text_html {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/html_icon.png);
+}
+
+div.text_plain {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/txt_icon.png);
+}
+
+div.text_x-python {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/python_icon.png);
+}
+
+div.application_pdf {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/pdf_icon.png);
+}
+
+div.application_msword {
+  /* display: block; */
+  margin-bottom: 0px;
+  padding: 0 0 0 0;
+  width: 16px;
+  height: 16px;
+  background: url(images/msword_icon.png);
+}
+
