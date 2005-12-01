@@ -26,6 +26,7 @@ from itertools import cycle
 from tempfile import mkdtemp
 import os, os.path as osp
 import stat
+import base64
 
 from zope.interface import Interface, implements
 from twisted.web import static
@@ -594,8 +595,9 @@ class ResultsPageMixIn:
             traceback.print_exc()
             print exc
             abstract = u'No abstract available for this document [%s]' % exc
+        doc_url = str(document.adulteredUnicodeUrl())
         context.fillSlots('abstract', tags.xml(abstract))
-        context.fillSlots('docurl', tags.xml(boldifyText(document.url, words)))
+        context.fillSlots('docurl', osp.basename(doc_url))
         context.fillSlots('words', self.query.joinwords(' ')) #WORDS
         context.fillSlots('readable_size', document.readable_size())
         date = datetime.fromtimestamp(document.publication_time)
@@ -613,8 +615,9 @@ class ResultsPageMixIn:
             context.fillSlots('providersCount', 'Provided by %s node(s)' %
                               (len(self.querier.getProvidersFor(document.document_id,
                                                                 self.qid))))
-        baseurl += '&filename=%s' % osp.basename(document.url)
-        baseurl += '&words=%s' % '+'.join(self.query.words)
+        baseurl += '&filename=%s' % osp.basename(doc_url)
+        #FIMXE: may explode due to unicode->str conversion
+        baseurl += str('&words=%s' % '+'.join(self.query.words))
         baseurl += '&qid=%s' % (self.qid,)
         context.fillSlots('url', baseurl)
         context.fillSlots('relevance', document.relevance)

@@ -46,6 +46,12 @@ WORDS_RGX = re.compile(r'\w{%s,%s}' % (WORD_MIN_LEN, WORD_MAX_LEN))
 CHARSET_RGX = re.compile(r'charset=[\s"]*([^\s"]+)', re.I | re.S | re.U)
 XML_ENCODING_RGX = re.compile(r'^<\?xml version=[^\s]*\s*encoding=([^\s]*)\s*\?>', re.I | re.S | re.U)
 
+##### sys.getfilesystemencoding() does not give us the encoding of the filename
+if sys.platform == 'win32':
+    SYS_PREF_ENCODING = 'CP1252'
+else:
+    SYS_PREF_ENCODING = 'ISO-8859-1'
+
 
 class LStringIO(list):
     """simple StringIO-like objects using a list
@@ -156,7 +162,7 @@ class AbstractParser:
         try:
             title, result, links, offset = self.parseString(stream.read())
             if not title:
-                title = unicode(pristineFilename, sys.getfilesystemencoding()) 
+                title = unicode(pristineFilename, SYS_PREF_ENCODING, errors='ignore')
             return title, result, links, offset 
         finally:
             stream.close()

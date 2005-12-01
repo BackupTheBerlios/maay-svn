@@ -28,6 +28,7 @@ __metaclass__ = type
 import time
 from mx.DateTime import now, DateTimeDelta
 import traceback
+import base64
 from math import sqrt, log as mathlog
 
 from twisted.python import log
@@ -95,6 +96,7 @@ class IQuerier(Interface):
     def close():
         """closes the DB connection"""
 
+
 class AnonymousQuerier:
     """High-Level interface to Maay SQL database for anonymous
     (typically peers) users
@@ -115,7 +117,7 @@ class AnonymousQuerier:
                 # FIXME: find a better way to perform this operation
                 # the autodetection of the charset guesses latin-1 and
                 # this obviously does not work with unicode
-                connection.charset = 'utf-8'
+                connection.charset = 'UTF-8'
             except dbapiMod.OperationalError:
                 raise MaayAuthenticationError("Failed to authenticate user %r"
                                               % user)
@@ -242,7 +244,7 @@ class AnonymousQuerier:
             finally:
                 cursor.close()
             self._updateDownloadStatistics(doc, words)
-            return doc.url
+            return doc.pristineUrl()
         except IndexError:
             raise
 
@@ -554,7 +556,7 @@ class MaayQuerier(AnonymousQuerier):
                        size=futureDoc.fileSize,
                        publication_time=futureDoc.lastModificationTime,
                        download_count=0.,
-                       url=futureDoc.filename,
+                       url=base64.encodestring(futureDoc.filename), 
                        mime_type=futureDoc.mime_type,
                        matching=0.,
                        indexed='1',

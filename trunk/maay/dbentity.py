@@ -27,6 +27,7 @@ __all__ = ['Document', 'FileInfo', 'DocumentProvider', 'DocumentScore',
 import re
 from sets import Set
 import time
+import base64
 
 from maay.localinfo import NODE_LOGIN
 
@@ -143,6 +144,16 @@ class FutureDocument:
             assert attrname in self.attributes, 'Unknown attribute %s' % attrname
             setattr(self, attrname, value)
 
+# FIXME: almost the same in indexer.py
+def safe_encode(string):
+    """because string.encode('UTF-8', 'ignore') is not safe"""
+    if not isinstance(string, unicode):
+        uni = string.decode('UTF-8', 'ignore')
+    else:
+        uni = string
+    res = uni.encode('UTF-8', 'ignore')
+    return res
+
         
 
 class Document(DBEntity):
@@ -219,6 +230,17 @@ class Document(DBEntity):
     
     tableName = 'documents'
     key = ('db_document_id',)
+
+    def adulteredUnicodeUrl(self):
+        if 'url' in self.boundAttributes():
+            res = safe_encode(base64.decodestring(self.url))
+            return res
+        return u'NO URL'
+
+    def pristineUrl(self):
+        if 'url' in self.boundAttributes():
+            return base64.decodestring(self.url)
+        return '' #FIXME: raise something ?
 
     def readable_size(self):
         if not self.size:
